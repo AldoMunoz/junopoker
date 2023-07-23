@@ -1,0 +1,35 @@
+poker-application/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   ├── com.example.poker/
+│   │   │   │   ├── config/
+│   │   │   │   │   ├── WebSocketConfig.java
+│   │   │   │   │   └── SecurityConfig.java
+│   │   │   │   ├── controller/
+│   │   │   │   │   ├── PokerController.java
+│   │   │   │   │   └── GameController.java
+│   │   │   │   ├── model/
+│   │   │   │   │   ├── User.java
+│   │   │   │   │   └── PokerTable.java
+│   │   │   │   ├── repository/
+│   │   │   │   │   ├── UserRepository.java
+│   │   │   │   │   └── PokerTableRepository.java
+│   │   │   │   ├── service/
+│   │   │   │   │   ├── PokerService.java
+│   │   │   │   │   └── UserService.java
+│   │   │   │   ├── websocket/
+│   │   │   │   │   ├── PokerTableWebSocketHandler.java
+│   │   │   │   │   └── PokerTableMessage.java
+│   │   │   │   └── PokerApplication.java
+│   │   │   └── resources/
+│   │   │       ├── static/
+│   │   │       │   ├── css/
+│   │   │       │   └── js/
+│   │   │       ├── templates/
+│   │   │       │   ├── index.html
+│   │   │       │   └── game.html
+│   │   │       └── application.properties
+│   │   └── test/
+│   └── ...
+└── pom.xml

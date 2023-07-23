@@ -26,7 +26,7 @@ public class TableService {
     //gathers and executes all the functions needed to run ring poker game
     public void runGame(Table table) {
         //starts the game and sets the blinds
-        if (table.isGameIsRunning() == false) {
+        if (!table.isGameIsRunning()) {
             setBlinds(table);
             table.setGameIsRunning(true);
         }
@@ -73,7 +73,7 @@ public class TableService {
         int seatCount = table.getSeatCount();
         //rotates clockwise using modulus until the next player is found, assigns them the BB
         for (int i = (table.getBigBlind()+1) % seatCount; i < seatCount; i = (i+1) % seatCount) {
-            if (table.getSeats()[i] == null) continue;
+            if (table.getSeats()[i] == null);
             else {
                 table.setBigBlind(i);
                 break;
@@ -88,7 +88,7 @@ public class TableService {
         deckService.shuffleCards(table.getDeck());
 
         //deals cards to every seat with an active player in it
-        for (int i = 0; i < table.getSeats().length; i++) {
+        for (int i = 0; i < table.getSeatCount(); i++) {
             if (table.getSeats()[i] != (null)) {
                 //creates an arraylist where the two dealt cards will be added
                 Card[] cards = new Card[2];
@@ -110,9 +110,8 @@ public class TableService {
         table.getBoard().add(deckService.drawCard(table.getDeck()));
 
         //iterates through players, gets their hand ranking, and sets it
-        for (int i = 0; i < table.getSeats().length; i++) {
+        for (int i = 0; i < table.getSeatCount(); i++) {
             if (table.getSeats()[i] != (null)) {
-
                 //creates new Hand and assigns it to the player
                 Hand hand = new Hand(table.getSeats()[i].getHoleCards(), table.getBoard());
                 table.getSeats()[i].setHand(hand);
@@ -177,7 +176,7 @@ public class TableService {
 
     //Goes through the list of players and reassigns Hand value after turn and river
     public void getHandVals(Table table) {
-        for (int i = 0; i < table.getSeats().length; i++) {
+        for (int i = 0; i < table.getSeatCount(); i++) {
             if (table.getSeats()[i] != (null)) {
                 table.getSeats()[i].getHand().getHandRanking();
             }
@@ -188,7 +187,7 @@ public class TableService {
     public void clearTable(Table table) {
         DeckService deckService = new DeckService();
 
-        for (int i = 0; i < table.getSeats().length; i++) {
+        for (int i = 0; i < table.getSeatCount(); i++) {
             if (table.getSeats()[i] != (null)) {
                 table.getSeats()[i].setHand(null);
             }

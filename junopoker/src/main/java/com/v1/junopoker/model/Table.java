@@ -9,6 +9,7 @@ import java.util.ArrayList;
 @Getter
 @Setter
 public class Table {
+    private final String gameType;
     private final int seatCount;
     private int pot;
     private final int[] stakes;
@@ -24,9 +25,10 @@ public class Table {
     private boolean gameIsRunning;
 
     //initiates table
-    public Table (char tableType, int seatCount, int[] stakes, String gameType) {
+    public Table (int seatCount, int[] stakes, String gameType) {
         this.seatCount = seatCount;
         this.stakes = stakes;
+        this.gameType = gameType;
 
         seats = new Player[seatCount];
         board = new ArrayList<Card>();

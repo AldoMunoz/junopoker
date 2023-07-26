@@ -1,0 +1,141 @@
+body {
+    background-color: #62626b;
+    margin: 0;
+}
+.headers {
+    display: flex;
+}
+
+h1, h4 {
+    margin: 2vh;
+}
+
+#title-header {
+    flex: 1;
+    text-align: left;
+    background-color: #62626b;
+}
+#game-info-header {
+    flex: 1;
+    text-align: right;
+    background-color: #62626b;
+}
+.test {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.table {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.poker-table-img {
+    display: block;
+    width: 60%;
+    height: auto;
+}
+
+.overlay-button {
+    margin:0;
+    padding:0;
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1; /* Ensure buttons appear above the image */
+}
+
+.overlay-button img {
+    width: 11vh;
+    height: auto;
+}
+
+.overlay-button:hover img {
+    content: url('../images/black-button.png')
+}
+
+#button1 {
+    position: absolute;
+    top: 6%;
+    left: 60%;
+    transform: translate(-50%, -50%);
+}
+#button2 {
+    position: absolute;
+    top: 50%;
+    left: 79%;
+    transform: translate(-50%, -50%);
+}
+#button3 {
+    position: absolute;
+    top: 93%;
+    left: 60%;
+    transform: translate(-50%, -50%);
+}
+#button4 {
+    position: absolute;
+    top: 93%;
+    left: 40%;
+    transform: translate(-50%, -50%);
+}
+#button5 {
+    position: absolute;
+    top: 50%;
+    left: 21%;
+    transform: translate(-50%, -50%);
+}
+#button6 {
+    position: absolute;
+    top: 6%;
+    left: 40%;
+    transform: translate(-50%, -50%);
+}
+
+.action-bar {
+    align-items: end;
+    margin-right: 0;
+    margin-left: 20px;
+}
+
+.slider-container {
+    margin: 0;
+    padding: 0;
+    width: 30vh;
+    height: 3vh;
+    background-color: #ddd;
+    border-radius: 6vh;
+    position: relative;
+    cursor: pointer;
+}
+
+.slider-track {
+    width: 0;
+    height: 100%;
+    background-color: #3498db;
+    border-radius: 10px;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.slider-handle {
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border: 2px solid #3498db;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    cursor: grab;
+    user-drag: none;
+    z-index: 1; /* Ensure the handle is above the track */
+}
+
+/* Additional style for text box */
+#slider-value {
+    margin-top: 10px;
+}

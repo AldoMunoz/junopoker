@@ -1,4 +1,4 @@
-// src/main/resources/static/js/script.js
+//Script for handling movement of the slider by the user
 const sliderContainer = document.querySelector(".slider-container");
 const sliderTrack = document.querySelector(".slider-track");
 const sliderHandle = document.querySelector(".slider-handle");
@@ -16,7 +16,7 @@ function getSliderPercentage(event) {
 }
 
 function updateSlider(percentage) {
-    const handlePosition = `${percentage}%`;
+    const handlePosition = `calc(${percentage}% + 10px)`;
     sliderHandle.style.left = handlePosition;
     sliderTrack.style.width = `${percentage}%`;
     sliderValue.value = Math.round(percentage) + "%";

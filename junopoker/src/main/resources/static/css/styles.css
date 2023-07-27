@@ -1,36 +1,47 @@
+/*General Styles*/
 body {
-    background-color: #62626b;
+    background-color: #6d6d72;
     margin: 0;
 }
 .headers {
     display: flex;
 }
-
 h1, h4 {
     margin: 2vh;
 }
 
+/*Text in the header of the page */
 #title-header {
     flex: 1;
     text-align: left;
-    background-color: #62626b;
+    background-color: #6d6d72;
 }
 #game-info-header {
     flex: 1;
     text-align: right;
-    background-color: #62626b;
+    background-color: #6d6d72;
 }
-.test {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
+/*Main UI */
 .table {
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
+    margin: 2vh;
+}
+.settings-bar {
+    position: absolute;
+    top: 1.5vh;
+    left: 1.5vh;
+    width: 10vh;
+    height: 30vh;
+    border: 1px solid grey;
+    background: transparent;
+}
+.settings-bar button {
+    background: transparent;
+    width: 7vh;
+    height: auto;
 }
 .poker-table-img {
     display: block;
@@ -38,72 +49,120 @@ h1, h4 {
     height: auto;
 }
 
+/*Seat Buttons*/
 .overlay-button {
     margin:0;
     padding:0;
     background: transparent;
     border: none;
     border-radius: 5px;
+    position: absolute;
+    transform: translate(-50%, -50%);
     cursor: pointer;
-    z-index: 1; /* Ensure buttons appear above the image */
+    z-index: 1;
 }
-
 .overlay-button img {
     width: 11vh;
     height: auto;
 }
-
 .overlay-button:hover img {
     content: url('../images/black-button.png')
 }
-
-#button1 {
-    position: absolute;
+#seat-1 {
     top: 6%;
     left: 60%;
-    transform: translate(-50%, -50%);
 }
-#button2 {
-    position: absolute;
+#seat-2 {
     top: 50%;
     left: 79%;
-    transform: translate(-50%, -50%);
 }
-#button3 {
-    position: absolute;
+#seat-3 {
     top: 93%;
     left: 60%;
-    transform: translate(-50%, -50%);
 }
-#button4 {
-    position: absolute;
+#seat-4 {
     top: 93%;
     left: 40%;
-    transform: translate(-50%, -50%);
 }
-#button5 {
-    position: absolute;
+#seat-5 {
     top: 50%;
     left: 21%;
-    transform: translate(-50%, -50%);
 }
-#button6 {
-    position: absolute;
+#seat-6 {
     top: 6%;
     left: 40%;
-    transform: translate(-50%, -50%);
 }
 
+/*Modal for when user selects a seat */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 300px;
+}
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+#submitBtn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    width: 100%;
+}
+#submitBtn:hover {
+    background-color: #45a049;
+}
+
+/*Area dealing with player actions */
 .action-bar {
-    align-items: end;
-    margin-right: 0;
-    margin-left: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-right: 2vh;
 }
 
+.custom-bet {
+    margin: 1vh 0;
+    display: flex;
+    justify-content: flex-end;
+}
 .slider-container {
-    margin: 0;
+    margin: 0 1vh 0 0;
     padding: 0;
-    width: 30vh;
+    width: 25vh;
     height: 3vh;
     background-color: #ddd;
     border-radius: 6vh;
@@ -132,10 +191,75 @@ h1, h4 {
     transform: translate(-50%, -50%);
     cursor: grab;
     user-drag: none;
-    z-index: 1; /* Ensure the handle is above the track */
+    z-index: 1;
 }
 
-/* Additional style for text box */
 #slider-value {
-    margin-top: 10px;
+    max-width: 6.5vh;
+    height: 3vh;
+    margin-left: 1.2vh;
+}
+
+.bet-sizes {
+    display: flex;
+    justify-content: flex-start;
+    margin: 1vh 0vh;
+}
+.bet-sizes button {
+    flex: 1;
+    max-width: 80px;
+    height: 3vh;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #95a5a6;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.bet-sizes button:not(:last-child) {
+    margin-right: 2px;
+}
+.bet-sizes button:hover {
+    background-color: #7f8c8d;
+}
+
+.bet-sizes button:focus {
+    outline: none;
+}
+
+.basic-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin: 1vh 0vh;
+}
+
+.basic-actions button {
+    display: inline-block;
+    min-width: 10vh;
+    height: 50px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #e74c3c;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+}
+.basic-actions button:not(:last-child) {
+    margin-right: 1vh;
+}
+.basic-actions button:hover {
+    background-color: #c0392b;
 }

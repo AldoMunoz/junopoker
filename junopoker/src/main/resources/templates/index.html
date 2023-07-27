@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/css/styles.css">
-    <script src="/js/table-script.js" defer></script>
+    <script src="/js/slider-script.js" defer></script>
+    <script src="/js/add-user-script.js" defer></script>
     <title>Juno Poker</title>
 </head>
 <body>
+    <!--Header for Website-->
     <div class="headers">
         <header id="title-header">
             <h1>Welcome to Juno Poker</h1>
@@ -16,35 +18,80 @@
             <h4>Stakes: </h4>
         </header>
     </div>
-    <div class='table'>
-        <img class="poker-table-img" src="/images/poker-table.png" alt="Error">
-        <button class="overlay-button" id="button1"><img src="/images/grey-button.png" alt="Error"></button>
-        <button class="overlay-button" id="button2"><img src="/images/grey-button.png" alt="Error"></button>
-        <button class="overlay-button" id="button3"><img src="/images/grey-button.png" alt="Error"></button>
-        <button class="overlay-button" id="button4"><img src="/images/grey-button.png" alt="Error"></button>
-        <button class="overlay-button" id="button5"><img src="/images/grey-button.png" alt="Error"></button>
-        <button class="overlay-button" id="button6"><img src="/images/grey-button.png" alt="Error"></button>
+    <!--Modal for input of game type and stakes-->
+    <div id="gameSetupModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Game Setup</h2>
+            <label for="gameType">Select Game Type:</label>
+            <select id="gameType">
+                <option value="Texas Hold'em">Texas Hold'em</option>
+                <option value="Omaha">Omaha</option>
+                <option value="Seven Card Stud">Seven Card Stud</option>
+            </select>
+
+            <label for="bigBlind">Big Blind:</label>
+            <input type="number" id="bigBlind">
+
+            <label for="smallBlind">Small Blind:</label>
+            <input type="number" id="smallBlind">
+
+            <button id="setupBtn">Start Game</button>
+        </div>
     </div>
+    <!-- Main UI (Table, Seats, Settings Bar) -->
+    <div class='table'>
+        <!--TODO Settings Bar-->
+        <div class="settings-bar">
+            <button class="menu-button">Menu</button>
+            <button class="stand-button">Stand</button>
+        </div>
+        <!--Table and buttons to sit at table-->
+        <img class="poker-table-img" src="/images/poker-table.png" alt="Error">
+        <button class="overlay-button" id="seat-1"><img src="/images/grey-button.png" alt="Error"></button>
+        <button class="overlay-button" id="seat-2"><img src="/images/grey-button.png" alt="Error"></button>
+        <button class="overlay-button" id="seat-3"><img src="/images/grey-button.png" alt="Error"></button>
+        <button class="overlay-button" id="seat-4"><img src="/images/grey-button.png" alt="Error"></button>
+        <button class="overlay-button" id="seat-5"><img src="/images/grey-button.png" alt="Error"></button>
+        <button class="overlay-button" id="seat-6"><img src="/images/grey-button.png" alt="Error"></button>
+    </div>
+    <!--Modal for when player takes a seat-->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <label for="name">Name:</label>
+            <input type="text" id="name">
+            <label for="chipCount">Number:</label>
+            <input type="text" id="chipCount">
+            <button id="submitBtn">Submit</button>
+        </div>
+    </div>
+    <!--Area that deals with player actions-->
     <div class="action-bar">
         <h6>Hand: </h6>
+        <!-- Bet size buttons -->
         <div class="bet-sizes">
             <button>25%</button>
             <button>50%</button>
             <button>75%</button>
             <button>100%</button>
         </div>
-        <div class="slider-container">
-            <div class="slider-track">
-                <div class="slider-handle"></div>
+        <!-- Custom bet slider and display -->
+        <div class="custom-bet">
+            <div class="slider-container">
+                <div class="slider-track">
+                    <div class="slider-handle"></div>
+                </div>
+            </div>
+            <div>
+                <input type="text" id="slider-value" readonly>
             </div>
         </div>
-        <input type="text" id="slider-value" readonly>
+        <!-- Basic action buttons -->
         <div class="basic-actions">
-            <button>Fold</button>
-            <button>Check</button>
-            <button>Bet: </button>
+            <button class="fold">Fold</button>
+            <button class="check">Check</button>
+            <button class="bet">Bet: </button>
         </div>
-
     </div>
 </body>
 </html>

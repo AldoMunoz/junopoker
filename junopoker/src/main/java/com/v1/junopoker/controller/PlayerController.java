@@ -7,11 +7,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
-public class PokerController {
+public class PlayerController {
     private final PlayerService playerService;
 
     @Autowired
-    public PokerController(PlayerService playerService) {
+    public PlayerController(PlayerService playerService) {
         this.playerService = playerService;
     }
 

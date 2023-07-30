@@ -22,7 +22,7 @@ h1, h4 {
     background-color: #6d6d72;
 }
 /*Main UI */
-.table {
+.main-ui {
     position: relative;
     display: flex;
     justify-content: center;
@@ -31,18 +31,52 @@ h1, h4 {
 }
 .settings-bar {
     position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     top: 1.5vh;
     left: 1.5vh;
     width: 10vh;
-    height: 30vh;
+    height: 18vh;
     border: 1px solid grey;
     background: transparent;
+    z-index: 3;
 }
-.settings-bar button {
-    background: transparent;
+.settings-bar-buttons {
+    position: relative;
+    margin: 1vh 0 0.5vh 0;
+    z-index: 3;
+}
+.settings-bar-buttons img {
     width: 7vh;
     height: auto;
+    background: transparent;
+    cursor: pointer;
 }
+.settings-bar-buttons:hover img {
+    opacity: 0.7;
+}
+.settings-bar-buttons::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px;
+    background-color: #333;
+    color: #fff;
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+/* Show the tooltip on hover */
+.settings-bar-buttons:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
 .poker-table-img {
     display: block;
     width: 60%;
@@ -50,7 +84,7 @@ h1, h4 {
 }
 
 /*Seat Buttons*/
-.overlay-button {
+.seat-buttons {
     margin:0;
     padding:0;
     background: transparent;
@@ -61,15 +95,15 @@ h1, h4 {
     cursor: pointer;
     z-index: 1;
 }
-.overlay-button img {
+.seat-buttons img {
     width: 11vh;
     height: auto;
 }
-.overlay-button:hover img {
+.seat-buttons:hover img {
     content: url('../images/black-button.png')
 }
 #seat-1 {
-    top: 6%;
+    top: 4%;
     left: 60%;
 }
 #seat-2 {
@@ -89,7 +123,7 @@ h1, h4 {
     left: 21%;
 }
 #seat-6 {
-    top: 6%;
+    top: 4%;
     left: 40%;
 }
 
@@ -97,7 +131,7 @@ h1, h4 {
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 2;
     left: 0;
     top: 0;
     width: 100%;
@@ -133,6 +167,23 @@ input {
     width: 100%;
     padding: 8px;
     margin-bottom: 10px;
+}
+select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+#setupBtn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    width: 100%;
+}
+
+#setupBtn:hover {
+    background-color: #45a049;
 }
 #submitBtn {
     background-color: #4CAF50;

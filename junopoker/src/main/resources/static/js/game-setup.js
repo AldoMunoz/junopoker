@@ -22,12 +22,29 @@ function handleSetupButtonClick() {
 
     if (gameType && !isNaN(bigBlind) && !isNaN(smallBlind)) {
         // Save the game setup information to localStorage
-        const data = {
+        const tableData = {
             gameType: gameType,
-            bigBlind: bigBlind,
-            smallBlind: smallBlind
+            stakes: [smallBlind, bigBlind]
         };
-        localStorage.setItem('gameSetup', JSON.stringify(data));
+        localStorage.setItem('gameSetup', JSON.stringify(tableData));
+
+        fetch('/createTable', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(tableData),
+        }).then(response => {
+            // Check if the response is successful (status code 2xx)
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        }).then(data => {
+                // Handle the response from the server if needed
+        }).catch(error => {
+                console.error('Error occurred:', error);
+        });
 
         // Populate the <h4> headers with the selected game type and stakes
         const gameTypeHeader = document.getElementById('game-type');

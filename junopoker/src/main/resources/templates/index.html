@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Include jQuery library -->
     <!--Scripts for slider, and modals -->
     <script src="/js/slider.js" defer></script>
-    <script src="/js/add-user.js" defer></script>
     <script src="/js/game-setup.js" defer></script>
+    <script src="/js/add-player.js" defer></script>
     <title>Juno Poker</title>
 </head>
 <body>
@@ -51,22 +52,34 @@
         </div>
         <!--Table and buttons to sit at table-->
         <img class="poker-table-img" src="/images/poker-table.png" alt="Error">
-        <button class="seat-buttons" id="seat-1" data-seat-id="1" data-initial-image="/images/grey-button.png"><img src="/images/grey-button.png" alt="Error"></button>
-        <button class="seat-buttons" id="seat-2" data-seat-id="1" data-initial-image="/images/grey-button.png"><img src="/images/grey-button.png" alt="Error"></button>
-        <button class="seat-buttons" id="seat-3" data-seat-id="1" data-initial-image="/images/grey-button.png"><img src="/images/grey-button.png" alt="Error"></button>
-        <button class="seat-buttons" id="seat-4" data-seat-id="1" data-initial-image="/images/grey-button.png"><img src="/images/grey-button.png" alt="Error"></button>
-        <button class="seat-buttons" id="seat-5" data-seat-id="1" data-initial-image="/images/grey-button.png"><img src="/images/grey-button.png" alt="Error"></button>
-        <button class="seat-buttons" id="seat-6" data-seat-id="1" data-initial-image="/images/grey-button.png"><img src="/images/grey-button.png" alt="Error"></button>
+        <div class="seats" id="seat-1">
+            <button class="seat-buttons" data-button-number="1" onclick="openAddPlayerModal(1)"><img src="/images/grey-button.png" alt="Error"></button>
+        </div>
+        <div class="seats" id="seat-2">
+            <button class="seat-buttons" data-button-number="2" onclick="openAddPlayerModal(2)"><img src="/images/grey-button.png" alt="Error"></button>
+        </div>
+        <div class="seats" id="seat-3">
+            <button class="seat-buttons" data-button-number="3" onclick="openAddPlayerModal(3)"><img src="/images/grey-button.png" alt="Error"></button>
+        </div>
+        <div class="seats" id="seat-4">
+            <button class="seat-buttons" data-button-number="4" onclick="openAddPlayerModal(4)"><img src="/images/grey-button.png" alt="Error"></button>
+        </div>
+        <div class="seats" id="seat-5">
+            <button class="seat-buttons" data-button-number="5" onclick="openAddPlayerModal(5)"><img src="/images/grey-button.png" alt="Error"></button>
+        </div>
+        <div class="seats" id="seat-6">
+            <button class="seat-buttons" data-button-number="6" onclick="openAddPlayerModal(6)"><img src="/images/grey-button.png" alt="Error"></button>
+        </div>
     </div>
     <!--Modal for when player takes a seat-->
     <div id="addUserModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <label for="name">Name:</label>
-            <input type="text" id="name">
+            <span class="close" onclick="closeAddPlayerModal()">&times;</span>
+            <label for="username">Name:</label>
+            <input type="text" id="username">
             <label for="chipCount">Chip Count:</label>
             <input type="text" id="chipCount">
-            <button id="submitBtn">Submit</button>
+            <button id="submitBtn" onclick="submitData()">Submit</button>
         </div>
     </div>
     <!--Area that deals with player actions-->

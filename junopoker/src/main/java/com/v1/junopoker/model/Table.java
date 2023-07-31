@@ -25,11 +25,11 @@ public class Table {
     private boolean gameIsRunning;
 
     //initiates table
-    public Table (int seatCount, int[] stakes, String gameType) {
-        this.seatCount = seatCount;
+    public Table (String gameType, int[] stakes) {
         this.stakes = stakes;
         this.gameType = gameType;
 
+        seatCount = 6;
         seats = new Player[seatCount];
         board = new ArrayList<Card>();
         seatedPlayerCount = 0;

@@ -83,17 +83,19 @@ h1, h4 {
     height: auto;
 }
 
-/*Seat Buttons*/
-.seat-buttons {
-    margin:0;
-    padding:0;
-    background: transparent;
-    border: none;
+/*Seats, Seat Buttons, Individual Seats*/
+.seats {
     border-radius: 5px;
     position: absolute;
     transform: translate(-50%, -50%);
     cursor: pointer;
     z-index: 1;
+}
+.seat-buttons {
+    background: transparent;
+    margin:0;
+    padding:0;
+    border: none;
 }
 .seat-buttons img {
     width: 11vh;
@@ -101,6 +103,32 @@ h1, h4 {
 }
 .seat-buttons:hover img {
     content: url('../images/black-button.png')
+}
+.player-info {
+    position: relative;
+    background: transparent;
+    margin:0;
+    padding:0;
+}
+.player-info p {
+    text-size: 2vh;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%);
+    margin: 0;
+    padding: 5px;
+    color: white;
+    text-align: center;
+}
+.player-info img {
+    width: 15vh;
+    height: auto;
+}
+.player-usernames {
+    bottom: 3.5vh;
+}
+.player-chip-counts {
+    bottom: .75vh;
 }
 #seat-1 {
     top: 4%;

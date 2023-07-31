@@ -1,13 +1,14 @@
 package com.v1.junopoker.controller;
 
 import com.v1.junopoker.model.Player;
+import com.v1.junopoker.model.Table;
 import com.v1.junopoker.service.TableService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class TableController {
@@ -18,13 +19,15 @@ public class TableController {
         this.tableService = tableService;
     }
 
-    @PostMapping("/action")
-    public String handlePlayerAction(@RequestParam String action, @RequestParam int betAmount) {
-        return"redirect:/";
-    }
-    @PostMapping("/poker")
-    public ResponseEntity<String> createPlayer(@RequestParam Player player) {
+    @PostMapping("/createTable")
+    public ResponseEntity<String> createTable(@RequestBody Table table, HttpSession session) {
+        // Process the user data and create an instance of User
+        Table sessionTable = new Table(table.getGameType(), table.getStakes());
 
-        return new ResponseEntity<>("User added successfully!", HttpStatus.OK);
+        session.setAttribute("createTable", sessionTable);
+        System.out.println("Created table successfully");
+
+        return ResponseEntity.ok().body("{\"status\": \"success\"}");
+
     }
 }

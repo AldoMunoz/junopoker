@@ -1,14 +1,14 @@
 let currentButtonNumber;
 function openAddPlayerModal(buttonNumber) {
     // Show the modal
-    $("#addUserModal").css("display", "block");
+    $("#addUserModal").show();
     // Set a data attribute on the modal to store the button number
     currentButtonNumber = buttonNumber;
 }
 // Function to close the modal
 function closeAddPlayerModal() {
     // Hide the modal
-    $("#addUserModal").css("display", "none");
+    $("#addUserModal").hide();
 }
 // Function to submit data from the modal
 function submitData() {
@@ -16,10 +16,16 @@ function submitData() {
     const chipCountInput = parseInt($("#chipCount").val());
 
     if (usernameInput && chipCountInput) {
-        const playerData = {
+        const player = {
             username: usernameInput,
             chipCount: chipCountInput,
         };
+        const seat = currentButtonNumber-1;
+
+        const data = {
+            player: player,
+            seat: seat
+        }
 
         // Make a Fetch API POST request to your Spring Boot controller
         fetch('/createPlayer', {
@@ -27,7 +33,7 @@ function submitData() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(playerData)
+            body: JSON.stringify(data)
         }).then(response => {
             // Check if the response is successful (status code 2xx)
             if (!response.ok) {
@@ -43,12 +49,6 @@ function submitData() {
             newDiv.append(`<p class="player-chip-counts">${chipCountInput}</p>`);
             newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
             seatDiv.append(newDiv);
-            /*
-            const button = $(`.seat-buttons[data-button-number="${currentButtonNumber}"]`);
-            const img = button.find("img");
-            img.attr("src", "/images/player-icon.png");
-            */
-
             // Close the modal
             closeAddPlayerModal();
         }).catch(error => {

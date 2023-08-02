@@ -1,14 +1,12 @@
-//Script for handling movement of the slider by the user
-const sliderContainer = document.querySelector(".slider-container");
-const sliderTrack = document.querySelector(".slider-track");
-const sliderHandle = document.querySelector(".slider-handle");
-const sliderValue = document.getElementById("slider-value");
+const sliderContainer = $(".slider-container");
+const sliderHandle = $(".slider-handle");
+const sliderValue = $("#slider-value");
 
 let isDragging = false;
 
 function getSliderPercentage(event) {
-    const containerRect = sliderContainer.getBoundingClientRect();
-    const sliderWidth = sliderHandle.offsetWidth;
+    const containerRect = sliderContainer[0].getBoundingClientRect();
+    const sliderWidth = sliderHandle.outerWidth();
     const offsetX = event.clientX - containerRect.left - sliderWidth / 2;
     const trackWidth = containerRect.width - sliderWidth;
     const percentage = (offsetX / trackWidth) * 100;
@@ -16,22 +14,22 @@ function getSliderPercentage(event) {
 }
 
 function updateSlider(percentage) {
-    const handlePosition = `calc(${percentage}% + 10px)`;
-    sliderHandle.style.left = handlePosition;
-    sliderTrack.style.width = `${percentage}%`;
-    sliderValue.value = Math.round(percentage) + "%";
+    const handlePosition = `${percentage}%`;
+    sliderHandle.css("left", handlePosition);
+    sliderContainer.find(".slider-track").css("width", `${percentage}%`);
+    sliderValue.val(Math.round(percentage) + "%");
 }
 
-sliderHandle.addEventListener("mousedown", (event) => {
+sliderHandle.on("mousedown", (event) => {
     isDragging = true;
     event.preventDefault();
 });
 
-document.addEventListener("mouseup", () => {
+$(document).on("mouseup", () => {
     isDragging = false;
 });
 
-document.addEventListener("mousemove", (event) => {
+$(document).on("mousemove", (event) => {
     if (!isDragging) return;
 
     const percentage = getSliderPercentage(event);

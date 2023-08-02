@@ -11,14 +11,12 @@ import java.util.ArrayList;
 @Service
 public class TableService {
     //adds a player to the players list, gives them a chip count and a specific seat
-    public void addPlayer (Table table, Player player, int seat, int chipCount) {
+    public void addPlayer (Table table, Player player, int seat) {
         if (table.getSeats()[seat] == null) table.getSeats()[seat] = player;
-
-        player.setChipCount(chipCount);
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() + 1);
     }
 
-    //removes player at the giver seat
+    //removes player at the given seat
     public void removePlayer(Table table, int seat) {
         table.getSeats()[seat] = null;
     }

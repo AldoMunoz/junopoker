@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/css/styles.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Include jQuery library -->
     <!--Scripts for slider, and modals -->
     <script src="/js/slider.js" defer></script>
     <script src="/js/game-setup.js" defer></script>
+    <script src="/js/remove-player.js" defer></script>
     <script src="/js/add-player.js" defer></script>
     <title>Juno Poker</title>
 </head>
@@ -44,10 +44,10 @@
         <!--TODO Settings Bar-->
         <div class="settings-bar">
             <div class="settings-bar-buttons" data-tooltip="Settings">
-                <img id="settings-button" src="/images/settings.png" alt="Error">
+                <img id="settings-button" src="/images/settings.png" onclick="showGameSetupModal()" alt="Error">
             </div>
             <div class="settings-bar-buttons" data-tooltip="Stand">
-                <img id="stand-button" src="/images/leave-table.png" alt="Error">
+                <img id="stand-button" src="/images/leave-table.png" onclick="removePlayer()" alt="Error">
             </div>
         </div>
         <!--Table and buttons to sit at table-->
@@ -95,9 +95,8 @@
         <!-- Custom bet slider and display -->
         <div class="custom-bet">
             <div class="slider-container">
-                <div class="slider-track">
-                    <div class="slider-handle"></div>
-                </div>
+                <div class="slider-track"></div>
+                <div class="slider-handle"></div>
             </div>
             <div>
                 <input type="text" id="slider-value" readonly>
@@ -110,5 +109,8 @@
             <button class="bet">Bet: </button>
         </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script><!-- SockJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script><!-- Stomp -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- jQuery -->
 </body>
 </html>

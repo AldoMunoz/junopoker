@@ -22,12 +22,20 @@ public class TableController {
     @PostMapping("/createTable")
     public ResponseEntity<String> createTable(@RequestBody Table table, HttpSession session) {
         // Process the user data and create an instance of User
-        Table sessionTable = new Table(table.getGameType(), table.getStakes());
+        Table sessionTable = (Table) session.getAttribute("table");
 
-        session.setAttribute("createTable", sessionTable);
-        System.out.println("Created table successfully");
-
+        if (sessionTable == null) {
+            sessionTable = table;
+            session.setAttribute("table", sessionTable);
+            System.out.println("Created table successfully");
+        }
+        else {
+            sessionTable.setGameType(table.getGameType());
+            sessionTable.setBigBlind(table.getBigBlind());
+            sessionTable.setSmallBlind(table.getSmallBlind());
+            System.out.println("Updated table successfully");
+        }
+        //Table sessionTable = new Table(table.getGameType(), table.getStakes());
         return ResponseEntity.ok().body("{\"status\": \"success\"}");
-
     }
 }

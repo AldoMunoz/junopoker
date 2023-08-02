@@ -9,7 +9,7 @@ import java.util.ArrayList;
 @Getter
 @Setter
 public class Table {
-    private final String gameType;
+    private String gameType;
     private final int seatCount;
     private int pot;
     private final int[] stakes;

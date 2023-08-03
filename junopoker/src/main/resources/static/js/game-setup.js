@@ -20,18 +20,26 @@ function handleSetupButtonClick() {
             stakes: [smallBlind, bigBlind]
         };
 
-        $.ajax({
-            url: '/createTable',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(tableData),
-            success: function (data) {
-                // Handle the response from the server if needed
+        fetch('/createTable', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
             },
-            error: function (error) {
+            body: JSON.stringify(tableData)
+        })
+            .then(response => {
+                // Check if the response is successful (status code 2xx)
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Handle the response from the server if needed
+            })
+            .catch(error => {
                 console.error('Error occurred:', error);
-            }
-        });
+            });
 
         // Populate the <h4> headers with the selected game type and stakes
         $('#game-type').text(`Game Type: ${gameType}`);
@@ -49,6 +57,53 @@ $('#setupBtn').on('click', handleSetupButtonClick);
 $(window).on('load', function () {
     const savedData = localStorage.getItem('gameSetup');
     if (!savedData) {
-        showGameSetupModal();
+        const tableData = {
+            gameType: "Texas Hold'em",
+            stakes: [1, 2]
+        };
+        fetch('/createTable', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(tableData)
+        }).then(response => {
+                // Check if the response is successful (status code 2xx)
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            }).then(data => {
+                // Handle the response from the server if needed
+                // Now that the table is created, establish the WebSocket connection
+                const socket = new SockJS('/ws');
+                const stompClient = Stomp.over(socket);
+
+                stompClient.connect({}, function (frame) {
+                    console.log('WebSocket connection established:', frame);
+                    stompClient.subscribe('/topic/poker-events', function (event) {
+                        const pokerEvent = JSON.parse(event.body);
+                        // Handle the received poker event here for spectators
+                    });
+                });
+            }).catch(error => {
+                console.error('Error occurred:', error);
+            });
+        // Populate the <h4> headers with the selected game type and stakes
+        $('#game-type').text(`Game Type: Texas Hold'em`);
+        $('#stakes').text(`Stakes: 1/2`);
+    }
+    else {
+        const socket = new SockJS('/ws');
+        const stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function (frame) {
+            console.log('WebSocket connection established:', frame);
+
+            stompClient.subscribe('/topic/poker-events', function (event) {
+                const pokerEvent = JSON.parse(event.body);
+                // Handle the received poker event here for spectators
+            });
+        });
     }
 });

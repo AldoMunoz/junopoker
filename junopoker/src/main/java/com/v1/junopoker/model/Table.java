@@ -1,5 +1,6 @@
 package com.v1.junopoker.model;
 
+import com.v1.junopoker.service.DeckService;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,6 +24,7 @@ public class Table {
     private int smallBlind;
     //Changed "isRunning" to "gameIsRunning", more specific
     private boolean gameIsRunning;
+    private DeckService deckService;
 
     //initiates table
     public Table (String gameType, int[] stakes) {

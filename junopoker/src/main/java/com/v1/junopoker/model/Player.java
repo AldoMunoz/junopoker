@@ -1,6 +1,5 @@
 package com.v1.junopoker.model;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,6 +12,7 @@ public class Player {
     private Hand hand;
     private boolean inHand;
     private int currentBet;
+    private boolean isActive;
 
     public Player (String username, int chipCount) {
         this.username = username;

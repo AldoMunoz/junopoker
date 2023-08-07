@@ -1,7 +1,6 @@
 package com.v1.junopoker.model;
 
 import com.v1.junopoker.service.DeckService;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,6 +21,7 @@ public class Table {
     private Deck deck;
     private int bigBlind;
     private int smallBlind;
+    private int currentBet;
     //Changed "isRunning" to "gameIsRunning", more specific
     private boolean gameIsRunning;
     private DeckService deckService;
@@ -33,11 +33,10 @@ public class Table {
 
         seatCount = 6;
         seats = new Player[seatCount];
-        board = new ArrayList<Card>();
-        seatedPlayerCount = 0;
+        board = new ArrayList<>();
         deck = new Deck();
         bigBlind = -1;
         smallBlind = -1;
-        gameIsRunning = false;
+        deckService = new DeckService();
     }
 }

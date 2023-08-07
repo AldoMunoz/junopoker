@@ -357,11 +357,4 @@ public class HandService {
     private void changeFiveCardHandVal(Hand hand, int pos, Card card) {
         hand.getFiveCardHand()[pos] = card;
     }
-
-    public void printFiveCardHand(Hand hand) {
-        for (int i = 0; i < 5; i++) {
-            System.out.println(hand.getFiveCardHand()[i]);
-        }
-        System.out.println();
-    }
 }

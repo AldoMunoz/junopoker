@@ -1,5 +1,6 @@
 package com.v1.junopoker.websocket;
 
+import com.v1.junopoker.model.Player;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,6 +9,6 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class TableMessage {
-    private String messageType;
-    private String content;
+    private MessageType messageType;
+    private Player player;
 }

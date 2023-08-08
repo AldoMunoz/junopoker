@@ -27,25 +27,19 @@ public class PlayerController {
     }
 
     @PostMapping("/createPlayer")
-    public ResponseEntity<String> createPlayer (@RequestBody RequestData requestData, HttpServletRequest request) {
-        Player newPlayer = requestData.getPlayer();
-        int seat = requestData.getSeat();
+    public ResponseEntity<String> createPlayer(@RequestBody CreatePlayerRequest createPlayerRequest, HttpServletRequest request) {
+        Player newPlayer = createPlayerRequest.getPlayer();
+        int seat = createPlayerRequest.getSeat();
         HttpSession session = request.getSession();
         Table table = (Table) session.getAttribute("table");
 
-        if(table == null) {
+        if (table == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        else {
+        } else {
             tableService.addPlayer(table, newPlayer, seat);
             System.out.println("Added player successfully");
 
             return ResponseEntity.ok().body("{\"status\": \"success\"}");
         }
-    }
-    @Getter
-    static class RequestData {
-        private Player player;
-        private int seat;
     }
 }

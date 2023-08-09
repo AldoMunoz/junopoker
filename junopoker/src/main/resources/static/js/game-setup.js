@@ -3,7 +3,6 @@
 let currentButtonNumber = -1;
 let stompClient = null;
 
-
 //When user opens the page:
 //Create new table if one doesn't exist
 //Create WebSocket connection for the user
@@ -68,8 +67,12 @@ function establishWebSocketConnection() {
 
 //Subscribe user to "seated-players" and "poker-events"
 function onConnected() {
-    stompClient.subscribe("topic/seated-players", seatedPlayers);
-    stompClient.subscribe("topic/poker-events", pokerEvents);
+    stompClient.subscribe("topic/seatedPlayers", function(payload) {
+        seatedPlayers(JSON.parse(payload.body));
+    });
+    stompClient.subscribe("topic/pokerEvents", function(payload) {
+        pokerEvents(JSON.parse(payload.body));
+    });
 
     console.log("Subscribed user to 'seated-players' and 'poker-events'")
 }
@@ -79,17 +82,12 @@ function onError(error) {
     console.log('Could not connect to WebSocket server. Please refresh this page to try again!')
 }
 
-//
-function seatedPlayers(payload) {
-    //TODO
-    console.log("Entered seatedPlayers")
-    let playerInfo = JSON.parse(payload.body);
-    console.log(playerInfo.player.chipCount);
-    console.log(playerInfo.player.username);
-    console.log(playerInfo.seat);
+//Handle seated Player Payloads
+function seatedPlayers(parsedPayload) {
+    console.log("Entered seatedPlayers with payload.")
 }
-function pokerEvents(payload) {
-    //TODO
+function pokerEvents(parsedPayload) {
+    console.log("Entered pokerEvents with payload.")
 }
 
 //Stores player data in an object
@@ -103,6 +101,11 @@ function submitPlayerData() {
         const player = {
             username: usernameInput,
             chipCount: chipCountInput,
+            holeCards: null,
+            hand: null,
+            inHand: false,
+            currentBet: 0,
+            isActive: false
         };
         const seat = currentButtonNumber - 1;
 
@@ -147,15 +150,16 @@ function submitPlayerData() {
 //Send data to "addUser" about new player
 function subscribeToPlayerTopic(usernameInput, player, seat) {
     // Subscribe to the player-specific topic
-    stompClient.subscribe(`/topic/player-events/${usernameInput}`, playerEvents);
+    stompClient.subscribe(`/topic/playerEvents/${usernameInput}`, playerEvents);
 
-    stompClient.send("app/addUser",
-        {},
-        JSON.stringify({
+    if(player && stompClient) {
+        let playerRequest = {
             player: player,
-            seat: seat
-        })
-    );
+            seat: currentButtonNumber
+        };
+        stompClient.send("/app/addUser", {}, JSON.stringify(playerRequest));
+    }
+    else console.log("Something went wrong before Websocket could send")
 }
 
 function playerEvents(payload) {

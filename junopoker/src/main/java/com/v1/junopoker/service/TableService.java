@@ -387,4 +387,8 @@ public class TableService {
         table.setBoard(new ArrayList<Card>());
         deckService.joinDeck(table.getDeck());
     }
+
+    public Player getPlayerAtSeat(Table table, int seat) {
+        return table.getSeats()[seat];
+    }
 }

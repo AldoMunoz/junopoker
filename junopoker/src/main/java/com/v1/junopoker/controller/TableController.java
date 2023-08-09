@@ -19,23 +19,30 @@ public class TableController {
         this.tableService = tableService;
     }
 
-    @PostMapping("/createTable")
-    public ResponseEntity<String> createTable(@RequestBody Table table, HttpSession session) {
-        // Process the user data and create an instance of User
-        Table sessionTable = (Table) session.getAttribute("table");
+    @GetMapping("/checkTableData")
+    public ResponseEntity<String> checkTableData(HttpSession session) {
+        Table table = (Table) session.getAttribute("table");
+        if (table != null) {
+            return ResponseEntity.ok().body("{\"status\": \"exists\"}");
+        } else {
+            return ResponseEntity.ok().body("{\"status\": \"notExists\"}");
+        }
+    }
 
-        if (sessionTable == null) {
-            sessionTable = table;
-            session.setAttribute("table", sessionTable);
-            System.out.println("Created table successfully");
+    @GetMapping("/getTableData")
+    public ResponseEntity<Table> getTableData(HttpSession session) {
+        Table table = (Table) session.getAttribute("table");
+        if (table != null) {
+            return ResponseEntity.ok().body(table);
+        } else {
+            // Return an appropriate status code if the table data is not available
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        else {
-            sessionTable.setGameType(table.getGameType());
-            sessionTable.setBigBlind(table.getBigBlind());
-            sessionTable.setSmallBlind(table.getSmallBlind());
-            System.out.println("Updated table successfully");
-        }
-        //Table sessionTable = new Table(table.getGameType(), table.getStakes());
-        return ResponseEntity.ok().body("{\"status\": \"success\"}");
+    }
+
+    @PostMapping("/storeTableData")
+    public ResponseEntity<String> storeTableData(@RequestBody Table table, HttpSession session) {
+        session.setAttribute("table", table);
+        return ResponseEntity.ok().body("{\"status\": \"stored\"}");
     }
 }

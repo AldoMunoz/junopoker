@@ -14,7 +14,6 @@ public class TableWebSocketController {
     @MessageMapping("/addUser")
     @SendTo("/topic/seatedPlayers")
     public CreatePlayerRequest addUser(@Payload CreatePlayerRequest request) {
-        System.out.println(request.toString());
         return request;
     }
 }

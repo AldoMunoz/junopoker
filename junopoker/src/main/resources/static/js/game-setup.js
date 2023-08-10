@@ -67,12 +67,8 @@ function establishWebSocketConnection() {
 
 //Subscribe user to "seated-players" and "poker-events"
 function onConnected() {
-    stompClient.subscribe("topic/seatedPlayers", function(payload) {
-        seatedPlayers(JSON.parse(payload.body));
-    });
-    stompClient.subscribe("topic/pokerEvents", function(payload) {
-        pokerEvents(JSON.parse(payload.body));
-    });
+    stompClient.subscribe("/topic/seatedPlayers", seatedPlayers);
+    stompClient.subscribe("/topic/pokerEvents", pokerEvents);
 
     console.log("Subscribed user to 'seated-players' and 'poker-events'")
 }
@@ -83,11 +79,22 @@ function onError(error) {
 }
 
 //Handle seated Player Payloads
-function seatedPlayers(parsedPayload) {
+function seatedPlayers(payload) {
     console.log("Entered seatedPlayers with payload.")
+    let message = JSON.parse(payload.body);
+
+    //Change the image in the button
+    const seatDiv = $(`#seat-${currentButtonNumber}`);
+    seatDiv.empty();
+    const newDiv = $("<div class='player-info'></div>");
+    newDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
+    newDiv.append(`<p class="player-chip-counts">${message.player.chipCount}</p>`);
+    newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
+    seatDiv.append(newDiv);
 }
-function pokerEvents(parsedPayload) {
+function pokerEvents(payload) {
     console.log("Entered pokerEvents with payload.")
+    let message = JSON.parse(payload.body);
 }
 
 //Stores player data in an object
@@ -130,14 +137,6 @@ function submitPlayerData() {
             //method used to subscribe user to player-events topic
             subscribeToPlayerTopic(usernameInput, player, seat);
 
-            // If the request is successful, change the image in the button
-            /*const seatDiv = $(`#seat-${currentButtonNumber}`);
-            seatDiv.empty();
-            const newDiv = $("<div class='player-info'></div>");
-            newDiv.append(`<p class="player-usernames">${usernameInput}</p>`);
-            newDiv.append(`<p class="player-chip-counts">${chipCountInput}</p>`);
-            newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
-            seatDiv.append(newDiv);*/
             // Close the modal
             closeAddPlayerModal();
         }).catch(error => {
@@ -148,7 +147,7 @@ function submitPlayerData() {
 
 //Subscribe user to player-events/${username}
 //Send data to "addUser" about new player
-function subscribeToPlayerTopic(usernameInput, player, seat) {
+function subscribeToPlayerTopic(usernameInput, player) {
     // Subscribe to the player-specific topic
     stompClient.subscribe(`/topic/playerEvents/${usernameInput}`, playerEvents);
 

@@ -45,4 +45,20 @@ public class TableController {
         session.setAttribute("table", table);
         return ResponseEntity.ok().body("{\"status\": \"stored\"}");
     }
+
+    @GetMapping("/getSeats")
+    public ResponseEntity<Player[]> getSeats(HttpSession session) {
+        Table table = (Table) session.getAttribute("table");
+        return ResponseEntity.ok(table.getSeats());
+    }
+
+    @PutMapping("/setTableData")
+    public ResponseEntity<String> setTableData(@RequestBody Table table, HttpSession session) {
+        Table sessionTable = (Table) session.getAttribute("table");
+        sessionTable.setGameType(table.getGameType());
+        sessionTable.setSmallBlind(table.getSmallBlind());
+        sessionTable.setBigBlind(table.getBigBlind());
+
+        return ResponseEntity.ok().body("{\"status\": \"stored\"}");
+    }
 }

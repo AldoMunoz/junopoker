@@ -11,8 +11,6 @@ import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,10 +25,9 @@ public class PlayerController {
     }
 
     @PostMapping("/createPlayer")
-    public ResponseEntity<String> createPlayer(@RequestBody CreatePlayerRequest createPlayerRequest, HttpServletRequest request) {
+    public ResponseEntity<String> createPlayer(@RequestBody CreatePlayerRequest createPlayerRequest, HttpSession session) {
         Player newPlayer = createPlayerRequest.getPlayer();
         int seat = createPlayerRequest.getSeat();
-        HttpSession session = request.getSession();
         Table table = (Table) session.getAttribute("table");
 
         if (table == null) {

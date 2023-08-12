@@ -22,7 +22,7 @@ public class TableService {
         if (table.getSeats()[seat] == null) table.getSeats()[seat] = player;
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() + 1);
         //if two people are seated, start the game
-        if(table.getSeatedPlayerCount() > 1) runGame(table);
+        //if(table.getSeatedPlayerCount() > 1) runGame(table);
     }
 
     //removes player at the given seat, decrements playerCount by 1

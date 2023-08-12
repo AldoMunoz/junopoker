@@ -66,11 +66,38 @@ function establishWebSocketConnection() {
 }
 
 //Subscribe user to "seated-players" and "poker-events"
-function onConnected() {
+async function onConnected() {
     stompClient.subscribe("/topic/seatedPlayers", seatedPlayers);
     stompClient.subscribe("/topic/pokerEvents", pokerEvents);
 
+    const seats = await fetchTableSeats();
+    console.log(seats);
+
+    for (let i = 0; i < seats.length; i++) {
+        if (seats[i] === null) ;
+        else {
+            const seatDiv = $(`#seat-${i + 1}`);
+            seatDiv.empty();
+            const newDiv = $("<div class='player-info'></div>");
+            newDiv.append(`<p class="player-usernames">${seats[i].username}</p>`);
+            newDiv.append(`<p class="player-chip-counts">${seats[i].chipCount}</p>`);
+            newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
+            seatDiv.append(newDiv);
+        }
+    }
+
     console.log("Subscribed user to 'seated-players' and 'poker-events'")
+}
+
+async function fetchTableSeats() {
+    try {
+        const response = await fetch("/getSeats");
+        const seats = await response.json();
+        return seats;
+    } catch (error) {
+        console.error('Error occurred while fetching table seats:', error);
+        return []; // Return an empty array or handle the error appropriately
+    }
 }
 
 //Displays error message if WebSocket Connection is unsuccessful
@@ -79,18 +106,28 @@ function onError(error) {
 }
 
 //Handle seated Player Payloads
-function seatedPlayers(payload) {
-    console.log("Entered seatedPlayers with payload.")
+async function seatedPlayers(payload) {
     let message = JSON.parse(payload.body);
 
-    //Change the image in the button
-    const seatDiv = $(`#seat-${currentButtonNumber}`);
-    seatDiv.empty();
-    const newDiv = $("<div class='player-info'></div>");
-    newDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
-    newDiv.append(`<p class="player-chip-counts">${message.player.chipCount}</p>`);
-    newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
-    seatDiv.append(newDiv);
+    let seats = await fetchTableSeats();
+
+    for (let i = 0; i < seats.length; i++) {
+        if (seats[i] === null) {
+            //Get rid of all the other seat buttons
+            const seatDiv = $(`#seat-${i+1}`);
+            seatDiv.hide();
+        }
+        else {
+            const seatDiv = $(`#seat-${i+1}`);
+            seatDiv.show();
+            seatDiv.empty();
+            const newDiv = $("<div class='player-info'></div>");
+            newDiv.append(`<p class="player-usernames">${seats[i].username}</p>`);
+            newDiv.append(`<p class="player-chip-counts">${seats[i].chipCount}</p>`);
+            newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
+            seatDiv.append(newDiv);
+        }
+    }
 }
 function pokerEvents(payload) {
     console.log("Entered pokerEvents with payload.")
@@ -131,6 +168,7 @@ function submitPlayerData() {
             // Check if the response is successful (status code 2xx)
             if (!response.ok) {
                 throw new Error('Network response was not ok');
+                console.log("error occurred creating player")
             }
             return response.json();
         }).then(data => {
@@ -178,8 +216,8 @@ function submitTableData() {
             stakes: [smallBlind, bigBlind]
         };
 
-        fetch('/createTable', {
-            method: 'POST',
+        fetch('/setTableData', {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -226,7 +264,7 @@ function openAddPlayerModal(buttonNumber) {
     // Set a data attribute on the modal to store the button number
     currentButtonNumber = buttonNumber;
 }
-// Function to close the modal
+// Function to close the player modal
 function closeAddPlayerModal() {
     // Hide the modal
     $("#addUserModal").hide();

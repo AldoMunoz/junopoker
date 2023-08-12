@@ -2,12 +2,10 @@ package com.v1.junopoker.controller;
 
 import com.v1.junopoker.model.Player;
 import com.v1.junopoker.model.Table;
+import com.v1.junopoker.request.CreatePlayerRequest;
 import com.v1.junopoker.service.PlayerService;
 import com.v1.junopoker.service.TableService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

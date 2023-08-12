@@ -109,6 +109,25 @@ function onError(error) {
 async function seatedPlayers(payload) {
     let message = JSON.parse(payload.body);
 
+    if(message.type === "SIT") {
+        const seatDiv = $(`#seat-${message.seat}`);
+        seatDiv.show();
+        seatDiv.empty();
+        const newDiv = $("<div class='player-info'></div>");
+        newDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
+        newDiv.append(`<p class="player-chip-counts">${message.player.chipCount}</p>`);
+        newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
+        seatDiv.append(newDiv);
+    }
+    else if(message.type === "STAND") {
+        //TODO
+    }
+    else {
+        console.log("error occurred")
+    }
+
+
+    /*
     let seats = await fetchTableSeats();
 
     for (let i = 0; i < seats.length; i++) {
@@ -127,7 +146,7 @@ async function seatedPlayers(payload) {
             newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
             seatDiv.append(newDiv);
         }
-    }
+    }*/
 }
 function pokerEvents(payload) {
     console.log("Entered pokerEvents with payload.")
@@ -191,10 +210,12 @@ function subscribeToPlayerTopic(usernameInput, player) {
 
     if(player && stompClient) {
         let playerRequest = {
+            type: "SIT",
             player: player,
             seat: currentButtonNumber
         };
         stompClient.send("/app/addUser", {}, JSON.stringify(playerRequest));
+        stompClient.send("/app/hideSitButtons", {}, JSON.stringify());
     }
     else console.log("Something went wrong before Websocket could send")
 }

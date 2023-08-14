@@ -124,7 +124,7 @@ function tableEvents(payload) {
     else if(message.type === "STAND") {
         const seatDiv = $(`#seat-${message.seat}`);
         seatDiv.empty();
-        seatDiv.append(`<button class="seat-buttons" data-button-number="${message.seat}" onclick="openAddPlayerModal(message.seat)"><img src="/images/grey-button.png" alt="Error"></button>`)
+        seatDiv.append(`<button class="seat-buttons" data-button-number="${message.seat}" onclick="openAddPlayerModal(${message.seat})"><img src="/images/grey-button.png" alt="Error"></button>`)
         seatDiv.hide();
     }
     else {
@@ -240,9 +240,8 @@ async function playerEvents(payload) {
 
         const settingsBar = $('.settings-bar');
         settingsBar.css("display", "none");
-        //TODO unsubscribe user from "topic/playerEvents/username
-        const subscription = `/topic/playerEvents/${message.player.username}`
-        subscription.unsubscribe();
+        stompClient.unsubscribe(`/topic/playerEvents/${message.player.username}`);
+        console.log("unsubscription successful")
     }
 
 }

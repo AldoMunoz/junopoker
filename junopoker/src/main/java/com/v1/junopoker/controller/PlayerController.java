@@ -37,10 +37,14 @@ public class PlayerController {
             return ResponseEntity.ok().body("{\"status\": \"success\"}");
         }
     }
-    @DeleteMapping("/deletePlayer")
-    public ResponseEntity<String> deletePlayer(@RequestBody CreatePlayerRequest createPlayerRequest, HttpSession session) {
-        //TODO
 
-        return ResponseEntity.ok().body("x");
+    @GetMapping("/removePlayerAtSeat")
+    public ResponseEntity<Player> removePlayerAtSeat(@RequestParam int seat, HttpSession session) {
+        Table table = (Table) session.getAttribute("table");
+
+        Player player = tableService.getPlayerAtSeat(table, seat);
+        tableService.removePlayer(table, seat);
+
+        return ResponseEntity.ok(player);
     }
 }

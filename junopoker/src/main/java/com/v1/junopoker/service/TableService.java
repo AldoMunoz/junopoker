@@ -3,6 +3,7 @@ package com.v1.junopoker.service;
 import com.v1.junopoker.factory.DeckServiceFactory;
 import com.v1.junopoker.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -11,9 +12,11 @@ import java.util.Scanner;
 @Service
 public class TableService {
     private final DeckServiceFactory deckServiceFactory;
+    private final SimpMessagingTemplate messagingTemplate;
     @Autowired
-    public TableService(DeckServiceFactory deckServiceFactory) {
+    public TableService(DeckServiceFactory deckServiceFactory, SimpMessagingTemplate messagingTemplate) {
         this.deckServiceFactory = deckServiceFactory;
+        this.messagingTemplate = messagingTemplate;
     }
 
 
@@ -22,7 +25,7 @@ public class TableService {
         if (table.getSeats()[seat] == null) table.getSeats()[seat] = player;
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() + 1);
         //if two people are seated, start the game
-        //if(table.getSeatedPlayerCount() > 1) runGame(table);
+        if(table.getSeatedPlayerCount() > 1) setBlinds(table);
     }
 
     //removes player at the given seat, decrements playerCount by 1
@@ -62,17 +65,20 @@ public class TableService {
             clearTable(table);
         }
         //if there are less than 2 people at the table, stop the game
+        //TODO stopGame(table); resets blinds to -1,
         table.setGameIsRunning(false);
     }
 
     //sets the BB and SB
-    private void setBlinds (Table table) {
+    public void setBlinds (Table table) {
         for (int i = 0; i < table.getSeats().length; i++) {
             if(table.getSeats()[i] == null);
             else {
                 if(table.getSmallBlind() == -1) table.setSmallBlind(i);
                 else {
                     table.setBigBlind(i);
+                    System.out.println("Table Service big blind: " + table.getBigBlind());
+                    messagingTemplate.convertAndSend("/topic/setBlinds", table.getBigBlind());
                     break;
                 }
             }
@@ -80,7 +86,7 @@ public class TableService {
     }
 
     //moves the BB and SB to the next player
-    private void moveBlinds(Table table) {
+    public void moveBlinds(Table table) {
         //SB is set to person who was just BB
         table.setSmallBlind(table.getBigBlind());
 
@@ -143,7 +149,7 @@ public class TableService {
     }
 
     //collects blinds and adds them to the pot
-    private void initiatePot (Table table) {
+    public void initiatePot (Table table) {
         Player[] seats = table.getSeats();
         int smallBlind = table.getSmallBlind();
         int bigBlind = table.getBigBlind();

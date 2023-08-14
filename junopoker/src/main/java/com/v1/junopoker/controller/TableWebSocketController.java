@@ -26,4 +26,5 @@ public class TableWebSocketController {
         String username = request.getPlayer().getUsername();
         messagingTemplate.convertAndSend("/topic/playerEvents/" + username, request);
     }
+
 }

@@ -61,4 +61,14 @@ public class TableController {
 
         return ResponseEntity.ok().body("{\"status\": \"stored\"}");
     }
+
+    @GetMapping("/removePlayerAtSeat")
+    public ResponseEntity<Player> removePlayerAtSeat(@RequestParam int seat, HttpSession session) {
+        Table table = (Table) session.getAttribute("table");
+
+        Player player = tableService.getPlayerAtSeat(table, seat);
+        table.getSeats()[seat] = null;
+
+        return ResponseEntity.ok(player);
+    }
 }

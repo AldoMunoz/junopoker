@@ -37,4 +37,10 @@ public class PlayerController {
             return ResponseEntity.ok().body("{\"status\": \"success\"}");
         }
     }
+    @DeleteMapping("/deletePlayer")
+    public ResponseEntity<String> deletePlayer(@RequestBody CreatePlayerRequest createPlayerRequest, HttpSession session) {
+        //TODO
+
+        return ResponseEntity.ok().body("x");
+    }
 }

@@ -30,8 +30,8 @@ h1, h4 {
     margin: 2vh;
 }
 .settings-bar {
+    display: none;
     position: absolute;
-    display: flex;
     flex-direction: column;
     align-items: center;
     top: 1.5vh;
@@ -130,27 +130,27 @@ h1, h4 {
 .player-chip-counts {
     bottom: .75vh;
 }
-#seat-1 {
+#seat-0 {
     top: 4%;
     left: 60%;
 }
-#seat-2 {
+#seat-1 {
     top: 50%;
     left: 79%;
 }
-#seat-3 {
+#seat-2 {
     top: 93%;
     left: 60%;
 }
-#seat-4 {
+#seat-3 {
     top: 93%;
     left: 40%;
 }
-#seat-5 {
+#seat-4 {
     top: 50%;
     left: 21%;
 }
-#seat-6 {
+#seat-5 {
     top: 4%;
     left: 40%;
 }

@@ -127,6 +127,9 @@ function tableEvents(payload) {
         seatDiv.append(`<button class="seat-buttons" data-button-number="${message.seat}" onclick="openAddPlayerModal(${message.seat})"><img src="/images/grey-button.png" alt="Error"></button>`)
         seatDiv.hide();
     }
+    else if(message.type === "MOVE_BLINDS") {
+
+    }
     else {
         console.log("error occurred")
     }

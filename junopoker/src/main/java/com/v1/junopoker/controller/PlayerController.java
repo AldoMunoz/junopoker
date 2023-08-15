@@ -2,7 +2,7 @@ package com.v1.junopoker.controller;
 
 import com.v1.junopoker.model.Player;
 import com.v1.junopoker.model.Table;
-import com.v1.junopoker.request.CreatePlayerRequest;
+import com.v1.junopoker.request.PlayerRequest;
 import com.v1.junopoker.service.PlayerService;
 import com.v1.junopoker.service.TableService;
 import jakarta.servlet.http.HttpSession;
@@ -23,7 +23,7 @@ public class PlayerController {
     }
 
     @PostMapping("/createPlayer")
-    public ResponseEntity<String> createPlayer(@RequestBody CreatePlayerRequest createPlayerRequest, HttpSession session) {
+    public ResponseEntity<String> createPlayer(@RequestBody PlayerRequest createPlayerRequest, HttpSession session) {
         Player newPlayer = createPlayerRequest.getPlayer();
         int seat = createPlayerRequest.getSeat();
         Table table = (Table) session.getAttribute("table");

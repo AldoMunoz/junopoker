@@ -6,6 +6,7 @@ public enum RequestType {
     BET,
     CHECK,
     FOLD,
+    MOVE_BLINDS,
     DEAL_PRE,
     DEAL_FLOP,
     DEAL_TURN,

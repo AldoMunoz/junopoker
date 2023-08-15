@@ -1,9 +1,9 @@
 package com.v1.junopoker.service;
 
+import com.v1.junopoker.callback.TableCallback;
 import com.v1.junopoker.factory.DeckServiceFactory;
 import com.v1.junopoker.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -11,21 +11,27 @@ import java.util.Scanner;
 
 @Service
 public class TableService {
+    //Class that creates a new DeckService when needed (for decoupling purposes)
     private final DeckServiceFactory deckServiceFactory;
-    private final SimpMessagingTemplate messagingTemplate;
+    //Interface for callback methods for all TableService methods that require user interaction,
+    //Callbacks are sent to the controller, and passed on to the UI via WebSocket
+    private TableCallback tableCallback;
+
     @Autowired
-    public TableService(DeckServiceFactory deckServiceFactory, SimpMessagingTemplate messagingTemplate) {
+    public TableService(DeckServiceFactory deckServiceFactory) {
         this.deckServiceFactory = deckServiceFactory;
-        this.messagingTemplate = messagingTemplate;
     }
 
+    public void setTableCallback(TableCallback tableCallback) {
+        this.tableCallback = tableCallback;
+    }
 
     //adds a player to the "seats" array, increments playerCount by 1
     public void addPlayer (Table table, Player player, int seat) {
         if (table.getSeats()[seat] == null) table.getSeats()[seat] = player;
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() + 1);
         //if two people are seated, start the game
-        if(table.getSeatedPlayerCount() > 1) setBlinds(table);
+        if(table.getSeatedPlayerCount() > 1) runGame(table);
     }
 
     //removes player at the given seat, decrements playerCount by 1
@@ -45,8 +51,8 @@ public class TableService {
         //game will run while there are at least 2 people seated at the table
         while (table.getSeatedPlayerCount() > 1) {
             moveBlinds(table);
-            dealCards(table);
             initiatePot(table);
+            dealCards(table);
             preFlopBetting(table);
             //clearBets(table);
             dealFlop(table);
@@ -66,7 +72,7 @@ public class TableService {
         }
         //if there are less than 2 people at the table, stop the game
         //TODO stopGame(table); resets blinds to -1,
-        table.setGameIsRunning(false);
+        //table.setGameIsRunning(false);
     }
 
     //sets the BB and SB
@@ -77,8 +83,6 @@ public class TableService {
                 if(table.getSmallBlind() == -1) table.setSmallBlind(i);
                 else {
                     table.setBigBlind(i);
-                    System.out.println("Table Service big blind: " + table.getBigBlind());
-                    messagingTemplate.convertAndSend("/topic/setBlinds", table.getBigBlind());
                     break;
                 }
             }
@@ -96,8 +100,15 @@ public class TableService {
             if (table.getSeats()[i] == null);
             else {
                 table.setBigBlind(i);
+                invokeMoveBlindsCallback(table.getSmallBlind(), table.getBigBlind());
                 break;
             }
+        }
+    }
+
+    private void invokeMoveBlindsCallback(int smallBlindIndex, int bigBlindIndex) {
+        if(tableCallback != null) {
+            tableCallback.onBlindsSet(smallBlindIndex, bigBlindIndex);
         }
     }
 

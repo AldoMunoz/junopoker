@@ -209,17 +209,22 @@ async function playerEvents(payload) {
     if(message.type == "SIT") {
         const seats = await fetchTableSeats();
 
+        let seatedPlayerCount = 1;
         for (let i = 0; i < seats.length; i++) {
             if (seats[i] === null) {
                 //Get rid of all the other seat buttons
                 const seatDiv = $(`#seat-${i}`);
                 seatDiv.hide();
             }
+            else seatedPlayerCount++;
         }
 
         const settingsBar = $('.settings-bar');
         settingsBar.css("display", "flex");
         settingsBar.attr("data-seat", message.seat);
+        if(seatedPlayerCount > 1) {
+            stompClient.send("/app/startGame", {});
+        }
     }
     else if(message.type === "STAND") {
         console.log("THIS STAND SHIT IS WORKING (KINDA)")

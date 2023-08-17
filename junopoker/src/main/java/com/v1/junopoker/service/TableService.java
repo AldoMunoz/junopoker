@@ -332,5 +332,12 @@ public class TableService {
         }
         table.setBoard(new ArrayList<Card>());
         deckService.joinDeck(table.getDeck());
+        table.setPot(0);
+        table.setSeatedFoldCount(0);
+        if (table.getSeatedPlayerCount() == 2) {
+            int temp = table.getBigBlind();
+            table.setBigBlind(table.getSmallBlind());
+            table.setSmallBlind(temp);
+        }
     }
 }

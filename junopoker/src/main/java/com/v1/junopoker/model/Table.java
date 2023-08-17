@@ -19,10 +19,11 @@ public class Table {
     private ArrayList<Card> board;
     //Changed "playerCount" to "seatedPlayerCount", more specific
     private int seatedPlayerCount;
+    private int seatedFoldCount;
     private Deck deck;
     private int bigBlind;
     private int smallBlind;
-    //Changed "isRunning" to "gameIsRunning", more specific
+    private int currentBet;
     private boolean gameIsRunning;
     private DeckService deckService;
 

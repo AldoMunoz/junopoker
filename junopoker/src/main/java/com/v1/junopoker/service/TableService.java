@@ -36,6 +36,8 @@ public class TableService {
     public void addPlayer (Table table, Player player, int seat) {
         if (table.getSeats()[seat] == null) table.getSeats()[seat] = player;
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() + 1);
+
+        if (table.getSeatedPlayerCount() > 1) runGame(table);
     }
 
     //removes player at the given seat
@@ -52,11 +54,12 @@ public class TableService {
             table.setGameIsRunning(true);
         }
 
+        moveBlinds(table);
         //game will run while there are at least 2 people seated at the table
-        while (table.getSeatedPlayerCount() > 1) {
+        /*while (table.getSeatedPlayerCount() > 1) {
             moveBlinds(table);
-            dealCards(table);
             initiatePot(table);
+            dealCards(table);
             preFlopBetting(table);
             dealFlop(table);
             getHandVals(table);
@@ -69,7 +72,7 @@ public class TableService {
             getHandVals(table);
             completeHand(table);
             clearTable(table);
-        }
+        }*/
     }
 
     //sets the BB and SB
@@ -87,23 +90,66 @@ public class TableService {
     }
 
     //moves the BB and SB to the next player
+    //sets or moves the button
+    //TODO dealerButton field might be redundant, maybe get rid of it
     private void moveBlinds(Table table) {
         //SB is set to person who was just BB
         table.setSmallBlind(table.getBigBlind());
 
         int seatCount = table.getSeatCount();
+        boolean bigBlindSet = false;
         //rotates clockwise using modulus until the next player is found, assigns them the BB
         for (int i = (table.getBigBlind()+1) % seatCount; i < seatCount; i = (i+1) % seatCount) {
             if (table.getSeats()[i] == null);
-            else {
+            //first player found after big blind = new big blind
+            else if(bigBlindSet == false){
                 table.setBigBlind(i);
+                bigBlindSet = true;
+            }
+            //next player found after big blind = button
+            else {
+                table.setDealerButton(i);
+                //callback to the front end
+                invokeMoveBlindsCallback(table.getSmallBlind(), table.getBigBlind(), table.getDealerButton());
                 break;
             }
         }
     }
-    private void invokeMoveBlindsCallback(int smallBlindIndex, int bigBlindIndex) {
+
+    //callback function used to send position info to the front-end
+    private void invokeMoveBlindsCallback(int smallBlindIndex, int bigBlindIndex, int buttonIndex) {
         if(tableCallback != null) {
-            tableCallback.onBlindsSet(smallBlindIndex, bigBlindIndex);
+            tableCallback.onBlindsSet(smallBlindIndex, bigBlindIndex, buttonIndex);
+        }
+    }
+
+    //collects blinds and adds them to the pot
+    private void initiatePot (Table table) {
+        Player[] seats = table.getSeats();
+        int smallBlind = table.getSmallBlind();
+        int bigBlind = table.getBigBlind();
+        int stakes[] = table.getStakes();
+
+        //BB collection
+        if (seats[bigBlind].getChipCount() > stakes[1]) {
+            table.setPot(table.getPot()+stakes[1]);
+            seats[bigBlind].setChipCount(seats[bigBlind].getChipCount()-stakes[1]);
+        }
+        //edge case, if the players stack size is less than the blind
+        else {
+            table.setPot(table.getPot() + seats[bigBlind].getChipCount());
+            seats[bigBlind].setChipCount(0);
+        }
+
+        //SB collection
+        if (seats[smallBlind].getChipCount() > stakes[0]) {
+            table.setPot(table.getPot()+stakes[0]);
+            seats[smallBlind].setChipCount(seats[smallBlind].getChipCount()-stakes[0]);
+        }
+        //edge case, if the players stack size is less than the blind
+        else {
+            table.setPot(table.getPot() + seats[smallBlind].getChipCount());
+            seats[smallBlind].setChipCount(0);
         }
     }
 
@@ -152,36 +198,6 @@ public class TableService {
 
         table.getBoard().add(deckService.drawCard(table.getDeck()));
         getHandVals(table);
-    }
-
-    //collects blinds and adds them to the pot
-    private void initiatePot (Table table) {
-        Player[] seats = table.getSeats();
-        int smallBlind = table.getSmallBlind();
-        int bigBlind = table.getBigBlind();
-        int stakes[] = table.getStakes();
-
-        //BB collection
-        if (seats[bigBlind].getChipCount() > stakes[1]) {
-            table.setPot(table.getPot()+stakes[1]);
-            seats[bigBlind].setChipCount(seats[bigBlind].getChipCount()-stakes[1]);
-        }
-        //edge case, if the players stack size is less than the blind
-        else {
-            table.setPot(table.getPot() + seats[bigBlind].getChipCount());
-            seats[bigBlind].setChipCount(0);
-        }
-
-        //SB collection
-        if (seats[smallBlind].getChipCount() > stakes[0]) {
-            table.setPot(table.getPot()+stakes[0]);
-            seats[smallBlind].setChipCount(seats[smallBlind].getChipCount()-stakes[0]);
-        }
-        //edge case, if the players stack size is less than the blind
-        else {
-            table.setPot(table.getPot() + seats[smallBlind].getChipCount());
-            seats[smallBlind].setChipCount(0);
-        }
     }
 
     public void playerAction(Table table, int currPlayer, int previousBet, boolean isPreflop) {

@@ -154,6 +154,12 @@ h1, h4 {
     top: 4%;
     left: 40%;
 }
+#dealer-button {
+    display: none;
+    width: 5vh;
+    height: auto;
+    position: absolute;
+}
 
 /*Modal for when user selects a seat */
 .modal {

@@ -105,12 +105,9 @@ function tableEvents(payload) {
     //view logic for when player stands up from seat
     else if(message.type === "STAND") standTableEvent(message);
     //view logic for when blinds are moved
-    else if(message.type === "MOVE_BLINDS") {
-
-    }
+    else if(message.type === "MOVE_BLINDS") moveBlindsEvent(message);
     //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
-
 }
 
 function sitTableEvent(message) {
@@ -135,6 +132,42 @@ function standTableEvent(message) {
         seatDiv.hide();
     }
     else seatDiv.show();
+}
+function moveBlindsEvent(message) {
+    const button = $('#dealer-button')
+    switch(message.button) {
+        case 0:
+            button.css('display', 'flex');
+            button.css('top', '15%');
+            button.css('left', '59%');
+            break;
+        case 1:
+            button.css('display', 'flex');
+            button.css('top', '43%');
+            button.css('left', '73%');
+            break;
+        case 2:
+            button.css('display', 'flex');
+            button.css('top', '74%');
+            button.css('left', '62%');
+            break;
+        case 3:
+            button.css('display', 'flex');
+            button.css('top', '74%');
+            button.css('left', '42%');
+            break;
+        case 4:
+            button.css('display', 'flex');
+            button.css('top', '56%');
+            button.css('left', '25%');
+            break;
+        case 5:
+            button.css('display', 'flex');
+            button.css('top', '15%');
+            button.css('left', '40%');
+            break;
+    }
+
 }
 
 

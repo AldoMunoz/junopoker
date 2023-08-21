@@ -1,4 +1,4 @@
-package com.v1.junopoker.request;
+package com.v1.junopoker.dto;
 
 public enum RequestType {
     SIT,

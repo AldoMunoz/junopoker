@@ -1,4 +1,4 @@
-package com.v1.junopoker.request;
+package com.v1.junopoker.dto;
 
 import com.v1.junopoker.model.Player;
 import lombok.*;

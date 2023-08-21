@@ -23,6 +23,7 @@ public class Table {
     private Deck deck;
     private int bigBlind;
     private int smallBlind;
+    private int dealerButton;
     private int currentBet;
     private boolean gameIsRunning;
     private DeckService deckService;
@@ -39,6 +40,7 @@ public class Table {
         deck = new Deck();
         bigBlind = -1;
         smallBlind = -1;
+        dealerButton = -1;
         gameIsRunning = false;
     }
 }

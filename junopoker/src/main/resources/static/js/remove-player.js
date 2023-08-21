@@ -1,7 +1,7 @@
 function removePlayer() {
     const settingsBar = $('.settings-bar');
-    const seat = settingsBar.data('seat');
-    console.log(seat);
+    const seat = settingsBar.attr('data-seat');
+    console.log("Seat value in removePlayer()", seat);
 
     fetch(`/removePlayerAtSeat?seat=${seat}`)
         .then(response => response.json())
@@ -12,6 +12,7 @@ function removePlayer() {
                 seat: seat
             }
 
+            isSeated = false
             stompClient.send("/app/tableEvents", {}, JSON.stringify(request));
             stompClient.send("/app/playerEvents", {}, JSON.stringify(request));
         });

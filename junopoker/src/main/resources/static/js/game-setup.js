@@ -1,7 +1,10 @@
 'use strict'
 // Global Variables
+//whenever a user takes a seat, this number will correspond to the seat they chose
 let currentButtonNumber = -1;
+//WebSocket connection
 let stompClient = null;
+let isSeated = false;
 
 //When user opens the page:
 //Create new table if one doesn't exist
@@ -57,49 +60,28 @@ $(document).ready(function () {
 });
 
 
-//Create a new WebSocket connection
+/*WEB SOCKET CONNECTION
+/*-----------------------------------*/
+
+//Creates a new WebSocket connection
 function establishWebSocketConnection() {
     let socket = new SockJS('/ws');
     stompClient = Stomp.over(socket);
 
+    //calls method depending on if websocket connection is successful or erroneous
     stompClient.connect({}, onConnected, onError);
 }
 
 //Subscribe user to "seated-players" and "poker-events"
 async function onConnected() {
+    //subscribes users to tableEvents, public topic that will impact the view of all players
+    //all messages sent to /topic/table events will be redirected to "tableEvents(payload) method below"
     stompClient.subscribe("/topic/tableEvents", tableEvents);
 
+    //seats is array of table seats
     const seats = await fetchTableSeats();
-    console.log(seats);
-
-    for (let i = 0; i < seats.length; i++) {
-        if (seats[i] === null)  {
-            const seatDiv = $(`#seat-${i}`);
-            seatDiv.show();
-        }
-        else {
-            const seatDiv = $(`#seat-${i}`);
-            seatDiv.empty();
-            const newDiv = $("<div class='player-info'></div>");
-            newDiv.append(`<p class="player-usernames">${seats[i].username}</p>`);
-            newDiv.append(`<p class="player-chip-counts">${seats[i].chipCount}</p>`);
-            newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
-            seatDiv.append(newDiv);
-        }
-    }
-
-    console.log("Subscribed user to 'table events'")
-}
-
-async function fetchTableSeats() {
-    try {
-        const response = await fetch("/getSeats");
-        const seats = await response.json();
-        return seats;
-    } catch (error) {
-        console.error('Error occurred while fetching table seats:', error);
-        return [];
-    }
+    //populate the table view with players
+    populateTable(seats);
 }
 
 //Displays error message if WebSocket Connection is unsuccessful
@@ -107,166 +89,74 @@ function onError(error) {
     console.log('Could not connect to WebSocket server. Please refresh this page to try again!')
 }
 
-//Handle seated Player Payloads
+
+
+/*TABLE EVENTS
+/*-----------------------------------*/
+
+//Handle seated Player payloads
 function tableEvents(payload) {
+    //parse the body of the message
     let message = JSON.parse(payload.body);
 
-    if(message.type === "SIT") {
-        const seatDiv = $(`#seat-${message.seat}`);
-        seatDiv.show();
-        seatDiv.empty();
-        const newDiv = $("<div class='player-info'></div>");
-        newDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
-        newDiv.append(`<p class="player-chip-counts">${message.player.chipCount}</p>`);
-        newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
-        seatDiv.append(newDiv);
-    }
-    else if(message.type === "STAND") {
-        const seatDiv = $(`#seat-${message.seat}`);
-        seatDiv.empty();
-        seatDiv.append(`<button class="seat-buttons" data-button-number="${message.seat}" onclick="openAddPlayerModal(${message.seat})"><img src="/images/grey-button.png" alt="Error"></button>`)
-        seatDiv.hide();
-    }
+    //view logic for when a new player takes a seat
+    if(message.type === "SIT") sitTableEvent(message);
+
+    //view logic for when player stands up from seat
+    else if(message.type === "STAND") standTableEvent(message);
+    //view logic for when blinds are moved
     else if(message.type === "MOVE_BLINDS") {
 
     }
-    else {
-        console.log("error occurred")
-    }
-}
-
-//Stores player data in an object
-//Stores the Player in the Table
-//creates Websocket subscription specifically for that player
-function submitPlayerData() {
-    const usernameInput = $("#username").val().trim();
-    const chipCountInput = parseInt($("#chipCount").val());
-
-    if (usernameInput && chipCountInput) {
-        const player = {
-            username: usernameInput,
-            chipCount: chipCountInput,
-            holeCards: null,
-            hand: null,
-            inHand: false,
-            currentBet: 0,
-            isActive: false
-        };
-        const seat = currentButtonNumber;
-
-        const data = {
-            player: player,
-            seat: seat
-        }
-        // Make a Fetch API POST request to your Spring Boot controller
-        fetch("/createPlayer", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        }).then(response => {
-            // Check if the response is successful (status code 2xx)
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-                console.log("error occurred creating player")
-            }
-            return response.json();
-        }).then(data => {
-            //method used to subscribe user to player-events topic
-            subscribeToPlayerTopic(usernameInput, player, seat);
-
-            // Close the modal
-            closeAddPlayerModal();
-        }).catch(error => {
-            console.error('Error occurred:', error);
-        });
-    }
-}
-
-//Subscribe user to player-events/${username}
-//Send data to "addUser" about new player
-function subscribeToPlayerTopic(usernameInput, player) {
-    // Subscribe to the player-specific topic
-    stompClient.subscribe(`/topic/playerEvents/${usernameInput}`, playerEvents);
-
-    if(player && stompClient) {
-        let playerRequest = {
-            type: "SIT",
-            player: player,
-            seat: currentButtonNumber
-        };
-        stompClient.send("/app/tableEvents", {}, JSON.stringify(playerRequest));
-        stompClient.send("/app/playerEvents", {}, JSON.stringify(playerRequest));
-    }
-    else console.log("Something went wrong before Websocket could send")
-}
-
-async function playerEvents(payload) {
-    console.log("Received playerEvents payload");
-    let message = JSON.parse(payload.body);
-
-    if(message.type == "SIT") {
-        const seats = await fetchTableSeats();
-
-        let seatedPlayerCount = 1;
-        for (let i = 0; i < seats.length; i++) {
-            if (seats[i] === null) {
-                //Get rid of all the other seat buttons
-                const seatDiv = $(`#seat-${i}`);
-                seatDiv.hide();
-            }
-            else seatedPlayerCount++;
-        }
-
-        const settingsBar = $('.settings-bar');
-        settingsBar.css("display", "flex");
-        settingsBar.attr("data-seat", message.seat);
-        if(seatedPlayerCount > 1) {
-            stompClient.send("/app/startGame", {});
-        }
-    }
-    else if(message.type === "STAND") {
-        console.log("THIS STAND SHIT IS WORKING (KINDA)")
-        const seats = await fetchTableSeats();
-
-        for (let i = 0; i < seats.length; i++) {
-            if (seats[i] === null)  {
-                const seatDiv = $(`#seat-${i}`);
-                seatDiv.show();
-            }
-            else {
-                const seatDiv = $(`#seat-${i}`);
-                seatDiv.empty();
-                const newDiv = $("<div class='player-info'></div>");
-                newDiv.append(`<p class="player-usernames">${seats[i].username}</p>`);
-                newDiv.append(`<p class="player-chip-counts">${seats[i].chipCount}</p>`);
-                newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
-                seatDiv.append(newDiv);
-            }
-        }
-
-        const settingsBar = $('.settings-bar');
-        settingsBar.css("display", "none");
-        stompClient.unsubscribe(`/topic/playerEvents/${message.player.username}`);
-        console.log("unsubscription successful")
-    }
+    //logic for when error occurred, most likely in payload body
+    else console.log("error occurred");
 
 }
 
+function sitTableEvent(message) {
+    //hide the seat button that the player selected
+    const seatDiv = $(`#seat-${message.seat}`);
+    seatDiv.show();
+    seatDiv.empty();
+    //replace that with a player icon
+    const newDiv = $("<div class='player-info'></div>");
+    newDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
+    newDiv.append(`<p class="player-chip-counts">${message.player.chipCount}</p>`);
+    newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
+    seatDiv.append(newDiv);
+}
+function standTableEvent(message) {
+    //replace the player icon with seat button, and then hide it from view
+    //we hide it so that seated players can't see or select another seat
+    const seatDiv = $(`#seat-${message.seat}`);
+    seatDiv.empty();
+    seatDiv.append(`<button class="seat-buttons" data-button-number="${message.seat}" onclick="openAddPlayerModal(${message.seat})"><img src="/images/grey-button.png" alt="Error"></button>`)
+    if (isSeated === true) {
+        seatDiv.hide();
+    }
+    else seatDiv.show();
+}
+
+
+
+/*HANDLE TABLE DATA SUBMISSION
+/*-----------------------------------*/
 
 //Function to handle the "Setup" button click
 function submitTableData() {
+    //parse data
     const gameType = $('#gameType').val();
     const bigBlind = parseInt($('#bigBlind').val());
     const smallBlind = parseInt($('#smallBlind').val());
 
     if (gameType && !isNaN(bigBlind) && !isNaN(smallBlind)) {
+        //create Table object
         const tableData = {
             gameType: gameType,
             stakes: [smallBlind, bigBlind]
         };
 
+        //fetches setTableData() method in TableController
         fetch('/setTableData', {
             method: 'PUT',
             headers: {
@@ -297,8 +187,48 @@ function submitTableData() {
     }
 }
 
-/*Open and Close Modals*/
 
+
+/*ASYNCHRONOUS FUNCTIONS
+/*-----------------------------------*/
+
+//asynchronous function that calls TableController method getSeats()
+//fetches and returns array of table seats
+async function fetchTableSeats() {
+    try {
+        const response = await fetch("/getSeats");
+        const seats = await response.json();
+        return seats;
+    } catch (error) {
+        console.error('Error occurred while fetching table seats:', error);
+        return [];
+    }
+}
+function populateTable(seats) {
+    //populate view with either seat button or player icon
+    for (let i = 0; i < seats.length; i++) {
+        //if seat is empty, show join seat button
+        if (seats[i] === null)  {
+            const seatDiv = $(`#seat-${i}`);
+            seatDiv.show();
+        }
+        //if seat is taken, show player icon with correct player information
+        else {
+            const seatDiv = $(`#seat-${i}`);
+            seatDiv.empty();
+            const newDiv = $("<div class='player-info'></div>");
+            newDiv.append(`<p class="player-usernames">${seats[i].username}</p>`);
+            newDiv.append(`<p class="player-chip-counts">${seats[i].chipCount}</p>`);
+            newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
+            seatDiv.append(newDiv);
+        }
+    }
+}
+
+
+
+/*OPEN AND CLOSE MODALS
+/*-----------------------------------*/
 // Function to show the game setup modal
 function openGameSetupModal() {
     $("#gameSetupModal").show();
@@ -308,18 +238,12 @@ function openGameSetupModal() {
 function closeGameSetupModal() {
     $("#gameSetupModal").hide();
 }
-// Function to open the player modal
-function openAddPlayerModal(buttonNumber) {
-    // Show the modal
-    $("#addUserModal").show();
-    // Set a data attribute on the modal to store the button number
-    currentButtonNumber = buttonNumber;
-}
-// Function to close the player modal
-function closeAddPlayerModal() {
-    // Hide the modal
-    $("#addUserModal").hide();
-}
+
+
+
+/*HANDLE USER EXITING PAGE
+/*-----------------------------------*/
+
 //Handle user leaving the page
 $(window).on('beforeunload', function() {
     // Disconnect WebSocket connection

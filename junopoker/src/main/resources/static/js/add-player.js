@@ -126,6 +126,10 @@ async function playerEvents(payload) {
         //unsubscribe user for /topic/playerEvents/${}
         stompClient.unsubscribe(`/topic/playerEvents/${message.player.username}`);
     }
+
+    else if (message.type = "DEAL_PRE") {
+        console.log("Private deal cards message: ", message);
+    }
 }
 
 // Function to open the player modal

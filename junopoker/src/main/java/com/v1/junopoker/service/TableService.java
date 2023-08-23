@@ -54,6 +54,7 @@ public class TableService {
 
         moveBlinds(table);
         initiatePot(table);
+        dealCards(table);
         //game will run while there are at least 2 people seated at the table
         /*while (table.getSeatedPlayerCount() > 1) {
             moveBlinds(table);
@@ -178,7 +179,15 @@ public class TableService {
                 cards[1] = deckService.drawCard(table.getDeck());
                 //the array is set as the player's hole cards
                 table.getSeats()[i].setHoleCards(cards);
+
+                invokeDealHoleCardsCallback(table.getSeats()[i].getUsername(), i, cards);
             }
+        }
+    }
+
+    private void invokeDealHoleCardsCallback(String username, int seat, Card[] holeCards) {
+        if(tableCallback != null) {
+            tableCallback.onHoleCardsDealt(username, seat, holeCards);
         }
     }
 

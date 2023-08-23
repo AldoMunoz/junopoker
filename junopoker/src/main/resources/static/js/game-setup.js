@@ -109,6 +109,7 @@ function tableEvents(payload) {
     //view logic for when blinds are set and collected
     else if(message.type === "INIT_POT") initPotEvent(message);
     //logic for when error occurred, most likely in payload body
+    else if(message.type === "DEAL_PRE") dealHoleCardsEvent(message);
     else console.log("error occurred");
 }
 
@@ -120,10 +121,22 @@ function sitTableEvent(message) {
 
     //replace that with a player icon
     const playerDiv = $("<div class='player-info'></div>");
-    playerDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
-    playerDiv.append(`<p class="player-chip-counts" id="chip-count-${message.seat}">${message.player.chipCount}</p>`);
-    playerDiv.append(`<p class="player-action-display" id="action-display-${message.seat}"></p>`)
-    playerDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
+
+    const playerImageDiv = $("<div class='player-display'></div>");
+    playerImageDiv.append(`<img class="player-icon" src="/images/player-icon.png" alt="Player Icon">`);
+    playerImageDiv.append(`<img class="player-panel" src="/images/player-info.png" alt="Player Info">`)
+    const holeCardDiv =$("<div class='hole-cards'></div>");
+    playerImageDiv.append(holeCardDiv);
+    playerDiv.append(playerImageDiv);
+
+
+
+    const playerTextDiv = $("<div class='player-text'></div>");
+    playerTextDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
+    playerTextDiv.append(`<p class="player-chip-counts" id="chip-count-${message.seat}">${message.player.chipCount}</p>`);
+    //playerTextDiv.append(`<p class="player-action-display" id="action-display-${message.seat}"></p>`)
+    playerDiv.append(playerTextDiv);
+
     seatDiv.append(playerDiv);
 }
 function standTableEvent(message) {
@@ -143,13 +156,13 @@ function moveButtonEvent(message) {
     switch(message.button) {
         case 0:
             button.css('display', 'flex');
-            button.css('top', '15%');
-            button.css('left', '59%');
+            button.css('top', '18%');
+            button.css('left', '63%');
             break;
         case 1:
             button.css('display', 'flex');
-            button.css('top', '43%');
-            button.css('left', '73%');
+            button.css('top', '38%');
+            button.css('left', '72%');
             break;
         case 2:
             button.css('display', 'flex');
@@ -168,8 +181,8 @@ function moveButtonEvent(message) {
             break;
         case 5:
             button.css('display', 'flex');
-            button.css('top', '15%');
-            button.css('left', '40%');
+            button.css('top', '18%');
+            button.css('left', '43%');
             break;
     }
     stompClient.send()
@@ -201,9 +214,14 @@ function initPotEvent(message) {
     //TODO
     //display potAmount
     //fill it with correct amount
+    const totalPot = $("#total-pot")
+    totalPot.css("display", "flex")
+    totalPot.text(`Total Pot: ${message.potSize}`)
 }
 
-
+function dealHoleCardsEvent(message) {
+    console.log("deal hole cards message:", message);
+}
 
 /*HANDLE TABLE DATA SUBMISSION
 /*-----------------------------------*/
@@ -282,11 +300,23 @@ function populateTable(seats) {
         else {
             const seatDiv = $(`#seat-${i}`);
             seatDiv.empty();
-            const newDiv = $("<div class='player-info'></div>");
-            newDiv.append(`<p class="player-usernames">${seats[i].username}</p>`);
-            newDiv.append(`<p class="player-chip-counts" id="chip-count-${i}">${seats[i].chipCount}</p>`);
-            newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
-            seatDiv.append(newDiv);
+            const playerDiv = $("<div class='player-info'></div>");
+
+            const playerImageDiv = $("<div class='player-display'></div>");
+            playerImageDiv.append(`<img class="player-icon" src="/images/player-icon.png" alt="Player Icon">`);
+            playerImageDiv.append(`<img class="player-panel" src="/images/player-info.png" alt="Player Info">`)
+            const holeCardDiv =$("<div class='hole-cards'></div>");
+            playerImageDiv.append(holeCardDiv);
+            playerDiv.append(playerImageDiv);
+
+
+            const playerTextDiv = $("<div class='player-text'></div>");
+            playerTextDiv.append(`<p class="player-usernames">${seats[i].username}</p>`);
+            playerTextDiv.append(`<p class="player-chip-counts" id="chip-count-${i}">${seats[i].chipCount}</p>`);
+            //playerTextDiv.append(`<p class="player-action-display" id="action-display-${i}"></p>`)
+            playerDiv.append(playerTextDiv);
+
+            seatDiv.append(playerDiv);
         }
     }
 }

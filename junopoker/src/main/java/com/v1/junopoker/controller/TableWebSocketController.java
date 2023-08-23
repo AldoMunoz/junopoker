@@ -1,14 +1,11 @@
 package com.v1.junopoker.controller;
 
 import com.v1.junopoker.callback.TableCallback;
-import com.v1.junopoker.dto.InitPotRequest;
-import com.v1.junopoker.dto.MoveButtonRequest;
+import com.v1.junopoker.dto.*;
+import com.v1.junopoker.model.Card;
 import com.v1.junopoker.model.Player;
-import com.v1.junopoker.dto.PlayerRequest;
-import com.v1.junopoker.dto.RequestType;
 import com.v1.junopoker.model.Table;
 import com.v1.junopoker.service.TableService;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -64,8 +61,18 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
     @Override
-    public void onCardsDealt(Player[] players) {
+    public void onHoleCardsDealt(String username, int seat, Card[] holeCards) {
+        PublicHoleCardsRequest publicRequest = new PublicHoleCardsRequest();
+        publicRequest.setType(RequestType.DEAL_PRE);
+        publicRequest.setSeat(seat);
 
+        PrivateHoleCardsRequest privateRequest = new PrivateHoleCardsRequest();
+        privateRequest.setType(RequestType.DEAL_PRE);
+        privateRequest.setSeat(seat);
+        privateRequest.setCards(holeCards);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", publicRequest);
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + username, privateRequest);
     }
 
     @Override

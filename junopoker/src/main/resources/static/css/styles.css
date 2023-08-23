@@ -83,6 +83,18 @@ h1, h4 {
     height: auto;
 }
 
+#total-pot {
+    position: absolute;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    top: 28%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%);
+    color: yellow;
+}
+
 /*Seats, Seat Buttons, Individual Seats*/
 .seats {
     border-radius: 5px;
@@ -105,33 +117,64 @@ h1, h4 {
     content: url('../images/black-button.png')
 }
 .player-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     position: relative;
     background: transparent;
     margin:0;
     padding:0;
 }
-.player-info p {
-    text-size: 2vh;
+.player-display {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.player-icon {
+    width: 13vh;
+    height: auto;
+    z-index: 1;
+}
+.player-panel {
+    width:13vh;
+    height:auto;
+    position: relative;
+    top: -4vh;
+    z-index: 3;
+}
+.hole-cards {
+    height: 100%;
     position: absolute;
+    bottom: 0;
     left: 50%;
-    transform: translate(-50%);
-    margin: 0;
-    padding: 5px;
-    color: white;
+    transform: translateX(-50%);
+    z-index: 2;
+    background-color: #45a049;
+}
+.player-text {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
     text-align: center;
 }
-.player-info img {
-    width: 15vh;
-    height: auto;
-}
-.player-usernames {
-    bottom: 3.5vh;
+.player-usernames, .player-chip-counts {
+    margin: auto 0 0;
+    color: white;
 }
 .player-chip-counts {
-    bottom: .75vh;
+    margin-top: 0.2vh;
+    margin-bottom: 0.8vh;
 }
+
 #seat-0 {
-    top: 4%;
+    top: 7%;
     left: 60%;
 }
 #seat-1 {
@@ -139,11 +182,11 @@ h1, h4 {
     left: 79%;
 }
 #seat-2 {
-    top: 93%;
+    top: 96%;
     left: 60%;
 }
 #seat-3 {
-    top: 93%;
+    top: 96%;
     left: 40%;
 }
 #seat-4 {
@@ -151,7 +194,7 @@ h1, h4 {
     left: 21%;
 }
 #seat-5 {
-    top: 4%;
+    top: 7%;
     left: 40%;
 }
 .bet-info {
@@ -165,20 +208,21 @@ h1, h4 {
     transform: translate(-50%, -50%);
     background-color: #6d6d72;
     border-radius: 3px; /* Adjust the value to control the roundness */
-    width: 3vw;
+    width: 4vh;
     height: 2.5vh;
     margin: 0;
 }
 .player-bet-display {
-    color: white;
-    width: 3vw;
-    height: 2.5vh;
-    margin: 0;
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center;
     text-align: center;
+    color: white;
+    margin: 0;
 }
 #bet-display-0 {
     display: none;
-    top: 20%;
+    top: 25%;
     left: 60%;
 }
 #bet-display-1 {
@@ -203,7 +247,7 @@ h1, h4 {
 }
 #bet-display-5 {
     display: none;
-    top: 20%;
+    top: 25%;
     left: 40%;
 }
 

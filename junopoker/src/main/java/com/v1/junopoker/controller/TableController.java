@@ -6,8 +6,6 @@ import com.v1.junopoker.service.TableService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 
@@ -61,5 +59,11 @@ public class TableController {
         sessionTable.setBigBlind(table.getBigBlind());
 
         return ResponseEntity.ok().body("{\"status\": \"stored\"}");
+    }
+
+    @GetMapping("/startGame")
+    public ResponseEntity<Table> startGame(HttpSession session) {
+        Table sessionTable = (Table) session.getAttribute("table");
+        return ResponseEntity.ok(sessionTable);
     }
 }

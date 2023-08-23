@@ -92,11 +92,14 @@ async function playerEvents(payload) {
         const seats = await fetchTableSeats();
 
         //loop to hide all seat buttons once the player sits
+        let seatedPlayerCount = 0;
         for (let i = 0; i < seats.length; i++) {
             if (seats[i] === null) {
                 const seatDiv = $(`#seat-${i}`);
                 seatDiv.hide();
             }
+            //count the amount of seated players at the table
+            else seatedPlayerCount++;
         }
 
         //show the settings bar
@@ -105,6 +108,12 @@ async function playerEvents(payload) {
         //associates the settings bar with a specific seat
         //so, for example, the controller knows who to remove when a player clicks the "stand" button
         settingsBar.attr("data-seat", message.seat);
+
+        if(seatedPlayerCount > 1) {
+           const response = await fetch("/startGame");
+           const table = await response.json();
+           stompClient.send("/app/startGame", {}, JSON.stringify(table))
+        }
     }
     //logic for when player stands from table
     else if(message.type === "STAND") {

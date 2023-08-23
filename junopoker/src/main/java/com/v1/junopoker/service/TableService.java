@@ -36,8 +36,6 @@ public class TableService {
     public void addPlayer (Table table, Player player, int seat) {
         if (table.getSeats()[seat] == null) table.getSeats()[seat] = player;
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() + 1);
-
-        if (table.getSeatedPlayerCount() > 1) runGame(table);
     }
 
     //removes player at the given seat
@@ -55,6 +53,7 @@ public class TableService {
         }
 
         moveBlinds(table);
+        initiatePot(table);
         //game will run while there are at least 2 people seated at the table
         /*while (table.getSeatedPlayerCount() > 1) {
             moveBlinds(table);
@@ -76,7 +75,7 @@ public class TableService {
     }
 
     //sets the BB and SB
-    private void setBlinds (Table table) {
+    public void setBlinds (Table table) {
         for (int i = 0; i < table.getSeats().length; i++) {
             if(table.getSeats()[i] == null);
             else {
@@ -91,8 +90,7 @@ public class TableService {
 
     //moves the BB and SB to the next player
     //sets or moves the button
-    //TODO dealerButton field might be redundant, maybe get rid of it
-    private void moveBlinds(Table table) {
+    public void moveBlinds(Table table) {
         //SB is set to person who was just BB
         table.setSmallBlind(table.getBigBlind());
 
@@ -109,26 +107,28 @@ public class TableService {
             //next player found after big blind = button
             else {
                 table.setDealerButton(i);
-                //callback to the front end
-                invokeMoveBlindsCallback(table.getSmallBlind(), table.getBigBlind(), table.getDealerButton());
+                invokeButtonCallback(table.getDealerButton());
                 break;
             }
         }
     }
 
     //callback function used to send position info to the front-end
-    private void invokeMoveBlindsCallback(int smallBlindIndex, int bigBlindIndex, int buttonIndex) {
+    private void invokeButtonCallback(int buttonIndex) {
         if(tableCallback != null) {
-            tableCallback.onBlindsSet(smallBlindIndex, bigBlindIndex, buttonIndex);
+            tableCallback.onButtonSet(buttonIndex);
         }
     }
 
     //collects blinds and adds them to the pot
-    private void initiatePot (Table table) {
+    public void initiatePot (Table table) {
         Player[] seats = table.getSeats();
         int smallBlind = table.getSmallBlind();
         int bigBlind = table.getBigBlind();
         int stakes[] = table.getStakes();
+
+        float sbAmount = stakes[0];
+        float bbAmount = stakes[1];
 
         //BB collection
         if (seats[bigBlind].getChipCount() > stakes[1]) {
@@ -137,6 +137,7 @@ public class TableService {
         }
         //edge case, if the players stack size is less than the blind
         else {
+            bbAmount = seats[bigBlind].getChipCount();
             table.setPot(table.getPot() + seats[bigBlind].getChipCount());
             seats[bigBlind].setChipCount(0);
         }
@@ -148,8 +149,17 @@ public class TableService {
         }
         //edge case, if the players stack size is less than the blind
         else {
+            sbAmount = seats[smallBlind].getChipCount();
             table.setPot(table.getPot() + seats[smallBlind].getChipCount());
             seats[smallBlind].setChipCount(0);
+        }
+
+        invokeInitPotCallback(table.getSmallBlind(), table.getBigBlind(), sbAmount, bbAmount, table.getPot());
+    }
+
+    private void invokeInitPotCallback(int sbIndex, int bbIndex, double sbAmount, double bbAmount, double potSize) {
+        if(tableCallback != null) {
+            tableCallback.onPotInit(sbIndex, bbIndex, sbAmount, bbAmount, potSize);
         }
     }
 

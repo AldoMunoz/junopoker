@@ -1,11 +1,14 @@
 package com.v1.junopoker.controller;
 
 import com.v1.junopoker.callback.TableCallback;
+import com.v1.junopoker.dto.InitPotRequest;
+import com.v1.junopoker.dto.MoveButtonRequest;
 import com.v1.junopoker.model.Player;
-import com.v1.junopoker.dto.BlindRequest;
 import com.v1.junopoker.dto.PlayerRequest;
 import com.v1.junopoker.dto.RequestType;
+import com.v1.junopoker.model.Table;
 import com.v1.junopoker.service.TableService;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -35,18 +38,31 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/playerEvents/" + username, request);
     }
 
+    @MessageMapping("/startGame")
+    public void startGame(@Payload Table table) {
+        tableService.runGame(table);
+    }
+
     @Override
-    public void onBlindsSet(int smallBlindIndex, int bigBlindIndex, int buttonIndex) {
-        System.out.println("entered callback on controller");
-        BlindRequest request = new BlindRequest();
-        request.setType(RequestType.MOVE_BLINDS);
-        request.setSmallBlind(smallBlindIndex);
-        request.setBigBlind(bigBlindIndex);
+    public void onButtonSet(int buttonIndex) {
+        MoveButtonRequest request = new MoveButtonRequest();
+        request.setType(RequestType.MOVE_BUTTON);
         request.setButton(buttonIndex);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
+    @Override
+    public void onPotInit(int sbIndex, int bbIndex, double sbAmount, double bbAmount, double potSize) {
+        InitPotRequest request = new InitPotRequest();
+        request.setType(RequestType.INIT_POT);
+        request.setSmallBlind(sbIndex);
+        request.setBigBlind(bbIndex);
+        request.setSbAmount(sbAmount);
+        request.setBbAmount(bbAmount);
+        request.setPotSize(potSize);
 
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
+    }
     @Override
     public void onCardsDealt(Player[] players) {
 

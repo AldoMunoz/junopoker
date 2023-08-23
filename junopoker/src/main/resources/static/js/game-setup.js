@@ -104,8 +104,10 @@ function tableEvents(payload) {
 
     //view logic for when player stands up from seat
     else if(message.type === "STAND") standTableEvent(message);
-    //view logic for when blinds are moved
-    else if(message.type === "MOVE_BLINDS") moveBlindsEvent(message);
+    //view logic for when button is set
+    else if(message.type === "MOVE_BUTTON") moveButtonEvent(message);
+    //view logic for when blinds are set and collected
+    else if(message.type === "INIT_POT") initPotEvent(message);
     //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
 }
@@ -115,12 +117,14 @@ function sitTableEvent(message) {
     const seatDiv = $(`#seat-${message.seat}`);
     seatDiv.show();
     seatDiv.empty();
+
     //replace that with a player icon
-    const newDiv = $("<div class='player-info'></div>");
-    newDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
-    newDiv.append(`<p class="player-chip-counts">${message.player.chipCount}</p>`);
-    newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
-    seatDiv.append(newDiv);
+    const playerDiv = $("<div class='player-info'></div>");
+    playerDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
+    playerDiv.append(`<p class="player-chip-counts" id="chip-count-${message.seat}">${message.player.chipCount}</p>`);
+    playerDiv.append(`<p class="player-action-display" id="action-display-${message.seat}"></p>`)
+    playerDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
+    seatDiv.append(playerDiv);
 }
 function standTableEvent(message) {
     //replace the player icon with seat button, and then hide it from view
@@ -133,7 +137,8 @@ function standTableEvent(message) {
     }
     else seatDiv.show();
 }
-function moveBlindsEvent(message) {
+function moveButtonEvent(message) {
+    console.log(message);
     const button = $('#dealer-button')
     switch(message.button) {
         case 0:
@@ -167,7 +172,35 @@ function moveBlindsEvent(message) {
             button.css('left', '40%');
             break;
     }
+    stompClient.send()
+}
 
+function initPotEvent(message) {
+    const oldBBChipCount = parseInt($(`#chip-count-${message.bigBlind}`).text());
+    const newBBChipCount = oldBBChipCount - message.bbAmount;
+    $(`#chip-count-${message.bigBlind}`).text(newBBChipCount);
+
+
+    //show display bet pop up
+    //fill it with bet amount
+    const bbBetDisplay = $(`#bet-display-${message.bigBlind}`);
+    bbBetDisplay.css("display", "flex");
+    bbBetDisplay.find('p').text(message.bbAmount);
+
+    const oldSBChipCount = parseInt($(`#chip-count-${message.smallBlind}`).text());
+    const newSBChipCount = oldBBChipCount - message.sbAmount;
+    $(`#chip-count-${message.smallBlind}`).text(newSBChipCount);
+
+
+    //show display bet pop up
+    //fill it with bet amount
+    const sbBetDisplay = $(`#bet-display-${message.smallBlind}`);
+    sbBetDisplay.css("display", "flex");
+    sbBetDisplay.find('p').text(message.sbAmount);
+
+    //TODO
+    //display potAmount
+    //fill it with correct amount
 }
 
 
@@ -251,7 +284,7 @@ function populateTable(seats) {
             seatDiv.empty();
             const newDiv = $("<div class='player-info'></div>");
             newDiv.append(`<p class="player-usernames">${seats[i].username}</p>`);
-            newDiv.append(`<p class="player-chip-counts">${seats[i].chipCount}</p>`);
+            newDiv.append(`<p class="player-chip-counts" id="chip-count-${i}">${seats[i].chipCount}</p>`);
             newDiv.append(`<img src="/images/player-icon.png" alt="Player Icon">`);
             seatDiv.append(newDiv);
         }

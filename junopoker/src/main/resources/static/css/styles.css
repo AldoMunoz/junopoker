@@ -154,6 +154,59 @@ h1, h4 {
     top: 4%;
     left: 40%;
 }
+.bet-info {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%);
+    background-color: #6d6d72;
+    border-radius: 3px; /* Adjust the value to control the roundness */
+    width: 3vw;
+    height: 2.5vh;
+    margin: 0;
+}
+.player-bet-display {
+    color: white;
+    width: 3vw;
+    height: 2.5vh;
+    margin: 0;
+    text-align: center;
+}
+#bet-display-0 {
+    display: none;
+    top: 20%;
+    left: 60%;
+}
+#bet-display-1 {
+    display: none;
+    top: 50%;
+    left: 73%;
+}
+#bet-display-2 {
+    display: none;
+    top: 76%;
+    left: 60%;
+}
+#bet-display-3 {
+    display: none;
+    top: 76%;
+    left: 40%;
+}
+#bet-display-4 {
+    display: none;
+    top: 50%;
+    left: 27%;
+}
+#bet-display-5 {
+    display: none;
+    top: 20%;
+    left: 40%;
+}
+
 #dealer-button {
     display: none;
     width: 5vh;

@@ -12,7 +12,7 @@ import java.util.ArrayList;
 public class Table {
     private String gameType;
     private final int seatCount;
-    private int pot;
+    private float pot;
     private final int[] stakes;
     //Changed "players" to "seats", more accurate
     private Player[] seats;

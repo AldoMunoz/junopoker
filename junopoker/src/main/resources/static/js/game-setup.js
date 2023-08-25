@@ -119,25 +119,28 @@ function sitTableEvent(message) {
     seatDiv.show();
     seatDiv.empty();
 
-    //replace that with a player icon
-    const playerDiv = $("<div class='player-info'></div>");
 
-    const playerImageDiv = $("<div class='player-display'></div>");
-    playerImageDiv.append(`<img class="player-icon" src="/images/player-icon.png" alt="Player Icon">`);
-    playerImageDiv.append(`<img class="player-panel" src="/images/player-info.png" alt="Player Info">`)
+    const playerInfoDiv = $("<div class='player-info'></div>");
+
+    const playerIconDiv = $("<div class='player-icon'></div>");
+    playerIconDiv.append(`<img class="icon-img" src="/images/player-icon.png" alt="Player Icon">`);
+
+    const playerPanelDiv = $("<div class='player-panel'></div>");
+    playerPanelDiv.append(`<img class="panel-img" src="/images/player-info.png" alt="Player Info">`)
+    playerPanelDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
+    playerPanelDiv.append(`<p class="player-chip-counts" id="chip-count-${message.seat}">${message.player.chipCount}</p>`);
+
     const holeCardDiv =$("<div class='hole-cards'></div>");
-    playerImageDiv.append(holeCardDiv);
-    playerDiv.append(playerImageDiv);
+    /*holeCardDiv.append(`<img src="/images/cards/JACK_C.png" alt="Image 1">`);
+    holeCardDiv.append(`<img src="/images/cards/JACK_H.png" alt="Image 1">`);
+    */
+    //holeCardDiv.append(`<p class="player-action-display" id="action-display-${i}"></p>`)
 
+    playerInfoDiv.append(playerIconDiv);
+    playerInfoDiv.append(playerPanelDiv);
+    playerInfoDiv.append(holeCardDiv);
 
-
-    const playerTextDiv = $("<div class='player-text'></div>");
-    playerTextDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
-    playerTextDiv.append(`<p class="player-chip-counts" id="chip-count-${message.seat}">${message.player.chipCount}</p>`);
-    //playerTextDiv.append(`<p class="player-action-display" id="action-display-${message.seat}"></p>`)
-    playerDiv.append(playerTextDiv);
-
-    seatDiv.append(playerDiv);
+    seatDiv.append(playerInfoDiv);
 }
 function standTableEvent(message) {
     //replace the player icon with seat button, and then hide it from view
@@ -300,23 +303,29 @@ function populateTable(seats) {
         else {
             const seatDiv = $(`#seat-${i}`);
             seatDiv.empty();
-            const playerDiv = $("<div class='player-info'></div>");
 
-            const playerImageDiv = $("<div class='player-display'></div>");
-            playerImageDiv.append(`<img class="player-icon" src="/images/player-icon.png" alt="Player Icon">`);
-            playerImageDiv.append(`<img class="player-panel" src="/images/player-info.png" alt="Player Info">`)
+            const playerInfoDiv = $("<div class='player-info'></div>");
+
+            const playerIconDiv = $("<div class='player-icon'></div>");
+            playerIconDiv.append(`<img class="icon-img" src="/images/player-icon.png" alt="Player Icon">`);
+            const playerPanelDiv = $("<div class='player-panel'></div>");
+            playerPanelDiv.append(`<img class="panel-img" src="/images/player-info.png" alt="Player Info">`)
+            playerPanelDiv.append(`<p class="player-usernames">${seats[i].username}</p>`);
+            playerPanelDiv.append(`<p class="player-chip-counts" id="chip-count-${i}">${seats[i].chipCount}</p>`);
+
             const holeCardDiv =$("<div class='hole-cards'></div>");
-            playerImageDiv.append(holeCardDiv);
-            playerDiv.append(playerImageDiv);
+            /*holeCardDiv.append(`<img src="/images/cards/JACK_C.png" alt="Image 1">`);
+            holeCardDiv.append(`<img src="/images/cards/JACK_H.png" alt="Image 1">`);
+            */
 
-
-            const playerTextDiv = $("<div class='player-text'></div>");
-            playerTextDiv.append(`<p class="player-usernames">${seats[i].username}</p>`);
-            playerTextDiv.append(`<p class="player-chip-counts" id="chip-count-${i}">${seats[i].chipCount}</p>`);
             //playerTextDiv.append(`<p class="player-action-display" id="action-display-${i}"></p>`)
-            playerDiv.append(playerTextDiv);
 
-            seatDiv.append(playerDiv);
+            playerInfoDiv.append(playerIconDiv);
+            playerInfoDiv.append(playerPanelDiv);
+            playerInfoDiv.append(holeCardDiv);
+
+
+            seatDiv.append(playerInfoDiv);
         }
     }
 }

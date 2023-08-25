@@ -125,54 +125,73 @@ h1, h4 {
     margin:0;
     padding:0;
 }
-.player-display {
+.player-icon {
     position: relative;
+    width: 100%;
+    max-width: 13vh;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
-.player-icon {
-    width: 13vh;
+.icon-img {
+    width: 100%;
+    max-width: 13vh;
     height: auto;
+    position: relative;
     z-index: 1;
 }
 .player-panel {
-    width:13vh;
-    height:auto;
     position: relative;
+    width: 100%;
+    max-width: 13vh;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     top: -4vh;
     z-index: 3;
 }
-.hole-cards {
-    height: 100%;
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2;
-    background-color: #45a049;
-}
-.player-text {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 4;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    text-align: center;
+.panel-img {
+    display: block;
+    width: 100%;
+    max-width: 13vh;
+    height: auto;
 }
 .player-usernames, .player-chip-counts {
-    margin: auto 0 0;
+    position: absolute;
+    width: 100%;
+    text-align: center;
     color: white;
+    font-size: 2vh;
+}
+.player-usernames {
+    bottom: 0;
+    margin: 1vh;
 }
 .player-chip-counts {
-    margin-top: 0.2vh;
-    margin-bottom: 0.8vh;
+    top: 0;
+    margin: 1vh;
 }
-
+.hole-cards {
+    /*display: none; */
+    width: 90%;
+    max-width: 13vh;
+    height: 50%;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    top: calc(-2vh + 50%);
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.hole-cards img {
+    flex: 1;
+    max-width: 6vh;
+    height: auto;
+}
 #seat-0 {
     top: 7%;
     left: 60%;

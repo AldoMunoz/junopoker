@@ -30,8 +30,8 @@ h1, h4 {
     margin: 2vh;
 }
 .settings-bar {
+    display: none;
     position: absolute;
-    display: flex;
     flex-direction: column;
     align-items: center;
     top: 1.5vh;
@@ -83,6 +83,18 @@ h1, h4 {
     height: auto;
 }
 
+#total-pot {
+    position: absolute;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    top: 28%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%);
+    color: yellow;
+}
+
 /*Seats, Seat Buttons, Individual Seats*/
 .seats {
     border-radius: 5px;
@@ -105,54 +117,164 @@ h1, h4 {
     content: url('../images/black-button.png')
 }
 .player-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     position: relative;
     background: transparent;
     margin:0;
     padding:0;
 }
-.player-info p {
-    text-size: 2vh;
-    position: absolute;
-    left: 50%;
-    transform: translate(-50%);
-    margin: 0;
-    padding: 5px;
-    color: white;
-    text-align: center;
+.player-icon {
+    position: relative;
+    width: 100%;
+    max-width: 13vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
-.player-info img {
-    width: 15vh;
+.icon-img {
+    width: 100%;
+    max-width: 13vh;
+    height: auto;
+    position: relative;
+    z-index: 1;
+}
+.player-panel {
+    position: relative;
+    width: 100%;
+    max-width: 13vh;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: -4vh;
+    z-index: 3;
+}
+.panel-img {
+    display: block;
+    width: 100%;
+    max-width: 13vh;
     height: auto;
 }
+.player-usernames, .player-chip-counts {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-size: 2vh;
+}
 .player-usernames {
-    bottom: 3.5vh;
+    bottom: 0;
+    margin: 1vh;
 }
 .player-chip-counts {
-    bottom: .75vh;
+    top: 0;
+    margin: 1vh;
 }
-#seat-1 {
-    top: 4%;
+.hole-cards {
+    /*display: none; */
+    width: 90%;
+    max-width: 13vh;
+    height: 50%;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    top: calc(-2vh + 50%);
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.hole-cards img {
+    flex: 1;
+    max-width: 6vh;
+    height: auto;
+}
+#seat-0 {
+    top: 7%;
     left: 60%;
 }
-#seat-2 {
+#seat-1 {
     top: 50%;
     left: 79%;
 }
-#seat-3 {
-    top: 93%;
+#seat-2 {
+    top: 96%;
     left: 60%;
 }
-#seat-4 {
-    top: 93%;
+#seat-3 {
+    top: 96%;
     left: 40%;
 }
-#seat-5 {
+#seat-4 {
     top: 50%;
     left: 21%;
 }
-#seat-6 {
-    top: 4%;
+#seat-5 {
+    top: 7%;
     left: 40%;
+}
+.bet-info {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%);
+    background-color: #6d6d72;
+    border-radius: 3px; /* Adjust the value to control the roundness */
+    width: 4vh;
+    height: 2.5vh;
+    margin: 0;
+}
+.player-bet-display {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center;
+    text-align: center;
+    color: white;
+    margin: 0;
+}
+#bet-display-0 {
+    display: none;
+    top: 25%;
+    left: 60%;
+}
+#bet-display-1 {
+    display: none;
+    top: 50%;
+    left: 73%;
+}
+#bet-display-2 {
+    display: none;
+    top: 76%;
+    left: 60%;
+}
+#bet-display-3 {
+    display: none;
+    top: 76%;
+    left: 40%;
+}
+#bet-display-4 {
+    display: none;
+    top: 50%;
+    left: 27%;
+}
+#bet-display-5 {
+    display: none;
+    top: 25%;
+    left: 40%;
+}
+
+#dealer-button {
+    display: none;
+    width: 5vh;
+    height: auto;
+    position: absolute;
 }
 
 /*Modal for when user selects a seat */
@@ -227,7 +349,7 @@ select {
 
 /*Area dealing with player actions */
 .action-bar {
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: flex-end;
     margin-right: 2vh;

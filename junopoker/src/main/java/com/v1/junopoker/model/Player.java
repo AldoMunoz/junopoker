@@ -1,23 +1,14 @@
 package com.v1.junopoker.model;
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 public class Player {
     private String username;
-    private int chipCount;
-    private Card[] holeCards;
-    private Hand hand;
-    private boolean inHand;
-    private int currentBet;
-
-    public Player (String username, int chipCount) {
-        this.username = username;
-        this.chipCount = chipCount;
-
-        currentBet = 0;
-    }
+    private float chipCount;
+    private Card[] holeCards = null;
+    private Hand hand = null;
+    private boolean inHand = false;
+    private int currentBet = 0;
+    private boolean isActive = false;
 }

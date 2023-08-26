@@ -1,4 +1,4 @@
-package com.v1.junopoker;
+package com.v1.junopoker.model;
 
 public enum MessageType {
     SIT,

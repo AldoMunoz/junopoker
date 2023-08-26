@@ -12,17 +12,19 @@ import java.util.ArrayList;
 public class Table {
     private String gameType;
     private final int seatCount;
-    private int pot;
+    private float pot;
     private final int[] stakes;
     //Changed "players" to "seats", more accurate
     private Player[] seats;
     private ArrayList<Card> board;
     //Changed "playerCount" to "seatedPlayerCount", more specific
     private int seatedPlayerCount;
+    private int seatedFoldCount;
     private Deck deck;
     private int bigBlind;
     private int smallBlind;
-    //Changed "isRunning" to "gameIsRunning", more specific
+    private int dealerButton;
+    private int currentBet;
     private boolean gameIsRunning;
     private DeckService deckService;
 
@@ -33,11 +35,12 @@ public class Table {
 
         seatCount = 6;
         seats = new Player[seatCount];
-        board = new ArrayList<Card>();
+        board = new ArrayList<>();
         seatedPlayerCount = 0;
         deck = new Deck();
         bigBlind = -1;
         smallBlind = -1;
+        dealerButton = -1;
         gameIsRunning = false;
     }
 }

@@ -3,11 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/css/styles.css">
-    <!--Scripts for slider, and modals -->
-    <script src="/js/slider.js" defer></script>
-    <script src="/js/game-setup.js" defer></script>
-    <script src="/js/remove-player.js" defer></script>
-    <script src="/js/add-player.js" defer></script>
     <title>Juno Poker</title>
 </head>
 <body>
@@ -23,6 +18,15 @@
     </div>
     <!-- Main UI (Table, Seats, Settings Bar) -->
     <div class='main-ui'>
+        <!--TODO Settings Bar-->
+        <div class="settings-bar">
+            <div class="settings-bar-buttons" data-tooltip="Settings">
+                <img id="settings-button" src="/images/settings.png" onclick="openGameSetupModal()" alt="Error">
+            </div>
+            <div class="settings-bar-buttons" data-tooltip="Stand">
+                <img id="stand-button" src="/images/leave-table.png" onclick="removePlayer()" alt="Error">
+            </div>
+        </div>
         <!--Modal for input of game type and stakes-->
         <div id="gameSetupModal" class="modal">
             <div class="modal-content">
@@ -39,38 +43,61 @@
                 <label for="smallBlind">Small Blind:</label>
                 <input type="number" id="smallBlind">
 
-                <button id="setupBtn">Start Game</button>
+                <button id="setupBtn" onclick="submitTableData()">Update</button>
             </div>
         </div>
-        <!--TODO Settings Bar-->
-        <div class="settings-bar">
-            <div class="settings-bar-buttons" data-tooltip="Settings">
-                <img id="settings-button" src="/images/settings.png" onclick="showGameSetupModal()" alt="Error">
-            </div>
-            <div class="settings-bar-buttons" data-tooltip="Stand">
-                <img id="stand-button" src="/images/leave-table.png" onclick="removePlayer()" alt="Error">
-            </div>
-        </div>
-        <!--Table and buttons to sit at table-->
+        <!--Table Image-->
         <img class="poker-table-img" src="/images/poker-table.png" alt="Error">
+        <!--Total Pot-->
+        <p id="total-pot">Total Pot: %</p>
+        <!-- Board -->
+        <div id="board">
+
+        </div>
+        <!-- Current Street Pot -->
+        <!--Seat 0 -->
+        <div class='bet-info' id="bet-display-0">
+            <p class="player-bet-display"></p>
+        </div>
+        <div class="seats" id="seat-0">
+            <button class="seat-buttons" data-button-number="0" onclick="openAddPlayerModal(0)"><img src="/images/grey-button.png" alt="Error"></button>
+        </div>
+        <!--Seat 1 -->
+        <div class='bet-info' id="bet-display-1">
+            <p class="player-bet-display"></p>
+        </div>
         <div class="seats" id="seat-1">
             <button class="seat-buttons" data-button-number="1" onclick="openAddPlayerModal(1)"><img src="/images/grey-button.png" alt="Error"></button>
+        </div>
+        <!--Seat 2 -->
+        <div class='bet-info' id="bet-display-2">
+            <p class="player-bet-display"></p>
         </div>
         <div class="seats" id="seat-2">
             <button class="seat-buttons" data-button-number="2" onclick="openAddPlayerModal(2)"><img src="/images/grey-button.png" alt="Error"></button>
         </div>
+        <!--Seat 3 -->
+        <div class='bet-info' id="bet-display-3">
+            <p class="player-bet-display"></p>
+        </div>
         <div class="seats" id="seat-3">
             <button class="seat-buttons" data-button-number="3" onclick="openAddPlayerModal(3)"><img src="/images/grey-button.png" alt="Error"></button>
         </div>
+        <!--Seat 4 -->
+        <div class='bet-info' id="bet-display-4">
+            <p class="player-bet-display"></p></div>
         <div class="seats" id="seat-4">
             <button class="seat-buttons" data-button-number="4" onclick="openAddPlayerModal(4)"><img src="/images/grey-button.png" alt="Error"></button>
+        </div>
+        <!--Seat 5 -->
+        <div class='bet-info' id="bet-display-5">
+            <p class="player-bet-display"></p>
         </div>
         <div class="seats" id="seat-5">
             <button class="seat-buttons" data-button-number="5" onclick="openAddPlayerModal(5)"><img src="/images/grey-button.png" alt="Error"></button>
         </div>
-        <div class="seats" id="seat-6">
-            <button class="seat-buttons" data-button-number="6" onclick="openAddPlayerModal(6)"><img src="/images/grey-button.png" alt="Error"></button>
-        </div>
+        <!--Dealer Button -->
+        <img id="dealer-button" src="images/dealer-button.png" alt="Error">
     </div>
     <!--Modal for when player takes a seat-->
     <div id="addUserModal" class="modal">
@@ -80,7 +107,7 @@
             <input type="text" id="username">
             <label for="chipCount">Chip Count:</label>
             <input type="text" id="chipCount">
-            <button id="submitBtn" onclick="submitData()">Submit</button>
+            <button id="submitBtn" onclick="submitPlayerData()">Submit</button>
         </div>
     </div>
     <!--Area that deals with player actions-->
@@ -110,8 +137,13 @@
             <button class="bet">Bet: </button>
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script> <!-- Sock JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script> <!-- Stomp -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- jQuery -->
+    <script src="/webjars/jquery/jquery.min.js"></script> <!-- jQuery -->
+    <script src="/webjars/sockjs-client/sockjs.min.js"></script> <!-- SockJS -->
+    <script src="/webjars/stomp-websocket/stomp.min.js"></script> <!-- Stomp -->
+    <!--Scripts for slider, and modals -->
+    <script src="/js/slider.js"></script>
+    <script src="/js/game-setup.js"></script>
+    <script src="/js/add-player.js"></script>
+    <script src="/js/remove-player.js"></script>
 </body>
 </html>

@@ -223,7 +223,9 @@ function initPotEvent(message) {
 }
 
 function dealHoleCardsEvent(message) {
-    console.log("deal hole cards message:", message);
+    const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
+    holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
+    holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
 }
 
 /*HANDLE TABLE DATA SUBMISSION

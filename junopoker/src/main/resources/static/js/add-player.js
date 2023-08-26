@@ -129,6 +129,12 @@ async function playerEvents(payload) {
 
     else if (message.type = "DEAL_PRE") {
         console.log("Private deal cards message: ", message);
+        const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
+        holeCardsDiv.empty();
+
+        holeCardsDiv.append(`<img src="/images/cards/${message.cards[0]}.png" alt="Card 1">`)
+        holeCardsDiv.append(`<img src="/images/cards/${message.cards[1]}.png" alt="Card 2">`)
+
     }
 }
 

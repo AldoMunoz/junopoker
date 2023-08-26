@@ -219,87 +219,136 @@ public class TableService {
         getHandVals(table);
     }
 
-    public void playerAction(Table table, int currPlayer, int previousBet, boolean isPreflop) {
-        int firstToAct = currPlayer;
+
+    //handles player actions during the betting round until the betting round is over
+    public void playerAction(Table table, int currPlayerIndex, boolean isPreflop) {
+        //fields for first to act index, is action over, and if the first action has occurred
+        int firstToActIndex = currPlayerIndex;
         boolean actionOver = false;
         boolean firstAction = true;
+        //Count for amount of players seated and the amount of players who've folded
+        int seatedPlayerCount = table.getSeatedPlayerCount();
         int foldCount = table.getSeatedFoldCount();
-        int playerCount = table.getSeatedPlayerCount();
-        Player[] players = table.getSeats();
+        //fields for table seats and table stakes
+        Player[] seats = table.getSeats();
         int[] stakes = table.getStakes();
+
+        int previousBet = 0;
+
+        //loop will continue until all action for the round is over
         while (!actionOver) {
-            if (foldCount == playerCount - 1) {completeHand(table); break;}
+            //TODO: should have a field called handOver on the Table object
+            //TODO: in runGame(), everytime a betting round is over, check HandOver, if true, skip to complete hand
+            //if everyone has folded (except for 1 player), the whole hand is over, skip to complete hand
+            if (foldCount == seatedPlayerCount - 1) {
+                completeHand(table);
+                break;
+            }
             // skips any empty seats or folded players
             int currentBet = table.getCurrentBet();
-            if (players[currPlayer] == null || !players[currPlayer].isInHand()) {
-                currPlayer = (currPlayer + 1)
-                        % players.length;
-                        continue;
+            if (seats[currPlayerIndex] == null || !seats[currPlayerIndex].isInHand()) {
+                currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
             }
-            else if (isPreflop && players[currPlayer].getCurrentBet() == currentBet && currentBet >
-                    stakes[1]) actionOver = true;
-            else if (isPreflop && players[currPlayer].getCurrentBet() == stakes[1] && currPlayer !=
-                    table.getBigBlind()) actionOver = true;
-            else if (!isPreflop && players[currPlayer].getCurrentBet() == currentBet && currentBet
-                    > 0) actionOver = true;
-            else if (!isPreflop && currPlayer == firstToAct && currentBet == 0 && !firstAction)
+            //PRE-FLOP
+            //if we've looped back to the original raiser and player CurrentBet = table CurrentBet, action is over
+            else if (isPreflop && seats[currPlayerIndex].getCurrentBet() == currentBet && currentBet > stakes[1])
                 actionOver = true;
+            //PRE-FLOP
+            //if we're at the big blind and the table currentBet = the big blind, it is a limped pot, action is over
+            else if (isPreflop && seats[currPlayerIndex].getCurrentBet() == stakes[1] && currPlayerIndex != table.getBigBlind())
+                actionOver = true;
+            //POST-FLOP
+            //if we've looped back to original raiser and player currentBet = table currentBet, action is over
+            else if (!isPreflop && seats[currPlayerIndex].getCurrentBet() == currentBet && currentBet > 0)
+                actionOver = true;
+            //POST-FLOP
+            //if we've checked around to the firstToAct player, action is over
+            else if (!isPreflop && currPlayerIndex == firstToActIndex && currentBet == 0 && !firstAction)
+                actionOver = true;
+            //else take an action input from the player
             else {
+                //TODO: callback method for action input
                 System.out.println("current bet is: " + currentBet);
                 System.out.println("your bet: ");
                 Scanner sc = new Scanner(System.in);
                 int bet = sc.nextInt();
                 int minBet = (currentBet - previousBet) + currentBet;
-                if (bet != players[currPlayer].getChipCount()) {
+                //TODO: callback method for action output
+                //if not all-in bet:
+                if (bet != seats[currPlayerIndex].getChipCount()) {
+                    //check for invalid bet (probably will delete)
                     while (bet != 0 && bet != currentBet && bet < minBet) {
                         System.out.println("invalid bet");
                         System.out.println("your new bet: ");
                         sc = new Scanner(System.in);
                         bet = sc.nextInt();
                     }
+                    //if they fold
                     if (bet == 0 && currentBet > 0) {
                         foldCount ++;
-                        players[currPlayer].setInHand(false);
+                        seats[currPlayerIndex].setInHand(false);
                     }
-                    else if (bet == players[currPlayer].getChipCount() || bet >= minBet) {
+                    //if player changed their mind and went all in after invalid input (PROBABLY DELETE)
+                    else if (bet == seats[currPlayerIndex].getChipCount() || bet >= minBet) {
                         previousBet = currentBet;
                         currentBet = bet;
                     }
                 }
+                //if bet is all-in:
                 else {
+                    //check if the all-in amount is greater than currentBet
                     if (bet > currentBet) {
+                        //if it is, set the current bet to previous bet and current bet to the player's bet
                         previousBet = currentBet;
                         table.setCurrentBet(bet);
                     }
                 }
-                players[currPlayer].setChipCount(
-                        players[currPlayer].getChipCount() - (bet -
-                                players[currPlayer].getCurrentBet()));
-                table.setPot(table.getPot() + (bet - players[currPlayer].getCurrentBet()));
-                players[currPlayer].setCurrentBet(bet);
-                currPlayer = (currPlayer + 1) % players.length;
+
+                //update player chip count
+                seats[currPlayerIndex].setChipCount(
+                        seats[currPlayerIndex].getChipCount() - (bet -
+                                seats[currPlayerIndex].getCurrentBet()));
+                //update the pot size of the table
+                table.setPot(table.getPot() + (bet - seats[currPlayerIndex].getCurrentBet()));
+                //update the current bet of the player
+                seats[currPlayerIndex].setCurrentBet(bet);
+
+                //TODO: check if the loop works
+                //get the next player to act
+                currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
+                while (table.getSeats()[currPlayerIndex] == null) {
+                    currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
+                }
+                //first action has now taken place, set bool to false
                 firstAction = false;
             }
         }
     }
     //deals with the pre-flop betting rounds
     public void preFlopBetting (Table table) {
+        //creating local fields for SB, BB, stakes, seats
         int smallBlind = table.getSmallBlind();
         int bigBlind = table.getBigBlind();
         int[] stakes = table.getStakes();
-        Player[] players = table.getSeats();
+        Player[] seats = table.getSeats();
+        //set current bet for player in SB and BB position
         table.getSeats()[smallBlind].setCurrentBet(stakes[0]);
         table.getSeats()[bigBlind].setCurrentBet(stakes[1]);
-        int previousBet = 0;
-        // initializes currPlayer index to be one more than the big blind, wrapping around
-        // players.length and skipping any nulls
-        int currPlayer = (bigBlind + 1) % players.length;
-        while (players[currPlayer] == null) {
-            currPlayer = (currPlayer + 1) % players.length;
-        }
-        table.setCurrentBet(stakes[1]);
-        playerAction(table, currPlayer, 0, true);
 
+
+        //find the first player to act
+        int currPlayerIndex = (bigBlind + 1) % table.getSeatCount();
+        while (seats[currPlayerIndex] == null) {
+            currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
+        }
+
+        //set the current table bet to the big blind
+        table.setCurrentBet(stakes[1]);
+
+        //handle betting round actions from players
+        playerAction(table, currPlayerIndex, true);
+
+        //switch sb and bb if game is heads up
         if (table.getSeatedPlayerCount() == 2) {
             int temp = bigBlind;
             table.setBigBlind(table.getSmallBlind());
@@ -307,21 +356,26 @@ public class TableService {
         }
     }
     public void postFlopBetting(Table table) {
+        //set fields
         int smallBlind = table.getSmallBlind();
-        Player[] players = table.getSeats();
-        int button = (smallBlind - 1) % players.length;
-        // Initializes currPlayer index to be the small blind, wrapping around players.length and
-        // skipping any nulls
-        int currPlayer = smallBlind;
-        while (players[currPlayer] == null) currPlayer = (currPlayer + 1) % players.length;
+        Player[] seats = table.getSeats();
 
+        //Identify who will be first to act
+        int currPlayerIndex = smallBlind;
+        while (seats[currPlayerIndex] == null) {
+            currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
+        }
 
+        //TODO: make seperate cleanUp method
+        //clean up table currentBet and player current bets
         table.setCurrentBet(0);
         int previousBet = 0;
-        for (Player player : players) {
+        for (Player player : seats) {
             if (player != null) player.setCurrentBet(0);
         }
-        playerAction(table, currPlayer, 0, false);
+
+        //handle betting round actions from players
+        playerAction(table, currPlayerIndex, false);
     }
     public void completeHand(Table table) {
         // Initializing the best made hand rank

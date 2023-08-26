@@ -219,6 +219,59 @@ public class TableService {
         getHandVals(table);
     }
 
+    //deals with the pre-flop betting rounds
+    public void preFlopBetting (Table table) {
+        //creating local fields for SB, BB, stakes, seats
+        int smallBlind = table.getSmallBlind();
+        int bigBlind = table.getBigBlind();
+        int[] stakes = table.getStakes();
+        Player[] seats = table.getSeats();
+        //set current bet for player in SB and BB position
+        table.getSeats()[smallBlind].setCurrentBet(stakes[0]);
+        table.getSeats()[bigBlind].setCurrentBet(stakes[1]);
+
+
+        //find the first player to act
+        int currPlayerIndex = (bigBlind + 1) % table.getSeatCount();
+        while (seats[currPlayerIndex] == null) {
+            currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
+        }
+
+        //set the current table bet to the big blind
+        table.setCurrentBet(stakes[1]);
+
+        //handle betting round actions from players
+        playerAction(table, currPlayerIndex, true);
+
+        //switch sb and bb if game is heads up
+        if (table.getSeatedPlayerCount() == 2) {
+            int temp = bigBlind;
+            table.setBigBlind(table.getSmallBlind());
+            table.setSmallBlind(temp);
+        }
+    }
+    public void postFlopBetting(Table table) {
+        //set fields
+        int smallBlind = table.getSmallBlind();
+        Player[] seats = table.getSeats();
+
+        //Identify who will be first to act
+        int currPlayerIndex = smallBlind;
+        while (seats[currPlayerIndex] == null) {
+            currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
+        }
+
+        //TODO: make seperate cleanUp method
+        //clean up table currentBet and player current bets
+        table.setCurrentBet(0);
+        int previousBet = 0;
+        for (Player player : seats) {
+            if (player != null) player.setCurrentBet(0);
+        }
+
+        //handle betting round actions from players
+        playerAction(table, currPlayerIndex, false);
+    }
 
     //handles player actions during the betting round until the betting round is over
     public void playerAction(Table table, int currPlayerIndex, boolean isPreflop) {
@@ -253,21 +306,23 @@ public class TableService {
             //if we've looped back to the original raiser and player CurrentBet = table CurrentBet, action is over
             else if (isPreflop && seats[currPlayerIndex].getCurrentBet() == currentBet && currentBet > stakes[1])
                 actionOver = true;
-            //PRE-FLOP
-            //if we're at the big blind and the table currentBet = the big blind, it is a limped pot, action is over
+                //PRE-FLOP
+                //if we're at the big blind and the table currentBet = the big blind, it is a limped pot, action is over
             else if (isPreflop && seats[currPlayerIndex].getCurrentBet() == stakes[1] && currPlayerIndex != table.getBigBlind())
                 actionOver = true;
-            //POST-FLOP
-            //if we've looped back to original raiser and player currentBet = table currentBet, action is over
+                //POST-FLOP
+                //if we've looped back to original raiser and player currentBet = table currentBet, action is over
             else if (!isPreflop && seats[currPlayerIndex].getCurrentBet() == currentBet && currentBet > 0)
                 actionOver = true;
-            //POST-FLOP
-            //if we've checked around to the firstToAct player, action is over
+                //POST-FLOP
+                //if we've checked around to the firstToAct player, action is over
             else if (!isPreflop && currPlayerIndex == firstToActIndex && currentBet == 0 && !firstAction)
                 actionOver = true;
-            //else take an action input from the player
+                //else take an action input from the player
             else {
                 //TODO: callback method for action input
+
+                invokePreFlopActionCallback(table.getSeats()[currPlayerIndex]);
                 System.out.println("current bet is: " + currentBet);
                 System.out.println("your bet: ");
                 Scanner sc = new Scanner(System.in);
@@ -324,59 +379,12 @@ public class TableService {
             }
         }
     }
-    //deals with the pre-flop betting rounds
-    public void preFlopBetting (Table table) {
-        //creating local fields for SB, BB, stakes, seats
-        int smallBlind = table.getSmallBlind();
-        int bigBlind = table.getBigBlind();
-        int[] stakes = table.getStakes();
-        Player[] seats = table.getSeats();
-        //set current bet for player in SB and BB position
-        table.getSeats()[smallBlind].setCurrentBet(stakes[0]);
-        table.getSeats()[bigBlind].setCurrentBet(stakes[1]);
-
-
-        //find the first player to act
-        int currPlayerIndex = (bigBlind + 1) % table.getSeatCount();
-        while (seats[currPlayerIndex] == null) {
-            currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
-        }
-
-        //set the current table bet to the big blind
-        table.setCurrentBet(stakes[1]);
-
-        //handle betting round actions from players
-        playerAction(table, currPlayerIndex, true);
-
-        //switch sb and bb if game is heads up
-        if (table.getSeatedPlayerCount() == 2) {
-            int temp = bigBlind;
-            table.setBigBlind(table.getSmallBlind());
-            table.setSmallBlind(temp);
+    private void invokePreFlopActionCallback(Player player) {
+        if(tableCallback != null) {
+            tableCallback.onPreFlopAction(player);
         }
     }
-    public void postFlopBetting(Table table) {
-        //set fields
-        int smallBlind = table.getSmallBlind();
-        Player[] seats = table.getSeats();
 
-        //Identify who will be first to act
-        int currPlayerIndex = smallBlind;
-        while (seats[currPlayerIndex] == null) {
-            currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
-        }
-
-        //TODO: make seperate cleanUp method
-        //clean up table currentBet and player current bets
-        table.setCurrentBet(0);
-        int previousBet = 0;
-        for (Player player : seats) {
-            if (player != null) player.setCurrentBet(0);
-        }
-
-        //handle betting round actions from players
-        playerAction(table, currPlayerIndex, false);
-    }
     public void completeHand(Table table) {
         // Initializing the best made hand rank
         HandRanking max_rank = null;

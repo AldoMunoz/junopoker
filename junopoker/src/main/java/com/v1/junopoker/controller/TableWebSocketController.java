@@ -76,7 +76,7 @@ public class TableWebSocketController implements TableCallback {
     }
 
     @Override
-    public void onPreFlopBetting(Player player) {
+    public void onPreFlopAction(Player player) {
 
     }
 }

@@ -137,11 +137,21 @@ async function playerEvents(payload) {
     }
     else if (message.type === "PLAYER_ACTION") {
         console.log(message);
+
+        const actionBarDiv = $(".action-bar");
+        actionBarDiv.css("display", "flex");
+
+        if(message.player.currentBet != message.currentBet) {
+
+        }
+
+
+
+
         const response = {
             action: 'F',
             betAmount: 0
         }
-
         stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
     }
 }

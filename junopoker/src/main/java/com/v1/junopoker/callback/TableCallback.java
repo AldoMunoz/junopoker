@@ -10,5 +10,5 @@ public interface TableCallback {
 
     void onHoleCardsDealt(String username, int seat, Card[] holeCards);
 
-    void onPreFlopAction(Player player, int seat);
+    void onPreFlopAction(Player player, int seat, float currentBet);
 }

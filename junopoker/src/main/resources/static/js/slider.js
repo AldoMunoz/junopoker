@@ -20,6 +20,28 @@ function updateSlider(percentage) {
     sliderValue.val(Math.round(percentage) + "%");
 }
 
+function increaseCustomBet() {
+    console.log("Incrase");
+}
+function decreaseCustomBet() {
+    console.log("Decrease");
+}
+function changeBetSize(size) {
+    console.log(size);
+}
+function onFold()  {
+
+}
+function onCheck() {
+
+}
+function onCall() {
+
+}
+function onBet(bet) {
+
+}
+
 sliderHandle.on("mousedown", (event) => {
     isDragging = true;
     event.preventDefault();

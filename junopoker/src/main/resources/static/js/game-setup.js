@@ -188,7 +188,6 @@ function moveButtonEvent(message) {
             button.css('left', '43%');
             break;
     }
-    stompClient.send()
 }
 
 function initPotEvent(message) {
@@ -204,7 +203,7 @@ function initPotEvent(message) {
     bbBetDisplay.find('p').text(message.bbAmount);
 
     const oldSBChipCount = parseInt($(`#chip-count-${message.smallBlind}`).text());
-    const newSBChipCount = oldBBChipCount - message.sbAmount;
+    const newSBChipCount = oldSBChipCount - message.sbAmount;
     $(`#chip-count-${message.smallBlind}`).text(newSBChipCount);
 
 
@@ -214,9 +213,7 @@ function initPotEvent(message) {
     sbBetDisplay.css("display", "flex");
     sbBetDisplay.find('p').text(message.sbAmount);
 
-    //TODO
-    //display potAmount
-    //fill it with correct amount
+    //Display Total Pot text and populate it with the pot size
     const totalPot = $("#total-pot")
     totalPot.css("display", "flex")
     totalPot.text(`Total Pot: ${message.potSize}`)

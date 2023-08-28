@@ -1,19 +1,22 @@
 package com.v1.junopoker.service;
 
 import com.v1.junopoker.callback.TableCallback;
+import com.v1.junopoker.dto.PlayerActionResponse;
 import com.v1.junopoker.factory.DeckServiceFactory;
 import com.v1.junopoker.model.Card;
 import com.v1.junopoker.model.Hand;
 import com.v1.junopoker.model.HandRanking;
 import com.v1.junopoker.model.Player;
 import com.v1.junopoker.model.Table;
-import java.util.Scanner;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.TabExpander;
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class TableService {
@@ -22,6 +25,7 @@ public class TableService {
     //Interface for callback methods for all TableService methods that require user interaction,
     //Callbacks are sent to the controller, and passed on to the UI via WebSocket
     private TableCallback tableCallback;
+    private CompletableFuture<PlayerActionResponse> playerActionResponse;
 
     @Autowired
     public TableService(DeckServiceFactory deckServiceFactory) {
@@ -31,6 +35,17 @@ public class TableService {
     public void setTableCallback(TableCallback tableCallback) {
         this.tableCallback = tableCallback;
     }
+
+
+    //TODO is this necessary
+    public CompletableFuture<PlayerActionResponse> getPlayerActionResponse() {
+        return playerActionResponse;
+    }
+
+    public void handlePlayerAction(PlayerActionResponse playerActionResponse) {
+        this.playerActionResponse.complete(playerActionResponse);
+    }
+
 
     //adds a player to the players list, gives them a chip count and a specific seat
     public void addPlayer (Table table, Player player, int seat) {
@@ -55,6 +70,7 @@ public class TableService {
         moveBlinds(table);
         initiatePot(table);
         dealCards(table);
+        preFlopBetting(table);
         //game will run while there are at least 2 people seated at the table
         /*while (table.getSeatedPlayerCount() > 1) {
             moveBlinds(table);
@@ -113,7 +129,6 @@ public class TableService {
             }
         }
     }
-
     //callback function used to send position info to the front-end
     private void invokeButtonCallback(int buttonIndex) {
         if(tableCallback != null) {
@@ -157,12 +172,12 @@ public class TableService {
 
         invokeInitPotCallback(table.getSmallBlind(), table.getBigBlind(), sbAmount, bbAmount, table.getPot());
     }
-
     private void invokeInitPotCallback(int sbIndex, int bbIndex, double sbAmount, double bbAmount, double potSize) {
         if(tableCallback != null) {
             tableCallback.onPotInit(sbIndex, bbIndex, sbAmount, bbAmount, potSize);
         }
     }
+
 
     //deals cards preflop to all players
     public void dealCards (Table table) {
@@ -179,6 +194,7 @@ public class TableService {
                 cards[1] = deckService.drawCard(table.getDeck());
                 //the array is set as the player's hole cards
                 table.getSeats()[i].setHoleCards(cards);
+                table.getSeats()[i].setInHand(true);
 
                 invokeDealHoleCardsCallback(table.getSeats()[i].getUsername(), i, cards);
             }
@@ -286,19 +302,19 @@ public class TableService {
         Player[] seats = table.getSeats();
         int[] stakes = table.getStakes();
 
-        int previousBet = 0;
+        float previousBet = 0;
 
         //loop will continue until all action for the round is over
         while (!actionOver) {
-            //TODO: should have a field called handOver on the Table object
-            //TODO: in runGame(), everytime a betting round is over, check HandOver, if true, skip to complete hand
+            //!!!!should have a field called handOver on the Table object
+            //!!!!in runGame(), everytime a betting round is over, check HandOver, if true, skip to complete hand
             //if everyone has folded (except for 1 player), the whole hand is over, skip to complete hand
             if (foldCount == seatedPlayerCount - 1) {
                 completeHand(table);
                 break;
             }
             // skips any empty seats or folded players
-            int currentBet = table.getCurrentBet();
+            float currentBet = table.getCurrentBet();
             if (seats[currPlayerIndex] == null || !seats[currPlayerIndex].isInHand()) {
                 currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
             }
@@ -320,71 +336,73 @@ public class TableService {
                 actionOver = true;
                 //else take an action input from the player
             else {
-                //TODO: callback method for action input
+                //callback method for preflop action callback
+                //returns an int (bet size)
+                invokePreFlopActionCallback(table.getSeats()[currPlayerIndex], currPlayerIndex);
 
-                invokePreFlopActionCallback(table.getSeats()[currPlayerIndex]);
-                System.out.println("current bet is: " + currentBet);
-                System.out.println("your bet: ");
-                Scanner sc = new Scanner(System.in);
-                int bet = sc.nextInt();
-                int minBet = (currentBet - previousBet) + currentBet;
-                //TODO: callback method for action output
-                //if not all-in bet:
-                if (bet != seats[currPlayerIndex].getChipCount()) {
-                    //check for invalid bet (probably will delete)
-                    while (bet != 0 && bet != currentBet && bet < minBet) {
-                        System.out.println("invalid bet");
-                        System.out.println("your new bet: ");
-                        sc = new Scanner(System.in);
-                        bet = sc.nextInt();
-                    }
-                    //if they fold
-                    if (bet == 0 && currentBet > 0) {
-                        foldCount ++;
-                        seats[currPlayerIndex].setInHand(false);
-                    }
-                    //if player changed their mind and went all in after invalid input (PROBABLY DELETE)
-                    else if (bet == seats[currPlayerIndex].getChipCount() || bet >= minBet) {
-                        previousBet = currentBet;
-                        currentBet = bet;
-                    }
-                }
-                //if bet is all-in:
-                else {
-                    //check if the all-in amount is greater than currentBet
-                    if (bet > currentBet) {
-                        //if it is, set the current bet to previous bet and current bet to the player's bet
-                        previousBet = currentBet;
-                        table.setCurrentBet(bet);
-                    }
-                }
+                CompletableFuture<PlayerActionResponse> future = new CompletableFuture<>();
+                playerActionResponse = future;
 
-                //update player chip count
-                seats[currPlayerIndex].setChipCount(
-                        seats[currPlayerIndex].getChipCount() - (bet -
-                                seats[currPlayerIndex].getCurrentBet()));
-                //update the pot size of the table
-                table.setPot(table.getPot() + (bet - seats[currPlayerIndex].getCurrentBet()));
-                //update the current bet of the player
-                seats[currPlayerIndex].setCurrentBet(bet);
+                try {
+                    PlayerActionResponse playerActionResponse = future.get();
+                    char action = playerActionResponse.getAction();
+                    float bet = playerActionResponse.getBetAmount();
+                    float minBet = (currentBet - previousBet) + currentBet;
+                    //if not all-in bet:
+                    if (bet != seats[currPlayerIndex].getChipCount()) {
+                        //if they fold
+                        if (action == 'F' && bet == 0) {
+                            foldCount ++;
+                            seats[currPlayerIndex].setInHand(false);
+                        }
+                        //if player changed their mind and went all in after invalid input (PROBABLY DELETE)
+                        else if (bet == seats[currPlayerIndex].getChipCount() || bet >= minBet) {
+                            previousBet = currentBet;
+                            currentBet = bet;
+                        }
+                    }
+                    //if bet is all-in:
+                    else {
+                        //check if the all-in amount is greater than currentBet
+                        if (bet > currentBet) {
+                            //if it is, set the current bet to previous bet and current bet to the player's bet
+                            previousBet = currentBet;
+                            table.setCurrentBet(bet);
+                        }
+                    }
 
-                //TODO: check if the loop works
-                //get the next player to act
-                currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
-                while (table.getSeats()[currPlayerIndex] == null) {
+                    if(action != 'F') {
+                        //update player chip count
+                        seats[currPlayerIndex].setChipCount(seats[currPlayerIndex].getChipCount() - bet);
+                        //update the pot size of the table
+                        table.setPot(table.getPot() + bet);
+                        //update the current bet of the player
+                        seats[currPlayerIndex].setCurrentBet(bet);
+                    }
+
+                    //!!!check if the loop works
+                    //get the next player to act
                     currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
+                    while (table.getSeats()[currPlayerIndex] == null) {
+                        currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
+                    }
+                    //first action has now taken place, set bool to false
+                    firstAction = false;
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
                 }
-                //first action has now taken place, set bool to false
-                firstAction = false;
             }
         }
     }
-    private void invokePreFlopActionCallback(Player player) {
+    private void invokePreFlopActionCallback(Player player, int seat) {
         if(tableCallback != null) {
-            tableCallback.onPreFlopAction(player);
+            tableCallback.onPreFlopAction(player, seat);
         }
     }
 
+
+    //TODO: handle cases for when the hand completes before showdown
+    //TODO: example, everyone folds pre flop, and as such player never gets assigned a handRanking.
     public void completeHand(Table table) {
         // Initializing the best made hand rank
         HandRanking max_rank = null;

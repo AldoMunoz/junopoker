@@ -24,7 +24,7 @@ public class Table {
     private int bigBlind;
     private int smallBlind;
     private int dealerButton;
-    private int currentBet;
+    private float currentBet;
     private boolean gameIsRunning;
     private DeckService deckService;
 

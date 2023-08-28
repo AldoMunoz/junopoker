@@ -3,9 +3,7 @@ package com.v1.junopoker.dto;
 public enum RequestType {
     SIT,
     STAND,
-    BET,
-    CHECK,
-    FOLD,
+    PLAYER_ACTION,
     MOVE_BUTTON,
     INIT_POT,
     DEAL_PRE,

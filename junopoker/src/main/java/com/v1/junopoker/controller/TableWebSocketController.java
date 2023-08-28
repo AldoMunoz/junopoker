@@ -12,6 +12,8 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.util.concurrent.CompletableFuture;
+
 @Controller
 public class TableWebSocketController implements TableCallback {
     private SimpMessagingTemplate messagingTemplate;
@@ -20,7 +22,8 @@ public class TableWebSocketController implements TableCallback {
     public TableWebSocketController (SimpMessagingTemplate messagingTemplate, TableService tableService) {
         this.messagingTemplate = messagingTemplate;
         this.tableService = tableService;
-        tableService.setTableCallback(this);
+        //revert this line to not use this if code doesn't work
+        this.tableService.setTableCallback(this);
     }
 
     @MessageMapping("/tableEvents")
@@ -76,7 +79,21 @@ public class TableWebSocketController implements TableCallback {
     }
 
     @Override
-    public void onPreFlopAction(Player player) {
+    //send a request to the front end for the player to input an action (check, bet, or fold)
+    //receive that action and send it to TableService.java using a CompletableFuture
+    public void onPreFlopAction(Player player, int seat) {
+        System.out.println("entered onPreFlopAction()");
+        //create a player request object and populate it with the passed fields
+        PlayerRequest request = new PlayerRequest();
+        request.setType(RequestType.PLAYER_ACTION);
+        request.setPlayer(player);
+        request.setSeat(seat);
 
+        //send websocket message to player whose turn is to act
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + player.getUsername(), request);
+    }
+    @MessageMapping("/playerActionEvent")
+    public void returnPreFlopAction(@Payload PlayerActionResponse response) {
+        tableService.handlePlayerAction(response);
     }
 }

@@ -126,8 +126,7 @@ async function playerEvents(payload) {
         //unsubscribe user for /topic/playerEvents/${}
         stompClient.unsubscribe(`/topic/playerEvents/${message.player.username}`);
     }
-
-    else if (message.type = "DEAL_PRE") {
+    else if (message.type === "DEAL_PRE") {
         console.log("Private deal cards message: ", message);
         const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
         holeCardsDiv.empty();
@@ -135,6 +134,15 @@ async function playerEvents(payload) {
         holeCardsDiv.append(`<img src="/images/cards/${message.cards[0]}.png" alt="Card 1">`)
         holeCardsDiv.append(`<img src="/images/cards/${message.cards[1]}.png" alt="Card 2">`)
 
+    }
+    else if (message.type === "PLAYER_ACTION") {
+        console.log(message);
+        const response = {
+            action: 'F',
+            betAmount: 0
+        }
+
+        stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
     }
 }
 

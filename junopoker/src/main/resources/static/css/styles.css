@@ -411,6 +411,7 @@ select {
     font-size: 2vh;
     height: auto;
     line-height: 1; /* Keep the text vertically centered */
+    user-select: none;
 }
 .inc-bet:hover  {
     cursor: pointer;

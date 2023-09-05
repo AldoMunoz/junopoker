@@ -290,6 +290,7 @@ public class TableService {
         int seatedPlayerCount = table.getSeatedPlayerCount();
         int[] stakes = table.getStakes();
         float previousBet = 0;
+        float minBet = (table.getCurrentBet() - previousBet) + table.getCurrentBet();
 
         //loop will continue until all action for the round is over
         while (!actionOver) {
@@ -324,7 +325,7 @@ public class TableService {
             else {
                 //callback method for preflop action callback
                 //returns an int (bet size)
-                invokePreFlopActionCallback(table.getSeats()[currPlayerIndex], currPlayerIndex, table.getCurrentBet());
+                invokePreFlopActionCallback(table.getSeats()[currPlayerIndex], currPlayerIndex, table.getCurrentBet(), table.getPot(), minBet);
 
                 CompletableFuture<PlayerActionResponse> future = new CompletableFuture<>();
                 playerActionResponse = future;
@@ -333,7 +334,6 @@ public class TableService {
                     PlayerActionResponse playerActionResponse = future.get();
                     char action = playerActionResponse.getAction();
                     float bet = playerActionResponse.getBetAmount();
-                    float minBet = (table.getCurrentBet() - previousBet) + table.getCurrentBet();
 
                     //if they fold
                     if (action == 'F' && bet == 0) {
@@ -382,9 +382,9 @@ public class TableService {
             }
         }
     }
-    private void invokePreFlopActionCallback(Player player, int seat, float currentBet) {
+    private void invokePreFlopActionCallback(Player player, int seat, float currentBet, float potSize, float minBet) {
         if(tableCallback != null) {
-            tableCallback.onPreFlopAction(player, seat, currentBet);
+            tableCallback.onPreFlopAction(player, seat, currentBet, potSize, minBet);
         }
     }
 

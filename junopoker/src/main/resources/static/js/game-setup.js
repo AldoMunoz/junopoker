@@ -46,6 +46,9 @@ $(document).ready(function () {
                     // Establish WebSocket connection
                     establishWebSocketConnection();
 
+                    //set the small blind = 1;
+                    setSmallBlind(1);
+
                     // Populate the <h4> headers with the selected game type and stakes
                     $('#game-type').text(`Game Type: Texas Hold'em`);
                     $('#stakes').text(`Stakes: 1/2`);

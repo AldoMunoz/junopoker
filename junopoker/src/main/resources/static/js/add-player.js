@@ -138,12 +138,43 @@ async function playerEvents(payload) {
     else if (message.type === "PLAYER_ACTION") {
         console.log(message);
 
+        //set min bet value, max bet value, and pot size;
+        setMinValue(message.minBet);
+        setMaxValue(message.player.chipCount);
+        setPotSize(message.potSize);
+
+        if($("#call").length == 0 && message.player.currentBet != message.currentBet) {
+            const button = $("#check");
+
+            // Change the ID attribute to "call"
+            button.attr("id", "call");
+
+            // Change the onclick attribute to "onCall()"
+            button.attr("onclick", "onCall()");
+
+            button.text(`Call: ${message.currentBet-message.player.currentBet}`);
+        }
+        else if ($("#check").length == 0  && message.player.currentBet == message.currentBet){
+            const button = $("#call");
+
+            // Change the ID attribute to "call"
+            button.attr("id", "check");
+
+            // Change the onclick attribute to "onCall()"
+            button.attr("onclick", "onCheck()");
+
+            button.text("Check");
+        }
+
+        //default the slider and bet value to min bet (0%)
+        const bet = updateSlider(0);
+        updateBetButton(bet);
+        updateInputBox(bet);
+
+        //display the action bar
         const actionBarDiv = $(".action-bar");
         actionBarDiv.css("display", "flex");
 
-        if(message.player.currentBet != message.currentBet) {
-
-        }
 
 
 

@@ -122,18 +122,18 @@
         </div>
         <!-- Custom bet slider and display -->
         <div class="custom-bet">
-            <div class="inc-bet" onclick="increaseCustomBet()">
+            <div class="inc-bet" onclick="decrementBet()">
                 <p>-</p>
             </div>
             <div class="slider-container">
                 <div class="slider-track"></div>
                 <div class="slider-handle"></div>
             </div>
-            <div class="dec-bet" onclick="decreaseCustomBet()">
+            <div class="dec-bet" onclick="incrementBet()">
                 <p>+</p>
             </div>
             <div>
-                <input class="bet-input" type="text" id="slider-value" readonly>
+                <input class="bet-input" type="text" pattern="[0-9\.]*" id="slider-value" oninput="onInputChange(this.value)">
             </div>
         </div>
         <!-- Basic action buttons -->

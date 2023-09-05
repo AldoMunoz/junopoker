@@ -95,11 +95,24 @@ function changeBetSize(size) {
 }
 
 function onInputChange(input) {
+    let inputArray = input.split('.');
 
+    let duplicate = false;
+    // Check if there is more than one period
+    if (inputArray.length > 2) {
+        duplicate = true;
+
+        // Remove the last element (the extra period)
+        inputArray.pop();
+
+        // Join the array elements back together with periods
+        input = inputArray.join('.');
+    }
 
     if(input < minValue) {
         const bet= updateSlider(0);
         updateBetButton(bet);
+        if(duplicate) updateInputBox(input);
     }
     else if(input > maxValue) {
         const bet = updateSlider(100);
@@ -109,7 +122,7 @@ function onInputChange(input) {
         //if the input hasn't changed, do nothing
     //for example if user changed input from "4.00" to "4.0"
     else if(input == (lastSliderPercentage / 100) * (maxValue - minValue) + minValue) {
-
+        if (duplicate) updateInputBox(input);
     }
     else {
         const percentage = ((input - minValue) / (maxValue - minValue)) * 100;
@@ -119,17 +132,60 @@ function onInputChange(input) {
     }
 }
 function onFold()  {
-
+    const response = {
+        action: 'F',
+        betAmount: 0
+    }
+    stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
 }
 function onCheck() {
-
+    const response = {
+        action: 'C',
+        betAmount: 0
+    }
+    stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
 }
 function onCall() {
+    const button = $("#call");
+
+    const bet = getBetValue(button);
+
+    const response = {
+        action: 'B',
+        betAmount: bet
+    }
+    stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
 
 }
-function onBet(bet) {
+function onBet() {
+    const button = $("#bet");
 
+    const bet = getBetValue(button);
+
+    const response = {
+        action: 'B',
+        betAmount: bet
+    }
+    stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
 }
+function getBetValue(button) {
+    const buttonText = button.text();
+    let numberMatch = buttonText.match(/[\d\.]+/);
+
+    if (numberMatch) {
+        // Extracted number as a string
+        let numberString = numberMatch[0];
+
+        // Parse the number to a float
+        let parsedNumber = parseFloat(numberString);
+
+        return parsedNumber;
+    } else {
+        return -1;
+    }
+}
+
+
 function setMinValue (value) {
     minValue = value;
 }

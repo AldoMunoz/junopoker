@@ -174,16 +174,6 @@ async function playerEvents(payload) {
         //display the action bar
         const actionBarDiv = $(".action-bar");
         actionBarDiv.css("display", "flex");
-
-
-
-
-
-        const response = {
-            action: 'F',
-            betAmount: 0
-        }
-        stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
     }
 }
 

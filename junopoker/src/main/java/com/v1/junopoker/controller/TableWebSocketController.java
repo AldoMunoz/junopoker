@@ -83,20 +83,38 @@ public class TableWebSocketController implements TableCallback {
     //receive that action and send it to TableService.java using a CompletableFuture
     public void onPreFlopAction(Player player, int seat, float currentBet, float potSize, float minBet) {
         System.out.println("entered onPreFlopAction()");
-        //create a player request object and populate it with the passed fields
-        PlayerActionRequest request = new PlayerActionRequest();
-        request.setType(RequestType.PLAYER_ACTION);
-        request.setPlayer(player);
-        request.setSeat(seat);
-        request.setCurrentBet(currentBet);
-        request.setPotSize(potSize);
-        request.setMinBet(minBet);
 
+        //TODO: change name of PublicHoleCardsRequest to something more generic
+        //TODO: maybe seatRequest
+        PublicHoleCardsRequest publicRequest= new PublicHoleCardsRequest();
+        publicRequest.setType(RequestType.PLAYER_ACTION);
+        publicRequest.setSeat(seat);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", publicRequest);
+
+        //create a player request object and populate it with the passed fields
+        PlayerActionRequest privateRequest = new PlayerActionRequest();
+        privateRequest.setType(RequestType.PLAYER_ACTION);
+        privateRequest.setPlayer(player);
+        privateRequest.setSeat(seat);
+        privateRequest.setCurrentBet(currentBet);
+        privateRequest.setPotSize(potSize);
+        privateRequest.setMinBet(minBet);
         //send websocket message to player whose turn is to act
-        messagingTemplate.convertAndSend("/topic/playerEvents/" + player.getUsername(), request);
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + player.getUsername(), privateRequest);
     }
     @MessageMapping("/playerActionEvent")
     public void returnPreFlopAction(@Payload PlayerActionResponse response) {
+        EndPlayerActionRequest request = new EndPlayerActionRequest();
+        request.setType(RequestType.END_PLAYER_ACTION);
+        request.setSeat(response.getSeat());
+        request.setBet(response.getBetAmount());
+        request.setAction(response.getAction());
+        request.setStackSize(response.getStackSize());
+        request.setPotSize(response.getPotSize());
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
+
         tableService.handlePlayerAction(response);
     }
 }

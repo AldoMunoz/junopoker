@@ -345,7 +345,7 @@ public class TableService {
                         continue;
                     }
                     //if they bet:
-                    else if (action == 'B' && bet >= minBet) {
+                    else if ((action == 'B' || action == 'P') && bet >= minBet) {
                         //update player chip count
                         table.getSeats()[currPlayerIndex].setChipCount
                                 (table.getSeats()[currPlayerIndex].getChipCount() + table.getSeats()[currPlayerIndex].getCurrentBet() - bet);

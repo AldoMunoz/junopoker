@@ -10,6 +10,7 @@ let maxValue = 0;
 let smallBlind = 0;
 let lastSliderPercentage = 0;
 let potSize = 0;
+let seatNo = -1;
 
 function getSliderPercentage(event) {
     const containerRect = sliderContainer[0].getBoundingClientRect();
@@ -134,15 +135,27 @@ function onInputChange(input) {
 function onFold()  {
     const response = {
         action: 'F',
-        betAmount: 0
+        betAmount: 0,
+        seat: seatNo,
+        stackSize: maxValue,
+        potSize: potSize
     }
+
+    hideActionBar();
+
     stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
 }
 function onCheck() {
     const response = {
         action: 'C',
-        betAmount: 0
+        betAmount: 0,
+        seat: seatNo,
+        stackSize: maxValue,
+        potSize: potSize
     }
+
+    hideActionBar();
+
     stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
 }
 function onCall() {
@@ -151,11 +164,16 @@ function onCall() {
     const bet = getBetValue(button);
 
     const response = {
-        action: 'B',
-        betAmount: bet
+        action: 'P',
+        betAmount: bet,
+        seat: seatNo,
+        stackSize: maxValue,
+        potSize: potSize
     }
-    stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
 
+    hideActionBar();
+
+    stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
 }
 function onBet() {
     const button = $("#bet");
@@ -164,8 +182,14 @@ function onBet() {
 
     const response = {
         action: 'B',
-        betAmount: bet
+        betAmount: bet,
+        seat: seatNo,
+        stackSize: maxValue,
+        potSize: potSize
     }
+
+    hideActionBar();
+
     stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
 }
 function getBetValue(button) {
@@ -185,6 +209,10 @@ function getBetValue(button) {
     }
 }
 
+function hideActionBar() {
+    const actionBar = $(".action-bar")
+    actionBar.css("display", "none");
+}
 
 function setMinValue (value) {
     minValue = value;
@@ -200,6 +228,10 @@ function setSmallBlind(value) {
 
 function setPotSize(value) {
     potSize = value;
+}
+
+function setSeat(seat) {
+    seatNo = seat;
 }
 
 sliderHandle.on("mousedown", (event) => {

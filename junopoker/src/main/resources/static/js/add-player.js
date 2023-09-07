@@ -142,6 +142,7 @@ async function playerEvents(payload) {
         setMinValue(message.minBet);
         setMaxValue(message.player.chipCount);
         setPotSize(message.potSize);
+        setSeat(message.seat);
 
         if($("#call").length == 0 && message.player.currentBet != message.currentBet) {
             const button = $("#check");

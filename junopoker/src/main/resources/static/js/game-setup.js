@@ -111,8 +111,13 @@ function tableEvents(payload) {
     else if(message.type === "MOVE_BUTTON") moveButtonEvent(message);
     //view logic for when blinds are set and collected
     else if(message.type === "INIT_POT") initPotEvent(message);
-    //logic for when error occurred, most likely in payload body
+    //view logic for displaying player hole cards
     else if(message.type === "DEAL_PRE") dealHoleCardsEvent(message);
+    //view logic for highlighting which player's turn it is.
+    else if (message.type == "PLAYER_ACTION") playerActionEvent(message);
+    //view logic for un-highlighting which players turn it is
+    else if(message.type == "END_PLAYER_ACTION") endPlayerActionEvent(message);
+    //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
 }
 
@@ -228,6 +233,40 @@ function dealHoleCardsEvent(message) {
     holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
 }
 
+function playerActionEvent(message) {
+    const seatDiv = $(`#seat-${message.seat}`);
+    const playerInfoImg = seatDiv.find(".panel-img");
+
+    playerInfoImg.attr("src", "/images/player-info-on-turn.png");
+}
+function endPlayerActionEvent(message) {
+    console.log(message);
+
+    const seatDiv = $(`#seat-${message.seat}`);
+    const playerInfoImg = seatDiv.find(".panel-img");
+
+    playerInfoImg.attr("src", "/images/player-info.png");
+
+    if(message.action == "F") {
+        //TODO fold the cards
+        //send a message to /playerEvents/soCards get semi transparent instead of hidden
+        //TODO temp textbox saying "Fold" appears
+    }
+    else if (message.action == "C") {
+        //TODO temp textbox saying "Check" appears
+    }
+    else if(message.action == "P") {
+        //TODO change stack size, current bet, and potsize
+        //TODO temp textbox saying "Call" appears
+    }
+    else if (message.action == "B") {
+        //TODO change stack size, current bet, and potsize
+        //TODO temp textbox saying "Bet" appears
+    }
+    else {
+        console.log("Error occurred in END PLAYER ACTION")
+    }
+}
 /*HANDLE TABLE DATA SUBMISSION
 /*-----------------------------------*/
 

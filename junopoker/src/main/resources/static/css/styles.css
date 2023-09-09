@@ -173,7 +173,6 @@ h1, h4 {
     margin: 1vh;
 }
 .hole-cards {
-    /*display: none; */
     width: 90%;
     max-width: 13vh;
     height: 50%;
@@ -186,6 +185,28 @@ h1, h4 {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+.player-actions {
+    display: none;
+    /* background-color: */
+    border-radius: 5px;
+    width: 70%;
+    max-width: 13vh;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    top: calc(85%);
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.player-actions p {
+    width: 100%;
+    text-align: center;
+    color: white;
+    margin: 0.2vh;
 }
 .hole-cards img {
     flex: 1;

@@ -55,15 +55,16 @@ public class TableService {
     //gathers and executes all the functions needed to run ring poker game
     public void runGame(Table table) {
         //starts the game and sets the blinds
-        if (!table.isGameIsRunning()) {
+        if (!table.isGameRunning()) {
             setBlinds(table);
-            table.setGameIsRunning(true);
+            table.setGameRunning(true);
         }
-
+        table.setHandOver(false);
         moveBlinds(table);
         initiatePot(table);
         dealCards(table);
         preFlopBetting(table);
+        if(table.isHandOver()); //break
         //game will run while there are at least 2 people seated at the table
         /*while (table.getSeatedPlayerCount() > 1) {
             moveBlinds(table);
@@ -393,56 +394,80 @@ public class TableService {
     //TODO: example, everyone folds pre flop, and as such player never gets assigned a handRanking.
     public void completeHand(Table table) {
         // Initializing the best made hand rank
-        HandRanking max_rank = null;
-        Player[] players = table.getSeats();
-        for (Player player : players) {
-            if (player == null || !player.isInHand()) { continue;
-            }
-            else if (max_rank == null) max_rank = player.getHand().getHandRanking();
-            else if (player.getHand().getHandRanking().getRanking() > max_rank.getRanking())
-                max_rank = player.getHand().getHandRanking();
-        }
-        // Appending all players with hand rank equal to the max rank
-        ArrayList<Player> potential_winners = new ArrayList();
-        for (Player player : players) {
-            if (player != null && player.isInHand() &&
-                    player.getHand().getHandRanking() == max_rank) potential_winners.add(player);
-        }
-        // Initialize winners and find winner(s) within potential_winners array list
         ArrayList<Player> winners = new ArrayList<>();
-        for (Player player : potential_winners) {
-            if (winners.size() == 0) {winners.add(player); continue;}
-            int hand_pos = 0;
-            boolean decided = false;
-            // Comparing cards at index hand_pos within the current player in potential_winners
-            // and the first player in winners
-            while (hand_pos < 5 && !decided) {
-                int currWinnerVal = winners.get(0).getHand().getFiveCardHand()[hand_pos].getVal();
-                int currPlayerVal = player.getHand().getFiveCardHand()[hand_pos].getVal();
-                if (currWinnerVal > currPlayerVal) decided = true;
-                else if (currWinnerVal == currPlayerVal) hand_pos ++;
-                else {
-                    winners.clear();
-                    decided = true;
+        // Only going through the if when there are at least two winners, more efficient
+        if (table.getSeatedFoldCount() != table.getSeatedPlayerCount() - 1) {
+            HandRanking max_rank = null;
+            Player[] players = table.getSeats();
+            for (Player player : players) {
+                if (player == null || !player.isInHand()) {
+                    continue;
+                } else if (max_rank == null)
+                    max_rank = player.getHand().getHandRanking();
+                else if (player.getHand().getHandRanking().getRanking() > max_rank.getRanking())
+                    max_rank = player.getHand().getHandRanking();
+            }
+            // Appending all players with hand rank equal to the max rank
+            ArrayList<Player> potential_winners = new ArrayList();
+            for (Player player : players) {
+                if (player != null && player.isInHand() &&
+                        player.getHand().getHandRanking() == max_rank)
+                    potential_winners.add(player);
+            }
+            // Initialize winners and find winner(s) within potential_winners array list
+            for (Player player : potential_winners) {
+                if (winners.size() == 0) {
+                    winners.add(player);
+                    continue;
+                }
+                int hand_pos = 0;
+                boolean decided = false;
+                // Comparing cards at index hand_pos within the current player in potential_winners
+                // and the first player in winners
+                while (hand_pos < 5 && !decided) {
+                    int currWinnerVal = winners.get(0).getHand()
+                            .getFiveCardHand()[hand_pos].getVal();
+                    int currPlayerVal = player.getHand().getFiveCardHand()[hand_pos].getVal();
+                    if (currWinnerVal > currPlayerVal)
+                        decided = true;
+                    else if (currWinnerVal == currPlayerVal)
+                        hand_pos++;
+                    else {
+                        winners.clear();
+                        decided = true;
+                    }
+                }
+                // decided is true in two cases: we have found a better hand or a worse hand.
+                // Winners array list is updated to just contain the current player in potential_winners
+                // if their hand is better. Otherwise, we continue to
+                // the next iteration since a player with a worse hand will not be a winner.
+                if (decided && winners.size() == 0) {
+                    winners.add(player);
+                }
+                // if we iterated through the whole hand and decided is false, then we know the current
+                // player in potential_winners has an equal strength hand to the current winner(s), so
+                // that player is added.
+                else if (hand_pos == 5)
+                    winners.add(player);
+            }
+            // Chip stacks of players in winners are updated to contain pot/winners.size()
+            // additional chips.
+        }
+        // else is a general case for a single winner
+        else {
+            for (Player player : table.getSeats()) {
+                if (player != null && player.isInHand()) {
+                    winners.add(player);
                 }
             }
-            // decided is true in two cases: we have found a better hand or a worse hand.
-            // Winners array list is updated to just contain the current player in potential_winners
-            // if their hand is better. Otherwise, we continue to
-            // the next iteration since a player with a worse hand will not be a winner.
-            if (decided && winners.size() == 0) {
-                winners.add(player);
-            }
-            // if we iterated through the whole hand and decided is false, then we know the current
-            // player in potential_winners has an equal strength hand to the current winner(s), so
-            // that player is added.
-            else if (hand_pos == 5) winners.add(player);
         }
-        // Chip stacks of players in winners are updated to contain pot/winners.size()
-        // additional chips.
+        // allocation of winnings
         for (Player winner : winners) {
             winner.setChipCount(winner.getChipCount() + (table.getPot() / winners.size()));
         }
+
+        //hand is now over
+        table.setHandOver(true);
     }
     //Goes through the list of players and reassigns Hand value after turn and river
     public void getHandVals(Table table) {

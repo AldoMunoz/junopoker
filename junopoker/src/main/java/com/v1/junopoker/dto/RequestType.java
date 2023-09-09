@@ -11,4 +11,5 @@ public enum RequestType {
     DEAL_FLOP,
     DEAL_TURN,
     DEAL_RIVER,
+    FOLD
 }

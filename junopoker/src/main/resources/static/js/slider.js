@@ -12,6 +12,7 @@ let lastSliderPercentage = 0;
 let potSize = 0;
 let seatNo = -1;
 
+
 function getSliderPercentage(event) {
     const containerRect = sliderContainer[0].getBoundingClientRect();
     const sliderWidth = sliderHandle.outerWidth();

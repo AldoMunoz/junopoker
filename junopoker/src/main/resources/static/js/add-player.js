@@ -74,7 +74,7 @@ function subscribeToPlayerTopic(usernameInput, player) {
         };
         //sends message to all users that a player has taken a seat
         stompClient.send("/app/tableEvents", {}, JSON.stringify(playerRequest));
-        //sends message to the player themselves, used to hide other seat buttons
+        //sends message to the player to hide other seat buttons
         stompClient.send("/app/playerEvents", {}, JSON.stringify(playerRequest));
     }
     else console.log("Something went wrong before Websocket could send")
@@ -144,27 +144,38 @@ async function playerEvents(payload) {
         setPotSize(message.potSize);
         setSeat(message.seat);
 
-        if($("#call").length == 0 && message.player.currentBet != message.currentBet) {
-            const button = $("#check");
+        console.log("PB ", message.player.currentBet);
+        console.log("CB ", message.currentBet);
+        if(message.player.currentBet != message.currentBet) {
+            if($("#call").length == 0) {
+                const button = $("#check");
 
-            // Change the ID attribute to "call"
-            button.attr("id", "call");
+                // Change the ID attribute to "call"
+                button.attr("id", "call");
 
-            // Change the onclick attribute to "onCall()"
-            button.attr("onclick", "onCall()");
+                // Change the onclick attribute to "onCall()"
+                button.attr("onclick", "onCall()");
 
-            button.text(`Call: ${message.currentBet-message.player.currentBet}`);
+                button.text(`Call: ${message.currentBet-message.player.currentBet}`);
+            }
+            else {
+                const button = $("#call")
+                button.text(`Call: ${message.currentBet-message.player.currentBet}`);
+            }
         }
-        else if ($("#check").length == 0  && message.player.currentBet == message.currentBet){
-            const button = $("#call");
+        else if (message.player.currentBet == message.currentBet){
+            if($("#check").length == 0) {
+                const button = $("#call");
 
-            // Change the ID attribute to "call"
-            button.attr("id", "check");
+                // Change the ID attribute to "call"
+                button.attr("id", "check");
 
-            // Change the onclick attribute to "onCall()"
-            button.attr("onclick", "onCheck()");
+                // Change the onclick attribute to "onCall()"
+                button.attr("onclick", "onCheck()");
 
-            button.text("Check");
+                button.text("Check");
+
+            }
         }
 
         //default the slider and bet value to min bet (0%)
@@ -175,6 +186,22 @@ async function playerEvents(payload) {
         //display the action bar
         const actionBarDiv = $(".action-bar");
         actionBarDiv.css("display", "flex");
+    }
+    else if (message.type == "FOLD") {
+        const seatDiv = $(`#seat-${message.seat}`);
+        const cardsDiv = seatDiv.find(".hole-cards");
+        cardsDiv.css("opacity", "0");
+        cardsDiv.css("display", "flex");
+
+        //TODO, don't know if this works, check it
+        cardsDiv.hover(
+            function() {
+                cardsDiv.css("opacity", "0.5");
+            },
+            function () {
+                cardsDiv.css("opacity", "0");
+            }
+        )
     }
 }
 

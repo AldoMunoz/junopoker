@@ -25,7 +25,8 @@ public class Table {
     private int smallBlind;
     private int dealerButton;
     private float currentBet;
-    private boolean gameIsRunning;
+    private boolean gameRunning;
+    private boolean handOver;
     private DeckService deckService;
 
     //initiates table
@@ -41,6 +42,6 @@ public class Table {
         bigBlind = -1;
         smallBlind = -1;
         dealerButton = -1;
-        gameIsRunning = false;
+        gameRunning = false;
     }
 }

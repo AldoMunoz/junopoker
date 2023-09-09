@@ -117,6 +117,8 @@ function tableEvents(payload) {
     else if (message.type == "PLAYER_ACTION") playerActionEvent(message);
     //view logic for un-highlighting which players turn it is
     else if(message.type == "END_PLAYER_ACTION") endPlayerActionEvent(message);
+    //view logic for displaying text bubble of player action
+    else if(message.type === "FOLD") foldEvent(message);
     //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
 }
@@ -126,7 +128,6 @@ function sitTableEvent(message) {
     const seatDiv = $(`#seat-${message.seat}`);
     seatDiv.show();
     seatDiv.empty();
-
 
     const playerInfoDiv = $("<div class='player-info'></div>");
 
@@ -139,14 +140,14 @@ function sitTableEvent(message) {
     playerPanelDiv.append(`<p class="player-chip-counts" id="chip-count-${message.seat}">${message.player.chipCount}</p>`);
 
     const holeCardDiv =$("<div class='hole-cards'></div>");
-    /*holeCardDiv.append(`<img src="/images/cards/JACK_C.png" alt="Image 1">`);
-    holeCardDiv.append(`<img src="/images/cards/JACK_H.png" alt="Image 1">`);
-    */
-    //holeCardDiv.append(`<p class="player-action-display" id="action-display-${i}"></p>`)
+
+    const playerActionsDiv = $("<div class='player-actions'></div>");
+    playerActionsDiv.append(`<p></p>`);
 
     playerInfoDiv.append(playerIconDiv);
     playerInfoDiv.append(playerPanelDiv);
     playerInfoDiv.append(holeCardDiv);
+    playerInfoDiv.append(playerActionsDiv);
 
     seatDiv.append(playerInfoDiv);
 }
@@ -240,32 +241,93 @@ function playerActionEvent(message) {
     playerInfoImg.attr("src", "/images/player-info-on-turn.png");
 }
 function endPlayerActionEvent(message) {
-    console.log(message);
+    console.log("End player action event: ", message);
 
+    //find the player's seat div and unhighlight their player panel
     const seatDiv = $(`#seat-${message.seat}`);
     const playerInfoImg = seatDiv.find(".panel-img");
-
     playerInfoImg.attr("src", "/images/player-info.png");
 
-    if(message.action == "F") {
-        //TODO fold the cards
-        //send a message to /playerEvents/soCards get semi transparent instead of hidden
+    //get the player's username
+    const playerUsername = seatDiv.find(".player-usernames").text();
+
+    //if they folded
+    if(message.action === "F") {
+        //hide their cards
+        const cardsDiv = seatDiv.find(".hole-cards");
+        cardsDiv.hide();
+
+        //creates and sends message to controller
+        //allows the user who folded to see their cards on hover until the hand ends
+        const request = {
+            type: "FOLD",
+            username: playerUsername,
+            seat: message.seat
+        }
+        //sends request to controller to modify the display of the cards for the folded player
+        stompClient.send("/app/foldEvent", {}, JSON.stringify(request));
+
         //TODO temp textbox saying "Fold" appears
     }
-    else if (message.action == "C") {
+    else if (message.action === "C") {
         //TODO temp textbox saying "Check" appears
     }
-    else if(message.action == "P") {
-        //TODO change stack size, current bet, and potsize
+    else if(message.action === "P") {
+        //update player's bet display
+        const betDisplayDiv = $(`#bet-display-${message.seat}`);
+        const betElement = betDisplayDiv.find(".player-bet-display");
+        const previousBet = parseFloat(betElement.text());
+        const newBet = previousBet + message.bet;
+        betElement.text(newBet);
+
+        //update player's chip count
+        const chipCountElement = seatDiv.find(".player-chip-counts");
+        chipCountElement.text(message.stackSize-message.bet);
+
+        //update the pot size
+        const potElement = $("#total-pot");
+        potElement.text("Total Pot: " + (message.potSize+message.bet));
+
         //TODO temp textbox saying "Call" appears
     }
-    else if (message.action == "B") {
-        //TODO change stack size, current bet, and potsize
+    else if (message.action === "B") {
+        //update player's bet display
+        const betDisplayDiv = $(`#bet-display-${message.seat}`);
+        const betElement = betDisplayDiv.find(".player-bet-display");
+        //save previous bet, used to calculate new stack size for player and pot size
+        const previousBet = parseFloat(betElement.text());
+        betElement.text(message.bet);
+
+        //update player's chip count
+        const chipCountElement = seatDiv.find(".player-chip-counts");
+        chipCountElement.text(message.stackSize-(message.bet - previousBet));
+
+        //update the pot size
+        const potElement = $("#total-pot");
+        potElement.text("Total Pot: " + (message.potSize+ (message.bet - previousBet)));
+
         //TODO temp textbox saying "Bet" appears
     }
     else {
         console.log("Error occurred in END PLAYER ACTION")
     }
+}
+
+function foldEvent(message) {
+    const seatDiv = $(`#seat-${message.seat}`);
+    const playerActionsDiv = seatDiv.find(".player-actions");
+    const pTag = playerActionsDiv.find("p");
+
+
+    pTag.text("Fold");
+    playerActionsDiv.css("background-color", "grey");
+    playerActionsDiv.css("display", "block");
+
+    // Use setTimeout to revert the changes after one second (1000 milliseconds)
+    setTimeout(function() {
+        playerActionsDiv.css("display", "none");
+        pTag.text("");
+    }, 1000);
 }
 /*HANDLE TABLE DATA SUBMISSION
 /*-----------------------------------*/
@@ -342,6 +404,7 @@ function populateTable(seats) {
         }
         //if seat is taken, show player icon with correct player information
         else {
+            //TODO: create a separate method for this;
             const seatDiv = $(`#seat-${i}`);
             seatDiv.empty();
 
@@ -355,16 +418,14 @@ function populateTable(seats) {
             playerPanelDiv.append(`<p class="player-chip-counts" id="chip-count-${i}">${seats[i].chipCount}</p>`);
 
             const holeCardDiv =$("<div class='hole-cards'></div>");
-            /*holeCardDiv.append(`<img src="/images/cards/JACK_C.png" alt="Image 1">`);
-            holeCardDiv.append(`<img src="/images/cards/JACK_H.png" alt="Image 1">`);
-            */
 
-            //playerTextDiv.append(`<p class="player-action-display" id="action-display-${i}"></p>`)
+            const playerActionsDiv = $("<div class='player-actions'></div>");
+            playerActionsDiv.append(`<p></p>`);
 
             playerInfoDiv.append(playerIconDiv);
             playerInfoDiv.append(playerPanelDiv);
             playerInfoDiv.append(holeCardDiv);
-
+            playerInfoDiv.append(playerActionsDiv);
 
             seatDiv.append(playerInfoDiv);
         }

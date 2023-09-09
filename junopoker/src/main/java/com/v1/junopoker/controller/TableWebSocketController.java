@@ -12,8 +12,6 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.util.concurrent.CompletableFuture;
-
 @Controller
 public class TableWebSocketController implements TableCallback {
     private SimpMessagingTemplate messagingTemplate;
@@ -65,7 +63,7 @@ public class TableWebSocketController implements TableCallback {
     }
     @Override
     public void onHoleCardsDealt(String username, int seat, Card[] holeCards) {
-        PublicHoleCardsRequest publicRequest = new PublicHoleCardsRequest();
+        SeatRequest publicRequest = new SeatRequest();
         publicRequest.setType(RequestType.DEAL_PRE);
         publicRequest.setSeat(seat);
 
@@ -86,7 +84,7 @@ public class TableWebSocketController implements TableCallback {
 
         //TODO: change name of PublicHoleCardsRequest to something more generic
         //TODO: maybe seatRequest
-        PublicHoleCardsRequest publicRequest= new PublicHoleCardsRequest();
+        SeatRequest publicRequest= new SeatRequest();
         publicRequest.setType(RequestType.PLAYER_ACTION);
         publicRequest.setSeat(seat);
 
@@ -116,5 +114,15 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
 
         tableService.handlePlayerAction(response);
+    }
+
+    @MessageMapping("/foldEvent")
+    public void foldEvent(@Payload FoldRequest request) {
+        System.out.println("Entered fold event");
+        SeatRequest seatRequest = new SeatRequest();
+        seatRequest.setType(request.getType());
+        seatRequest.setSeat(request.getSeat());
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + request.getUsername(), seatRequest);
+        messagingTemplate.convertAndSend("/topic/tableEvents", seatRequest);
     }
 }

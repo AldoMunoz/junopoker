@@ -193,6 +193,9 @@ function onBet() {
 
     stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
 }
+function onAllIn() {
+    //TODO add functionality to all in button press
+}
 function getBetValue(button) {
     const buttonText = button.text();
     let numberMatch = buttonText.match(/[\d\.]+/);

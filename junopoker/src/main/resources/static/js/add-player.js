@@ -138,44 +138,37 @@ async function playerEvents(payload) {
     else if (message.type === "PLAYER_ACTION") {
         console.log(message);
 
-        //set min bet value, max bet value, and pot size;
+        //set min bet value, max bet value, and pot size and the seat in slider.js;
         setMinValue(message.minBet);
         setMaxValue(message.player.chipCount);
         setPotSize(message.potSize);
         setSeat(message.seat);
 
-        console.log("PB ", message.player.currentBet);
-        console.log("CB ", message.currentBet);
-        if(message.player.currentBet != message.currentBet) {
-            if($("#call").length == 0) {
-                const button = $("#check");
-
-                // Change the ID attribute to "call"
-                button.attr("id", "call");
-
-                // Change the onclick attribute to "onCall()"
-                button.attr("onclick", "onCall()");
-
-                button.text(`Call: ${message.currentBet-message.player.currentBet}`);
-            }
-            else {
-                const button = $("#call")
-                button.text(`Call: ${message.currentBet-message.player.currentBet}`);
-            }
+        //clear the basic actions div, apart from the fold button, which is always required
+        const basicActionsDiv = $(".basic-actions");
+        basicActionsDiv.children().not("#fold").remove();
+        //if the current bet is greater than the player's stack, they can fold or go all-in
+        if(message.currentBet > message.player.chipCount) {
+            //add "all-in" button
+            basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In</button>`);
         }
-        else if (message.player.currentBet == message.currentBet){
-            if($("#check").length == 0) {
-                const button = $("#call");
-
-                // Change the ID attribute to "call"
-                button.attr("id", "check");
-
-                // Change the onclick attribute to "onCall()"
-                button.attr("onclick", "onCheck()");
-
-                button.text("Check");
-
-            }
+        //if the min bet would be greater than the player's stack, they can fold, call, or go all-in
+        else if (message.minBet > message.player.chipCount && message.player.currentBet != message.currentBet) {
+            //add "call" and "all-in" buttons
+            basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
+            basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In</button>`)
+        }
+        //if the player's bet is not equal to the table bet, they can fold, call, or raise
+        else if(message.player.currentBet != message.currentBet) {
+            //add "call" and "raise" buttons
+            basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
+            basicActionsDiv.append(`<button id="raise" onclick="onBet()">Raise: </button>`)
+        }
+        //if both the table's current bet and the player's current bet == 0, they can fold, check, or call
+        else if (message.player.currentBet == 0 && message.currentBet == 0){
+            //add "check" and "bet" buttons
+            basicActionsDiv.append(`<button id="check" onclick="onCheck()">Check</button>`);
+            basicActionsDiv.append(`<button id="bet" onclick="onBet()">Bet: </button>`)
         }
 
         //default the slider and bet value to min bet (0%)
@@ -187,17 +180,21 @@ async function playerEvents(payload) {
         const actionBarDiv = $(".action-bar");
         actionBarDiv.css("display", "flex");
     }
+    //code to display cards on hover after a player folds
     else if (message.type == "FOLD") {
+        //find the player's cards
         const seatDiv = $(`#seat-${message.seat}`);
         const cardsDiv = seatDiv.find(".hole-cards");
+        //display the cards on the page with 0 opacity (invisible)
         cardsDiv.css("opacity", "0");
         cardsDiv.css("display", "flex");
 
-        //TODO, don't know if this works, check it
         cardsDiv.hover(
+            //on hover, display the cards at 50% opacity
             function() {
                 cardsDiv.css("opacity", "0.5");
             },
+            //on exit, display the cards at 0% opacity
             function () {
                 cardsDiv.css("opacity", "0");
             }

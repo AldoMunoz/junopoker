@@ -118,7 +118,7 @@ function tableEvents(payload) {
     //view logic for un-highlighting which players turn it is
     else if(message.type == "END_PLAYER_ACTION") endPlayerActionEvent(message);
     //view logic for displaying text bubble of player action
-    else if(message.type === "FOLD") foldEvent(message);
+    else if(message.type === "FOLD" || message.type === "CHECK") foldOrCheckEvent(message);
     //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
 }
@@ -242,7 +242,6 @@ function playerActionEvent(message) {
 }
 function endPlayerActionEvent(message) {
     console.log("End player action event: ", message);
-
     //find the player's seat div and unhighlight their player panel
     const seatDiv = $(`#seat-${message.seat}`);
     const playerInfoImg = seatDiv.find(".panel-img");
@@ -266,12 +265,12 @@ function endPlayerActionEvent(message) {
         }
         //sends request to controller to modify the display of the cards for the folded player
         stompClient.send("/app/foldEvent", {}, JSON.stringify(request));
-
-        //TODO temp textbox saying "Fold" appears
     }
+    //if they checked
     else if (message.action === "C") {
-        //TODO temp textbox saying "Check" appears
+        //nothing really happens, their turn just ends
     }
+    //if they called (P stands for pay)
     else if(message.action === "P") {
         //update player's bet display
         const betDisplayDiv = $(`#bet-display-${message.seat}`);
@@ -287,8 +286,6 @@ function endPlayerActionEvent(message) {
         //update the pot size
         const potElement = $("#total-pot");
         potElement.text("Total Pot: " + (message.potSize+message.bet));
-
-        //TODO temp textbox saying "Call" appears
     }
     else if (message.action === "B") {
         //update player's bet display
@@ -296,6 +293,7 @@ function endPlayerActionEvent(message) {
         const betElement = betDisplayDiv.find(".player-bet-display");
         //save previous bet, used to calculate new stack size for player and pot size
         const previousBet = parseFloat(betElement.text());
+        //set the player bet display to equal to new bet
         betElement.text(message.bet);
 
         //update player's chip count
@@ -305,30 +303,48 @@ function endPlayerActionEvent(message) {
         //update the pot size
         const potElement = $("#total-pot");
         potElement.text("Total Pot: " + (message.potSize+ (message.bet - previousBet)));
-
-        //TODO temp textbox saying "Bet" appears
     }
     else {
         console.log("Error occurred in END PLAYER ACTION")
     }
+    //display an action bubble under the player icon briefly displaying what action the user took
+    displayActionBubble(message.seat, message.action);
 }
-
-function foldEvent(message) {
-    const seatDiv = $(`#seat-${message.seat}`);
+function displayActionBubble(seat, action) {
+    const seatDiv = $(`#seat-${seat}`);
     const playerActionsDiv = seatDiv.find(".player-actions");
     const pTag = playerActionsDiv.find("p");
 
+    switch(action) {
+        case "F":
+            pTag.text("Fold");
+            playerActionsDiv.css("background-color", "grey");
+            break;
+        case "C":
+            pTag.text("Check");
+            playerActionsDiv.css("background-color", "grey");
+            break;
+        case "P":
+            pTag.text("Call");
+            playerActionsDiv.css("background-color", "blue");
+            break;
+        case "B":
+            pTag.text("Bet")
+            playerActionsDiv.css("background-color", "orange");
+            break;
+    }
 
-    pTag.text("Fold");
-    playerActionsDiv.css("background-color", "grey");
+    //display the action bubble on the screen
     playerActionsDiv.css("display", "block");
 
     // Use setTimeout to revert the changes after one second (1000 milliseconds)
     setTimeout(function() {
+        //stops displaying the action bubble, resets the text to empty
         playerActionsDiv.css("display", "none");
         pTag.text("");
     }, 1000);
 }
+
 /*HANDLE TABLE DATA SUBMISSION
 /*-----------------------------------*/
 

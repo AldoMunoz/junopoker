@@ -118,11 +118,9 @@ public class TableWebSocketController implements TableCallback {
 
     @MessageMapping("/foldEvent")
     public void foldEvent(@Payload FoldRequest request) {
-        System.out.println("Entered fold event");
         SeatRequest seatRequest = new SeatRequest();
         seatRequest.setType(request.getType());
         seatRequest.setSeat(request.getSeat());
         messagingTemplate.convertAndSend("/topic/playerEvents/" + request.getUsername(), seatRequest);
-        messagingTemplate.convertAndSend("/topic/tableEvents", seatRequest);
     }
 }

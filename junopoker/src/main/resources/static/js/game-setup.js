@@ -102,9 +102,9 @@ function tableEvents(payload) {
     //parse the body of the message
     let message = JSON.parse(payload.body);
 
+    //TODO: Make this a switch-case
     //view logic for when a new player takes a seat
     if(message.type === "SIT") sitTableEvent(message);
-
     //view logic for when player stands up from seat
     else if(message.type === "STAND") standTableEvent(message);
     //view logic for when button is set
@@ -117,8 +117,10 @@ function tableEvents(payload) {
     else if (message.type == "PLAYER_ACTION") playerActionEvent(message);
     //view logic for un-highlighting which players turn it is
     else if(message.type == "END_PLAYER_ACTION") endPlayerActionEvent(message);
-    //view logic for displaying text bubble of player action
-    else if(message.type === "FOLD" || message.type === "CHECK") foldOrCheckEvent(message);
+    //view logic for when the hand has ended
+    else if (message.type === "COMPLETE_HAND") completeHandEvent(message);
+    //view logic for dealing the flop
+    else if (message.type === "FLOP") dealFlopEvent(message);
     //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
 }
@@ -343,6 +345,78 @@ function displayActionBubble(seat, action) {
         playerActionsDiv.css("display", "none");
         pTag.text("");
     }, 1000);
+}
+
+//Completes closing actions after the hand has ended
+function completeHandEvent(message) {
+    //Reset and hide the bet displays
+    for(let i = 0; i < 5; i++) {
+        $(`#bet-display-${i}`).text("");
+        $(`#bet-display-${i}`).hide();
+    }
+
+    //list of winner(s) seat positions, used to display winner message
+    let winners = []
+    //Find the winners
+    //Change their player icon to display the updated stack size
+    for (let i = 0; i < message.seats.length; i++) {
+        if(message.seats[i] != null && message.seats[i].inHand === true) {
+            //push the index of the winner to winners array
+            winners.push(i);
+            $(`#chip-count-${i}`).text(message.seats[i].chipCount);
+            console.log("Updated chip count");
+        }
+    }
+
+    //Set Total Pot display = 0;
+    $("#total-pot").text("Total Pot: 0")
+
+    // Create a Promise for the winner animations
+    function animateWinners() {
+        return new Promise(resolve => {
+            const winnerPromises = winners.map(winner => {
+                return new Promise(winnerResolve => {
+                    const seatDiv = $(`#seat-${winner}`);
+                    const playerActionsDiv = seatDiv.find(".player-actions");
+                    const pTag = playerActionsDiv.find("p");
+
+                    pTag.text("WINNER");
+                    playerActionsDiv.css("background-color", "green");
+
+                    // Display the action bubble on the screen
+                    playerActionsDiv.css("display", "block");
+
+                    // Use setTimeout to revert the changes after three seconds (3000 milliseconds)
+                    setTimeout(function() {
+                        // Stops displaying the action bubble, resets the text to empty
+                        playerActionsDiv.css("display", "none");
+                        pTag.text("");
+                        winnerResolve(); // Resolve the individual winner animation
+                    }, 3000);
+                });
+            });
+
+            // Wait for all winner animations to complete
+            Promise.all(winnerPromises).then(() => {
+                resolve(); // Resolve the parent promise once all winners are done
+            });
+        });
+    }
+    // Execute winner animations and then proceed to the next loop
+    animateWinners().then(() => {
+        //Remove each player's hole cards
+        for (let i = 0; i < message.seats.length; i++) {
+            if (message.seats[i] != null) {
+                const seatDiv = $(`#seat-${i}`);
+                const holeCardsDiv = seatDiv.find(".hole-cards");
+                holeCardsDiv.empty();
+            }
+        }
+    });
+}
+
+function dealFlopEvent(message) {
+    console.log("Entered dealFlopEvent")
 }
 
 /*HANDLE TABLE DATA SUBMISSION

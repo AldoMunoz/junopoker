@@ -150,25 +150,27 @@ async function playerEvents(payload) {
         //if the current bet is greater than the player's stack, they can fold or go all-in
         if(message.currentBet > message.player.chipCount) {
             //add "all-in" button
-            basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In</button>`);
+            basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In ${message.player.chipCount}</button>`);
         }
         //if the min bet would be greater than the player's stack, they can fold, call, or go all-in
         else if (message.minBet > message.player.chipCount && message.player.currentBet != message.currentBet) {
             //add "call" and "all-in" buttons
             basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
-            basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In</button>`)
+            basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In ${message.player.chipCount}</button>`)
         }
         //if the player's bet is not equal to the table bet, they can fold, call, or raise
         else if(message.player.currentBet != message.currentBet) {
             //add "call" and "raise" buttons
             basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
             basicActionsDiv.append(`<button id="raise" onclick="onBet()">Raise: </button>`)
+            setBetButtonType('r');
         }
         //if both the table's current bet and the player's current bet == 0, they can fold, check, or call
         else if (message.player.currentBet == 0 && message.currentBet == 0){
             //add "check" and "bet" buttons
             basicActionsDiv.append(`<button id="check" onclick="onCheck()">Check</button>`);
             basicActionsDiv.append(`<button id="bet" onclick="onBet()">Bet: </button>`)
+            setBetButtonType('b');
         }
 
         //default the slider and bet value to min bet (0%)

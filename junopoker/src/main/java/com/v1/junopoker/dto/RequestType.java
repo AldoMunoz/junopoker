@@ -14,5 +14,8 @@ public enum RequestType {
     FOLD,
     CHECK,
     CALL,
-    BET
+    BET,
+
+    COMPLETE_HAND,
+    FLOP
 }

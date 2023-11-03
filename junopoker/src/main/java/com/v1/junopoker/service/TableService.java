@@ -205,7 +205,7 @@ public class TableService {
     public void dealFlop (Table table) {
         DeckService deckService = new DeckService();
 
-        //adds 3 cards (flop) to the board
+        //add 3 cards to the board
         table.getBoard().add(deckService.drawCard(table.getDeck()));
         table.getBoard().add(deckService.drawCard(table.getDeck()));
         table.getBoard().add(deckService.drawCard(table.getDeck()));
@@ -217,7 +217,17 @@ public class TableService {
                 Hand hand = new Hand(table.getSeats()[i].getHoleCards(), table.getBoard());
                 table.getSeats()[i].setHand(hand);
                 table.getSeats()[i].getHand().getHandRanking();
+
+                //TODO callback method to each individual player with their hand ranking
             }
+        }
+
+        invokeDealFlopCallback(table.getBoard());
+    }
+
+    private void invokeDealFlopCallback(ArrayList<Card> flop) {
+        if(tableCallback != null) {
+            tableCallback.onFlopDealt(flop);
         }
     }
 
@@ -389,9 +399,6 @@ public class TableService {
         }
     }
 
-
-    //TODO: handle cases for when the hand completes before showdown
-    //TODO: example, everyone folds pre flop, and as such player never gets assigned a handRanking.
     public void completeHand(Table table) {
         // Initializing the best made hand rank
         ArrayList<Player> winners = new ArrayList<>();
@@ -466,9 +473,19 @@ public class TableService {
             winner.setChipCount(winner.getChipCount() + (table.getPot() / winners.size()));
         }
 
+        //invoke callback method for ending the hand (clean up front end)
+        invokeCompleteHandCallback(table.getSeats());
+
         //hand is now over
         table.setHandOver(true);
     }
+    private void invokeCompleteHandCallback(Player[] seats) {
+        if(tableCallback != null) {
+            tableCallback.onCompleteHand(seats);
+        }
+    }
+
+
     //Goes through the list of players and reassigns Hand value after turn and river
     public void getHandVals(Table table) {
         for (int i = 0; i < table.getSeatCount(); i++) {

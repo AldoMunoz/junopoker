@@ -1,0 +1,12 @@
+package com.v1.junopoker.dto;
+
+import com.v1.junopoker.model.Card;
+import lombok.Data;
+
+import java.util.ArrayList;
+
+@Data
+public class DealFlopRequest {
+    RequestType type;
+    ArrayList<Card> flop;
+}

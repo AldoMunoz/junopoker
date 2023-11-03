@@ -12,6 +12,8 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.util.ArrayList;
+
 @Controller
 public class TableWebSocketController implements TableCallback {
     private SimpMessagingTemplate messagingTemplate;
@@ -82,8 +84,6 @@ public class TableWebSocketController implements TableCallback {
     public void onPreFlopAction(Player player, int seat, float currentBet, float potSize, float minBet) {
         System.out.println("entered onPreFlopAction()");
 
-        //TODO: change name of PublicHoleCardsRequest to something more generic
-        //TODO: maybe seatRequest
         SeatRequest publicRequest= new SeatRequest();
         publicRequest.setType(RequestType.PLAYER_ACTION);
         publicRequest.setSeat(seat);
@@ -101,6 +101,26 @@ public class TableWebSocketController implements TableCallback {
         //send websocket message to player whose turn is to act
         messagingTemplate.convertAndSend("/topic/playerEvents/" + player.getUsername(), privateRequest);
     }
+
+    @Override
+    //Add the player(s) who won the pot and send that via WebSocket Object
+    public void onCompleteHand(Player[] seats) {
+        CompleteHandRequest request = new CompleteHandRequest();
+        request.setType(RequestType.COMPLETE_HAND);
+        request.setSeats(seats);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
+    }
+
+    @Override
+    public void onFlopDealt(ArrayList<Card> flop) {
+        DealFlopRequest request = new DealFlopRequest();
+        request.setType(RequestType.FLOP);
+        request.setFlop(flop);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
+    }
+
     @MessageMapping("/playerActionEvent")
     public void returnPreFlopAction(@Payload PlayerActionResponse response) {
         EndPlayerActionRequest request = new EndPlayerActionRequest();

@@ -64,6 +64,7 @@ public class TableService {
         initiatePot(table);
         dealCards(table);
         preFlopBetting(table);
+        dealFlop(table);
         if(table.isHandOver()); //break
         //game will run while there are at least 2 people seated at the table
         /*while (table.getSeatedPlayerCount() > 1) {
@@ -320,19 +321,23 @@ public class TableService {
             //if we've looped back to the original raiser and player CurrentBet = table CurrentBet, action is over
             else if (isPreflop && table.getSeats()[currPlayerIndex].getCurrentBet() == table.getCurrentBet() && table.getCurrentBet() > stakes[1])
                 actionOver = true;
-                //PRE-FLOP
-                //if we're at the big blind and the table currentBet = the big blind, it is a limped pot, action is over
+
+            //PRE-FLOP
+            //if we're at the big blind and the table currentBet = the big blind, it is a limped pot, action is over
             else if (isPreflop && table.getSeats()[currPlayerIndex].getCurrentBet() == stakes[1] && currPlayerIndex != table.getBigBlind())
                 actionOver = true;
-                //POST-FLOP
-                //if we've looped back to original raiser and player currentBet = table currentBet, action is over
+
+            //POST-FLOP
+            //if we've looped back to original raiser and player currentBet = table currentBet, action is over
             else if (!isPreflop && table.getSeats()[currPlayerIndex].getCurrentBet() == table.getCurrentBet() && table.getCurrentBet() > 0)
                 actionOver = true;
-                //POST-FLOP
-                //if we've checked around to the firstToAct player, action is over
+
+            //POST-FLOP
+            //if we've checked around to the firstToAct player, action is over
             else if (!isPreflop && currPlayerIndex == firstToActIndex && table.getCurrentBet() == 0 && !firstAction)
                 actionOver = true;
-                //else take an action input from the player
+
+            //else take an action input from the player
             else {
                 //callback method for preflop action callback
                 //returns an int (bet size)
@@ -353,10 +358,9 @@ public class TableService {
                     }
                     //if they check
                     else if(action == 'C' && bet == 0) {
-                        continue;
                     }
                     //if they bet:
-                    else if ((action == 'B' || action == 'P') && bet >= minBet) {
+                    else if (action == 'B' && bet >= minBet) {
                         //update player chip count
                         table.getSeats()[currPlayerIndex].setChipCount
                                 (table.getSeats()[currPlayerIndex].getChipCount() + table.getSeats()[currPlayerIndex].getCurrentBet() - bet);
@@ -373,6 +377,17 @@ public class TableService {
                             table.setCurrentBet(bet);
                             minBet = (table.getCurrentBet() - previousBet) + table.getCurrentBet();
                         }
+                        //TODO update front end with this math, instead of doing it in the front end
+                    }
+                    //if they calL:
+                    else if(action == 'P') {
+                        //update player chip count
+                        table.getSeats()[currPlayerIndex].setChipCount(table.getSeats()[currPlayerIndex].getChipCount() - bet);
+                        //update the pot size of the table
+                        table.setPot(table.getPot() + bet);
+                        //update the player's current bet
+                        table.getSeats()[currPlayerIndex].setCurrentBet(table.getSeats()[currPlayerIndex].getCurrentBet() + bet);
+                        //TODO update front end with this math, instead of doing it in the front end
                     }
                     else {
                         System.out.println("wrong action or bet input");
@@ -381,7 +396,6 @@ public class TableService {
                     //loops over seats to get the next player to act
                     currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
                     //loops until a non-empty seat with non-folded player
-                    //TODO second part of while might be wrong, have to test
                     while (table.getSeats()[currPlayerIndex] == null || !(table.getSeats()[currPlayerIndex].isInHand())) {
                         currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
                     }

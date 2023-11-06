@@ -416,7 +416,8 @@ function completeHandEvent(message) {
 }
 
 function dealFlopEvent(message) {
-    console.log("Entered dealFlopEvent")
+    console.log("Entered dealFlopEvent");
+    console.log(message.flop);
 }
 
 /*HANDLE TABLE DATA SUBMISSION

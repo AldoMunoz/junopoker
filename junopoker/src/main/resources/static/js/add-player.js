@@ -166,7 +166,8 @@ async function playerEvents(payload) {
             setBetButtonType('r');
         }
         //if both the table's current bet and the player's current bet == 0, they can fold, check, or call
-        else if (message.player.currentBet == 0 && message.currentBet == 0){
+        //or if the player's current bet is equal to the table's current bet (preflop)
+        else if ((message.player.currentBet == 0 && message.currentBet == 0) || (message.player.currentBet == message.currentBet)) {
             //add "check" and "bet" buttons
             basicActionsDiv.append(`<button id="check" onclick="onCheck()">Check</button>`);
             basicActionsDiv.append(`<button id="bet" onclick="onBet()">Bet: </button>`)

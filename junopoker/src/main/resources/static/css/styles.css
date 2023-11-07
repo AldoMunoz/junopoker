@@ -83,6 +83,23 @@ h1, h4 {
     height: auto;
 }
 
+/* Board */
+#board {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%);
+    z-index: 2; /* Set a higher z-index to make it appear on top */
+}
+
+#board img {
+    max-width: 7vh;
+    margin: 0 1px; /* Adjust horizontal spacing between the cards */
+}
+
 #total-pot {
     position: absolute;
     display: none;

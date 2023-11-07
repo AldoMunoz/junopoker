@@ -64,8 +64,10 @@ public class TableService {
         initiatePot(table);
         dealCards(table);
         preFlopBetting(table);
-        dealFlop(table);
         if(table.isHandOver()); //break
+        dealFlop(table);
+        postFlopBetting(table);
+        if(table.isHandOver()); // break
         //game will run while there are at least 2 people seated at the table
         /*while (table.getSeatedPlayerCount() > 1) {
             moveBlinds(table);
@@ -73,7 +75,6 @@ public class TableService {
             dealCards(table);
             preFlopBetting(table);
             dealFlop(table);
-            getHandVals(table);
             postFlopBetting(table);
             dealTurnOrRiver(table);
             postFlopBetting(table);
@@ -217,9 +218,12 @@ public class TableService {
                 //creates new Hand and assigns it to the player
                 Hand hand = new Hand(table.getSeats()[i].getHoleCards(), table.getBoard());
                 table.getSeats()[i].setHand(hand);
-                table.getSeats()[i].getHand().getHandRanking();
+
+                HandService handService = new HandService();
+                table.getSeats()[i].getHand().setHandRanking(handService.findHandRanking(hand));
 
                 //TODO callback method to each individual player with their hand ranking
+                String toStringHand = handService.toString(table.getSeats()[i].getHand().getFiveCardHand(), table.getSeats()[i].getHand().getHandRanking());
             }
         }
 
@@ -282,16 +286,22 @@ public class TableService {
             currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
         }
 
-        //TODO: make separate cleanUp method
-        //clean up table currentBet and player current bets
-        table.setCurrentBet(0);
-        int previousBet = 0;
-        for (Player player : seats) {
-            if (player != null) player.setCurrentBet(0);
-        }
-
         //handle betting round actions from players
         playerAction(table, currPlayerIndex, false);
+    }
+
+    public void cleanUp(Table table) {
+        //clean up table currentBet and player current bets
+        table.setCurrentBet(0);
+        for (Player player : table.getSeats()) {
+            if (player != null) player.setCurrentBet(0);
+        }
+        invokeCleanUpCallback();
+    }
+    public void invokeCleanUpCallback() {
+        if(tableCallback != null) {
+            tableCallback.onCleanUp();
+        }
     }
 
     //handles player actions during the betting round until the betting round is over
@@ -323,7 +333,7 @@ public class TableService {
                 actionOver = true;
 
             //PRE-FLOP
-            //if we're at the big blind and the table currentBet = the big blind, it is a limped pot, action is over
+            //if we're not at the big blind and the table currentBet = the big blind, it is a limped pot, action is over
             else if (isPreflop && table.getSeats()[currPlayerIndex].getCurrentBet() == stakes[1] && currPlayerIndex != table.getBigBlind())
                 actionOver = true;
 

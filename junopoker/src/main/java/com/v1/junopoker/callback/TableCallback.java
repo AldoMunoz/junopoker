@@ -18,4 +18,6 @@ public interface TableCallback {
 
     void onFlopDealt(ArrayList<Card> flop);
 
+    void onCleanUp();
+
 }

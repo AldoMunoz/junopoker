@@ -17,5 +17,7 @@ public enum RequestType {
     BET,
 
     COMPLETE_HAND,
-    FLOP
+    FLOP,
+
+    CLEAN_UP
 }

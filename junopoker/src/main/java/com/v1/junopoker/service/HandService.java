@@ -10,7 +10,7 @@ import java.util.Arrays;
 
 @Service
 public class HandService {
-    public HandRanking getHandRanking(Hand hand) {
+    public HandRanking findHandRanking(Hand hand) {
         //Creates array of cards, adds player cards and community cards to the array
         Card[] cards = new Card[hand.getPlayerCards().length+hand.getCommunityCards().size()];
         cards[0] = hand.getPlayerCards()[0];
@@ -356,5 +356,14 @@ public class HandService {
     //used for isFullHouse, might get rid of later
     private void changeFiveCardHandVal(Hand hand, int pos, Card card) {
         hand.getFiveCardHand()[pos] = card;
+    }
+
+    //TODO: Given a 5 card hand and a known handRanking, provide a readable string version of the hand
+    //TODO: look at HandRanking.java to see the strings you have to complete
+    //TODO: For example, if you're given the fiveCardHand [4,4,4,4,A] and handRanking FOUR_OF_A_KIND,
+    //TODO: the result of this function should be "Four of a Kind, 4's"
+    public String toString(Card[] fiveCardHand, HandRanking handRanking) {
+        //TIP: use handRanking.getHand() for the string
+        return "";
     }
 }

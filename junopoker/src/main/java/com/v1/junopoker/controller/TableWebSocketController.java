@@ -121,6 +121,12 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
 
+    @Override
+    public void onCleanUp() {
+        TypeOnlyRequest request = new TypeOnlyRequest();
+        request.setType(RequestType.CLEAN_UP);
+    }
+
     @MessageMapping("/playerActionEvent")
     public void returnPreFlopAction(@Payload PlayerActionResponse response) {
         EndPlayerActionRequest request = new EndPlayerActionRequest();

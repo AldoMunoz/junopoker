@@ -415,9 +415,16 @@ function completeHandEvent(message) {
     });
 }
 
+//Displays the flop cards
 function dealFlopEvent(message) {
-    console.log("Entered dealFlopEvent");
-    console.log(message.flop);
+    //TODO add some timing between the dealing of each card
+    for (let i = 0; i < message.flop.length; i++) {
+        const flopCard = new  $('<img>');
+        flopCard.attr("src", `/images/cards/${message.flop[i]}.png`);
+        flopCard.attr("alt", `Board Card ${i}`);
+
+        $("#board").append(flopCard);
+    }
 }
 
 /*HANDLE TABLE DATA SUBMISSION

@@ -120,7 +120,9 @@ function tableEvents(payload) {
     //view logic for when the hand has ended
     else if (message.type === "COMPLETE_HAND") completeHandEvent(message);
     //view logic for dealing the flop
-    else if (message.type === "FLOP") dealFlopEvent(message);
+    else if (message.type === "BOARD_CARDS") dealBoardCardsEvent(message);
+    //view logic for cleaning up the table in between streets
+    else if(message.type === "CLEAN_UP") cleanUpEvent();
     //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
 }
@@ -249,9 +251,6 @@ function endPlayerActionEvent(message) {
     const playerInfoImg = seatDiv.find(".panel-img");
     playerInfoImg.attr("src", "/images/player-info.png");
 
-    //get the player's username
-    const playerUsername = seatDiv.find(".player-usernames").text();
-
     //if they folded
     if(message.action === "F") {
         //hide their cards
@@ -262,17 +261,13 @@ function endPlayerActionEvent(message) {
         //allows the user who folded to see their cards on hover until the hand ends
         const request = {
             type: "FOLD",
-            username: playerUsername,
+            username: message.username,
             seat: message.seat
         }
         //sends request to controller to modify the display of the cards for the folded player
         stompClient.send("/app/foldEvent", {}, JSON.stringify(request));
     }
-    //if they checked
-    else if (message.action === "C") {
-        //nothing really happens, their turn just ends
-    }
-    //if they called (P stands for pay)
+    //if they called (P stands for "pay")
     else if(message.action === "P") {
         //update player's bet display
         const betDisplayDiv = $(`#bet-display-${message.seat}`);
@@ -283,28 +278,25 @@ function endPlayerActionEvent(message) {
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");
-        chipCountElement.text(message.stackSize-message.bet);
+        chipCountElement.text(message.stackSize);
 
         //update the pot size
         const potElement = $("#total-pot");
-        potElement.text("Total Pot: " + (message.potSize+message.bet));
+        potElement.text("Total Pot: " + message.potSize);
     }
     else if (message.action === "B") {
         //update player's bet display
         const betDisplayDiv = $(`#bet-display-${message.seat}`);
         const betElement = betDisplayDiv.find(".player-bet-display");
-        //save previous bet, used to calculate new stack size for player and pot size
-        const previousBet = parseFloat(betElement.text());
-        //set the player bet display to equal to new bet
         betElement.text(message.bet);
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");
-        chipCountElement.text(message.stackSize-(message.bet - previousBet));
+        chipCountElement.text(message.stackSize);
 
         //update the pot size
         const potElement = $("#total-pot");
-        potElement.text("Total Pot: " + (message.potSize+ (message.bet - previousBet)));
+        potElement.text("Total Pot: " + message.potSize);
     }
     else {
         console.log("Error occurred in END PLAYER ACTION")
@@ -349,11 +341,8 @@ function displayActionBubble(seat, action) {
 
 //Completes closing actions after the hand has ended
 function completeHandEvent(message) {
-    //Reset and hide the bet displays
-    for(let i = 0; i < 5; i++) {
-        $(`#bet-display-${i}`).text("");
-        $(`#bet-display-${i}`).hide();
-    }
+    //hides the bet displays for each player
+    hideBetDisplays();
 
     //list of winner(s) seat positions, used to display winner message
     let winners = []
@@ -412,19 +401,35 @@ function completeHandEvent(message) {
                 holeCardsDiv.empty();
             }
         }
+        //Clear the board
+        $("#board").empty();
     });
 }
 
+//Reset and hide the bet displays
+function hideBetDisplays() {
+    for(let i = 0; i < 5; i++) {
+        $(`#bet-display-${i}`).text("");
+        $(`#bet-display-${i}`).hide();
+    }
+}
+
 //Displays the flop cards
-function dealFlopEvent(message) {
+function dealBoardCardsEvent(message) {
     //TODO add some timing between the dealing of each card
-    for (let i = 0; i < message.flop.length; i++) {
+    for (let i = 0; i < message.cards.length; i++) {
         const flopCard = new  $('<img>');
-        flopCard.attr("src", `/images/cards/${message.flop[i]}.png`);
+        flopCard.attr("src", `/images/cards/${message.cards[i]}.png`);
         flopCard.attr("alt", `Board Card ${i}`);
 
         $("#board").append(flopCard);
     }
+}
+
+//cleans up view information between hands
+function cleanUpEvent() {
+    //hides the bet displays for each player
+    hideBetDisplays();
 }
 
 /*HANDLE TABLE DATA SUBMISSION

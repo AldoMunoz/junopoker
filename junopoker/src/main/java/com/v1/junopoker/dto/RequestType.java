@@ -8,16 +8,13 @@ public enum RequestType {
     PLAYER_ACTION,
     END_PLAYER_ACTION,
     DEAL_PRE,
-    DEAL_FLOP,
-    DEAL_TURN,
-    DEAL_RIVER,
     FOLD,
     CHECK,
     CALL,
     BET,
 
     COMPLETE_HAND,
-    FLOP,
+    BOARD_CARDS,
 
     CLEAN_UP
 }

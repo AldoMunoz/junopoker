@@ -43,5 +43,6 @@ public class Table {
         smallBlind = -1;
         dealerButton = -1;
         gameRunning = false;
+        handOver = false;
     }
 }

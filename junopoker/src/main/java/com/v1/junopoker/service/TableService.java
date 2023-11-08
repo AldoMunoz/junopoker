@@ -31,9 +31,9 @@ public class TableService {
 
 
     //TODO is this necessary
-    public CompletableFuture<PlayerActionResponse> getPlayerActionResponse() {
+    /*public CompletableFuture<PlayerActionResponse> getPlayerActionResponse() {
         return playerActionResponse;
-    }
+    }*/
 
     public void handlePlayerAction(PlayerActionResponse playerActionResponse) {
         this.playerActionResponse.complete(playerActionResponse);
@@ -59,32 +59,29 @@ public class TableService {
             setBlinds(table);
             table.setGameRunning(true);
         }
-        table.setHandOver(false);
-        moveBlinds(table);
-        initiatePot(table);
-        dealCards(table);
-        preFlopBetting(table);
-        if(table.isHandOver()); //break
-        dealFlop(table);
-        postFlopBetting(table);
-        if(table.isHandOver()); // break
+
         //game will run while there are at least 2 people seated at the table
-        /*while (table.getSeatedPlayerCount() > 1) {
+        while (table.getSeatedPlayerCount() > 1) {
+            table.setHandOver(false);
             moveBlinds(table);
             initiatePot(table);
             dealCards(table);
             preFlopBetting(table);
+            if(table.isHandOver()) continue;
+            cleanUp(table);
             dealFlop(table);
             postFlopBetting(table);
+            if(table.isHandOver()) continue;
+            cleanUp(table);
             dealTurnOrRiver(table);
             postFlopBetting(table);
-            getHandVals(table);
+            if(table.isHandOver()) continue;
+            cleanUp(table);
             dealTurnOrRiver(table);
             postFlopBetting(table);
-            getHandVals(table);
             completeHand(table);
             clearTable(table);
-        }*/
+        }
     }
 
     //sets the BB and SB
@@ -212,27 +209,16 @@ public class TableService {
         table.getBoard().add(deckService.drawCard(table.getDeck()));
         table.getBoard().add(deckService.drawCard(table.getDeck()));
 
-        //iterates through players, gets their hand ranking, and sets it
-        for (int i = 0; i < table.getSeatCount(); i++) {
-            if (table.getSeats()[i] != (null)) {
-                //creates new Hand and assigns it to the player
-                Hand hand = new Hand(table.getSeats()[i].getHoleCards(), table.getBoard());
-                table.getSeats()[i].setHand(hand);
+        //assign hand ranking for each player and send hand rankings to the controller
+        getHandRankings(table);
 
-                HandService handService = new HandService();
-                table.getSeats()[i].getHand().setHandRanking(handService.findHandRanking(hand));
-
-                //TODO callback method to each individual player with their hand ranking
-                String toStringHand = handService.toString(table.getSeats()[i].getHand().getFiveCardHand(), table.getSeats()[i].getHand().getHandRanking());
-            }
-        }
-
-        invokeDealFlopCallback(table.getBoard());
+        //callback method to send the flop to the controller
+        invokeDealBoardCardsCallback(table.getBoard());
     }
 
-    private void invokeDealFlopCallback(ArrayList<Card> flop) {
+    private void invokeDealBoardCardsCallback(ArrayList<Card> cards) {
         if(tableCallback != null) {
-            tableCallback.onFlopDealt(flop);
+            tableCallback.onBoardCardsDealt(cards);
         }
     }
 
@@ -240,8 +226,20 @@ public class TableService {
     public void dealTurnOrRiver (Table table) {
         DeckService deckService = deckServiceFactory.createDeckService();
 
-        table.getBoard().add(deckService.drawCard(table.getDeck()));
-        getHandVals(table);
+        //TODO this might be too memory intensive, might be easier to create seperate callback method for a turn/river card
+        //draws a card and adds it to an array (makes it compatible with the callback method)
+        Card card = deckService.drawCard(table.getDeck());
+        ArrayList<Card> cards = new ArrayList<>();
+        cards.add(card);
+
+        //adds 1 card to the board
+        table.getBoard().add(card);
+
+        //assign hand ranking for each player and send hand rankings to the controller
+        getHandRankings(table);
+
+        //callback method to send the card to the controller in the form or an ArrayList of length 1
+        invokeDealBoardCardsCallback(cards);
     }
 
     //deals with the pre-flop betting rounds
@@ -316,11 +314,10 @@ public class TableService {
 
         //loop will continue until all action for the round is over
         while (!actionOver) {
-            //TODO: should have a field called handOver on the Table object
-            //TODO: in runGame(), everytime a betting round is over, check HandOver, if true, skip to complete hand
             //if everyone has folded (except for 1 player), the whole hand is over, skip to complete hand
             if (table.getSeatedFoldCount() == seatedPlayerCount - 1) {
                 completeHand(table);
+                table.setHandOver(true);
                 break;
             }
             // skips any empty seats or folded players
@@ -329,22 +326,31 @@ public class TableService {
             }
             //PRE-FLOP
             //if we've looped back to the original raiser and player CurrentBet = table CurrentBet, action is over
-            else if (isPreflop && table.getSeats()[currPlayerIndex].getCurrentBet() == table.getCurrentBet() && table.getCurrentBet() > stakes[1])
+            else if (isPreflop &&
+                    table.getSeats()[currPlayerIndex].getCurrentBet() == table.getCurrentBet() &&
+                    table.getCurrentBet() > stakes[1])
                 actionOver = true;
 
             //PRE-FLOP
             //if we're not at the big blind and the table currentBet = the big blind, it is a limped pot, action is over
-            else if (isPreflop && table.getSeats()[currPlayerIndex].getCurrentBet() == stakes[1] && currPlayerIndex != table.getBigBlind())
+            else if (isPreflop &&
+                    table.getSeats()[currPlayerIndex].getCurrentBet() == stakes[1] &&
+                    table.getCurrentBet() == stakes[1] &&
+                    currPlayerIndex != table.getBigBlind())
                 actionOver = true;
 
             //POST-FLOP
             //if we've looped back to original raiser and player currentBet = table currentBet, action is over
-            else if (!isPreflop && table.getSeats()[currPlayerIndex].getCurrentBet() == table.getCurrentBet() && table.getCurrentBet() > 0)
+            else if (!isPreflop &&
+                    table.getSeats()[currPlayerIndex].getCurrentBet() == table.getCurrentBet() &&
+                    table.getCurrentBet() > 0)
                 actionOver = true;
 
             //POST-FLOP
             //if we've checked around to the firstToAct player, action is over
-            else if (!isPreflop && currPlayerIndex == firstToActIndex && table.getCurrentBet() == 0 && !firstAction)
+            else if (!isPreflop &&
+                    currPlayerIndex == firstToActIndex && table.getCurrentBet() == 0 &&
+                    !firstAction)
                 actionOver = true;
 
             //else take an action input from the player
@@ -361,13 +367,16 @@ public class TableService {
                     char action = playerActionResponse.getAction();
                     float bet = playerActionResponse.getBetAmount();
 
-                    //if they fold
+                    //if they fold:
                     if (action == 'F' && bet == 0) {
                         table.setSeatedFoldCount(table.getSeatedFoldCount()+1);
                         table.getSeats()[currPlayerIndex].setInHand(false);
+
+                        invokeEndPlayerActionCallback('F', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, 0, 0, 0);
                     }
-                    //if they check
+                    //if they check:
                     else if(action == 'C' && bet == 0) {
+                        //nothing happens, their turn just ends
                     }
                     //if they bet:
                     else if (action == 'B' && bet >= minBet) {
@@ -387,7 +396,8 @@ public class TableService {
                             table.setCurrentBet(bet);
                             minBet = (table.getCurrentBet() - previousBet) + table.getCurrentBet();
                         }
-                        //TODO update front end with this math, instead of doing it in the front end
+                        //sends message to the controller to update the user's stack size, bet display, and the pot size
+                        invokeEndPlayerActionCallback('B', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot());
                     }
                     //if they calL:
                     else if(action == 'P') {
@@ -397,7 +407,9 @@ public class TableService {
                         table.setPot(table.getPot() + bet);
                         //update the player's current bet
                         table.getSeats()[currPlayerIndex].setCurrentBet(table.getSeats()[currPlayerIndex].getCurrentBet() + bet);
-                        //TODO update front end with this math, instead of doing it in the front end
+
+                        //sends message to the controller to update the user's stack size, bet display, and the pot size
+                        invokeEndPlayerActionCallback('P', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot());
                     }
                     else {
                         System.out.println("wrong action or bet input");
@@ -420,6 +432,12 @@ public class TableService {
     private void invokePreFlopActionCallback(Player player, int seat, float currentBet, float potSize, float minBet) {
         if(tableCallback != null) {
             tableCallback.onPreFlopAction(player, seat, currentBet, potSize, minBet);
+        }
+    }
+
+    private void invokeEndPlayerActionCallback(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize) {
+        if(tableCallback != null) {
+            tableCallback.onEndPlayerAction(action, username, seatIndex, betAmount, stackSize, potSize);
         }
     }
 
@@ -511,10 +529,19 @@ public class TableService {
 
 
     //Goes through the list of players and reassigns Hand value after turn and river
-    public void getHandVals(Table table) {
+    public void getHandRankings(Table table) {
+        //iterates through players, gets their hand ranking, and sets it
         for (int i = 0; i < table.getSeatCount(); i++) {
             if (table.getSeats()[i] != (null)) {
-                table.getSeats()[i].getHand().getHandRanking();
+                //creates new Hand and assigns it to the player
+                Hand hand = new Hand(table.getSeats()[i].getHoleCards(), table.getBoard());
+                table.getSeats()[i].setHand(hand);
+
+                HandService handService = new HandService();
+                table.getSeats()[i].getHand().setHandRanking(handService.findHandRanking(hand));
+
+                //TODO callback method to each individual player with their hand ranking
+                String toStringHand = handService.toString(table.getSeats()[i].getHand().getFiveCardHand(), table.getSeats()[i].getHand().getHandRanking());
             }
         }
     }
@@ -526,6 +553,7 @@ public class TableService {
         for (int i = 0; i < table.getSeatCount(); i++) {
             if (table.getSeats()[i] != (null)) {
                 table.getSeats()[i].setHand(null);
+                table.getSeats()[i].setInHand(true);
             }
         }
         table.setBoard(new ArrayList<Card>());

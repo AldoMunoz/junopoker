@@ -6,9 +6,10 @@ import lombok.Data;
 @Data
 public class EndPlayerActionRequest {
     private RequestType type;
+    private char action;
+    private String username;
     private int seat;
     private float bet;
-    private char action;
     private float stackSize;
     private float potSize;
 }

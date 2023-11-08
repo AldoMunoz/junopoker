@@ -155,10 +155,7 @@ function onFold()  {
     //create response object
     const response = {
         action: 'F',
-        betAmount: 0,
-        seat: seatNo,
-        stackSize: maxValue,
-        potSize: potSize
+        betAmount: 0
     }
 
     hideActionBar();
@@ -170,10 +167,7 @@ function onCheck() {
     //create response object
     const response = {
         action: 'C',
-        betAmount: 0,
-        seat: seatNo,
-        stackSize: maxValue,
-        potSize: potSize
+        betAmount: 0
     }
 
     hideActionBar();
@@ -190,9 +184,6 @@ function onCall() {
     const response = {
         action: 'P',
         betAmount: bet,
-        seat: seatNo,
-        stackSize: maxValue,
-        potSize: potSize
     }
 
     hideActionBar();
@@ -213,9 +204,6 @@ function onBet() {
     const response = {
         action: 'B',
         betAmount: bet,
-        seat: seatNo,
-        stackSize: maxValue,
-        potSize: potSize
     }
 
     hideActionBar();
@@ -226,6 +214,8 @@ function onBet() {
 function onAllIn() {
     let button = $('#all-in');
     const bet = getBetValue(button);
+
+    //TODO finish this at some point
 }
 
 //extracts the text from the "bet" button to get the float value of the bet

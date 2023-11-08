@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.ArrayList;
 
 @Data
-public class DealFlopRequest {
+public class DealBoardCardsRequest {
     RequestType type;
-    ArrayList<Card> flop;
+    ArrayList<Card> cards;
 }

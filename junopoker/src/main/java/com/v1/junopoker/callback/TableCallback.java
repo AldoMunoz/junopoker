@@ -14,9 +14,11 @@ public interface TableCallback {
 
     void onPreFlopAction(Player player, int seat, float currentBet, float potSize, float minBet);
 
+    void onEndPlayerAction(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize);
+
     void onCompleteHand(Player[] seats);
 
-    void onFlopDealt(ArrayList<Card> flop);
+    void onBoardCardsDealt(ArrayList<Card> cards);
 
     void onCleanUp();
 

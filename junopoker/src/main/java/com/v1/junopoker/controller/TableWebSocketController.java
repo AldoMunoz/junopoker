@@ -82,8 +82,6 @@ public class TableWebSocketController implements TableCallback {
     //send a request to the front end for the player to input an action (check, bet, or fold)
     //receive that action and send it to TableService.java using a CompletableFuture
     public void onPreFlopAction(Player player, int seat, float currentBet, float potSize, float minBet) {
-        System.out.println("entered onPreFlopAction()");
-
         SeatRequest publicRequest= new SeatRequest();
         publicRequest.setType(RequestType.PLAYER_ACTION);
         publicRequest.setSeat(seat);
@@ -113,10 +111,10 @@ public class TableWebSocketController implements TableCallback {
     }
 
     @Override
-    public void onFlopDealt(ArrayList<Card> flop) {
-        DealFlopRequest request = new DealFlopRequest();
-        request.setType(RequestType.FLOP);
-        request.setFlop(flop);
+    public void onBoardCardsDealt(ArrayList<Card> cards) {
+        DealBoardCardsRequest request = new DealBoardCardsRequest();
+        request.setType(RequestType.BOARD_CARDS);
+        request.setCards(cards);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
@@ -125,21 +123,27 @@ public class TableWebSocketController implements TableCallback {
     public void onCleanUp() {
         TypeOnlyRequest request = new TypeOnlyRequest();
         request.setType(RequestType.CLEAN_UP);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
 
     @MessageMapping("/playerActionEvent")
     public void returnPreFlopAction(@Payload PlayerActionResponse response) {
+        tableService.handlePlayerAction(response);
+    }
+
+    @Override
+    public void onEndPlayerAction(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize) {
         EndPlayerActionRequest request = new EndPlayerActionRequest();
         request.setType(RequestType.END_PLAYER_ACTION);
-        request.setSeat(response.getSeat());
-        request.setBet(response.getBetAmount());
-        request.setAction(response.getAction());
-        request.setStackSize(response.getStackSize());
-        request.setPotSize(response.getPotSize());
+        request.setAction(action);
+        request.setUsername(username);
+        request.setSeat(seatIndex);
+        request.setBet(betAmount);
+        request.setStackSize(stackSize);
+        request.setPotSize(potSize);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
-
-        tableService.handlePlayerAction(response);
     }
 
     @MessageMapping("/foldEvent")

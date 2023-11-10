@@ -120,9 +120,10 @@ public class TableWebSocketController implements TableCallback {
     }
 
     @Override
-    public void onCleanUp() {
-        TypeOnlyRequest request = new TypeOnlyRequest();
+    public void onCleanUp(boolean isHandOver) {
+        CleanUpRequest request = new CleanUpRequest();
         request.setType(RequestType.CLEAN_UP);
+        request.setHandOver(isHandOver);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }

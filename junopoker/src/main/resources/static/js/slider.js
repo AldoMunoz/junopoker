@@ -96,7 +96,14 @@ function decrementBet() {
 function changeBetSize(size) {
     const betSize = (size/100)*potSize;
 
-    if(betSize > minValue) {
+    //if BetSize is greater than the max value they can bet, default to the max value
+    if (betSize > maxValue) {
+        const bet = updateSlider(100);
+        updateBetButton(bet);
+        updateInputBox(bet);
+    }
+    //otherwise, have the button function as normal as long as the betSize is greater than the min value they can bet
+    else if(betSize > minValue) {
         const newPercentage = ((betSize - minValue) / (maxValue - minValue)) * 100;
         const bet = updateSlider(newPercentage);
         updateBetButton(bet);

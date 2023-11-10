@@ -21,8 +21,8 @@ public class Table {
     private int seatedPlayerCount;
     private int seatedFoldCount;
     private Deck deck;
-    private int bigBlind;
-    private int smallBlind;
+    private int bigBlindIndex;
+    private int smallBlindIndex;
     private int dealerButton;
     private float currentBet;
     private boolean gameRunning;
@@ -39,8 +39,8 @@ public class Table {
         board = new ArrayList<>();
         seatedPlayerCount = 0;
         deck = new Deck();
-        bigBlind = -1;
-        smallBlind = -1;
+        bigBlindIndex = -1;
+        smallBlindIndex = -1;
         dealerButton = -1;
         gameRunning = false;
         handOver = false;

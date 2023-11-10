@@ -130,15 +130,14 @@ async function playerEvents(payload) {
         console.log("Private deal cards message: ", message);
         const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
         holeCardsDiv.empty();
-
         holeCardsDiv.append(`<img src="/images/cards/${message.cards[0]}.png" alt="Card 1">`)
         holeCardsDiv.append(`<img src="/images/cards/${message.cards[1]}.png" alt="Card 2">`)
-
+        holeCardsDiv.show();
     }
     else if (message.type === "PLAYER_ACTION") {
         console.log(message);
 
-        //set min bet value, max bet value, and pot size and the seat in slider.js;
+        //set min bet value, max bet value, pot size, and the seat in slider.js;
         setMinValue(message.minBet);
         setMaxValue(message.player.chipCount);
         setPotSize(message.potSize);

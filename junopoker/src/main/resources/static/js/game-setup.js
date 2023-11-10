@@ -21,6 +21,9 @@ $(document).ready(function () {
                 fetch("/getTableData")
                     .then(response => response.json())
                     .then(tableData => {
+                        //set the small blind = 1;
+                        setSmallBlind(tableData.stakes[0]);
+
                         $('#game-type').text(`Game Type: ${tableData.gameType}`);
                         $('#stakes').text(`Stakes: ${tableData.stakes[0]}/${tableData.stakes[1]}`);
                     })
@@ -114,15 +117,15 @@ function tableEvents(payload) {
     //view logic for displaying player hole cards
     else if(message.type === "DEAL_PRE") dealHoleCardsEvent(message);
     //view logic for highlighting which player's turn it is.
-    else if (message.type == "PLAYER_ACTION") playerActionEvent(message);
+    else if (message.type === "PLAYER_ACTION") playerActionEvent(message);
     //view logic for un-highlighting which players turn it is
-    else if(message.type == "END_PLAYER_ACTION") endPlayerActionEvent(message);
+    else if(message.type === "END_PLAYER_ACTION") endPlayerActionEvent(message);
     //view logic for when the hand has ended
     else if (message.type === "COMPLETE_HAND") completeHandEvent(message);
     //view logic for dealing the flop
     else if (message.type === "BOARD_CARDS") dealBoardCardsEvent(message);
     //view logic for cleaning up the table in between streets
-    else if(message.type === "CLEAN_UP") cleanUpEvent();
+    else if(message.type === "CLEAN_UP") cleanUpEvent(message);
     //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
 }
@@ -227,15 +230,17 @@ function initPotEvent(message) {
     sbBetDisplay.find('p').text(message.sbAmount);
 
     //Display Total Pot text and populate it with the pot size
-    const totalPot = $("#total-pot")
-    totalPot.css("display", "flex")
-    totalPot.text(`Total Pot: ${message.potSize}`)
+    const totalPot = $("#total-pot");
+    totalPot.css("display", "flex");
+    totalPot.text(`Total Pot: ${message.potSize}`);
 }
 
 function dealHoleCardsEvent(message) {
     const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
+    holeCardsDiv.empty();
     holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
     holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
+    holeCardsDiv.show();
 }
 
 function playerActionEvent(message) {
@@ -267,6 +272,10 @@ function endPlayerActionEvent(message) {
         //sends request to controller to modify the display of the cards for the folded player
         stompClient.send("/app/foldEvent", {}, JSON.stringify(request));
     }
+    //if they check
+    else if (message.action == "C")  {
+        //nothing happens (except for display bubble)
+    }
     //if they called (P stands for "pay")
     else if(message.action === "P") {
         //update player's bet display
@@ -275,6 +284,7 @@ function endPlayerActionEvent(message) {
         const previousBet = parseFloat(betElement.text());
         const newBet = previousBet + message.bet;
         betElement.text(newBet);
+        betDisplayDiv.show();
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");
@@ -289,6 +299,7 @@ function endPlayerActionEvent(message) {
         const betDisplayDiv = $(`#bet-display-${message.seat}`);
         const betElement = betDisplayDiv.find(".player-bet-display");
         betElement.text(message.bet);
+        betDisplayDiv.show();
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");
@@ -409,8 +420,10 @@ function completeHandEvent(message) {
 //Reset and hide the bet displays
 function hideBetDisplays() {
     for(let i = 0; i < 5; i++) {
-        $(`#bet-display-${i}`).text("");
-        $(`#bet-display-${i}`).hide();
+        const betDisplayDiv = $(`#bet-display-${i}`);
+        const betElement = betDisplayDiv.find(".player-bet-display");
+        betElement.text("");
+        betDisplayDiv.hide();
     }
 }
 
@@ -427,8 +440,12 @@ function dealBoardCardsEvent(message) {
 }
 
 //cleans up view information between hands
-function cleanUpEvent() {
+function cleanUpEvent(message) {
     //hides the bet displays for each player
+    if (message.handOver === true) {
+        $("#total-pot").css("display", "none")
+        $("#total-pot").text(`Total Pot: `)
+    }
     hideBetDisplays();
 }
 

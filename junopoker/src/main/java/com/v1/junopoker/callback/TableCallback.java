@@ -20,6 +20,6 @@ public interface TableCallback {
 
     void onBoardCardsDealt(ArrayList<Card> cards);
 
-    void onCleanUp();
+    void onCleanUp(boolean isHandOver);
 
 }

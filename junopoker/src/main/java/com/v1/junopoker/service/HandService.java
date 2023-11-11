@@ -363,7 +363,20 @@ public class HandService {
     //TODO: For example, if you're given the fiveCardHand [4,4,4,4,A] and handRanking FOUR_OF_A_KIND,
     //TODO: the result of this function should be "Four of a Kind, 4's"
     public String toString(Card[] fiveCardHand, HandRanking handRanking) {
+        //if royal, return royal
+        if (handRanking.getRanking() == 9) {
+            return handRanking.getHand();
+        }
+        //if straight flush
+        else if (handRanking.getRanking() == 8) {
+            //find the first card in 5 card hand
+            //return a string of the first card + handRanking.getHand();
+            //exp: if first card is 9, return "9 High Straight Flush"
+        }
+
+
         String rank = handRanking.getHand() + ", ";
+
         ArrayList<String> hand = new ArrayList<>();
         for (Card c : fiveCardHand) {
             switch (c.getVal()) {

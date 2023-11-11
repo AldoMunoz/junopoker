@@ -542,7 +542,7 @@ public class TableService {
     }
 
 
-    //Goes through the list of players and reassigns Hand value after turn and river
+    //Goes through the list of players and reassigns Hand value after flop, turn, and river
     public void getHandRankings(Table table) {
         //iterates through players, gets their hand ranking, and sets it
         for (int i = 0; i < table.getSeatCount(); i++) {
@@ -556,6 +556,7 @@ public class TableService {
 
                 //TODO callback method to each individual player with their hand ranking
                 String toStringHand = handService.toString(table.getSeats()[i].getHand().getFiveCardHand(), table.getSeats()[i].getHand().getHandRanking());
+                System.out.println(toStringHand);
             }
         }
     }

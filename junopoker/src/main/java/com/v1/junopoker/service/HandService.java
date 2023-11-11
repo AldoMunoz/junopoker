@@ -363,7 +363,62 @@ public class HandService {
     //TODO: For example, if you're given the fiveCardHand [4,4,4,4,A] and handRanking FOUR_OF_A_KIND,
     //TODO: the result of this function should be "Four of a Kind, 4's"
     public String toString(Card[] fiveCardHand, HandRanking handRanking) {
-        //TIP: use handRanking.getHand() for the string
-        return "";
+        String rank = handRanking.getHand() + ", ";
+        ArrayList<String> hand = new ArrayList<>();
+        for (Card c : fiveCardHand) {
+            switch (c.getVal()) {
+                case 2:
+                    hand.add("2");
+                case 3:
+                    hand.add("3");
+                case 4:
+                    hand.add("4");
+                case 5:
+                    hand.add("5");
+                case 6:
+                    hand.add("6");
+                case 7:
+                    hand.add("7");
+                case 8:
+                    hand.add("8");
+                case 9:
+                    hand.add("9");
+                case 10:
+                    hand.add("10");
+                case 11:
+                    hand.add("J");
+                case 12:
+                    hand.add("Q");
+                case 13:
+                    hand.add("K");
+                case 14:
+                    hand.add("A");
+            }
+        }
+        String res = null;
+        switch (rank) {
+            case "High, ":
+                res = rank + hand.get(0);
+            case "One Pair, ":
+                res = rank + hand.get(0) + "'s";
+            case "Two Pair, ":
+                res = rank + hand.get(0) + "'s & " + hand.get(2) + "'s";
+            case "Three of a Kind, ":
+                res = rank + hand.get(0) + "'s";
+            case "High Straight, ":
+                res = rank + hand.get(0);
+            case "High Flush, ":
+                res = rank + hand.get(0);
+            case "Full House, ":
+                // temp value: undetermined whether the three of a kind or the pair shows up first
+                res = "Full House";
+            case "Four of a Kind, ":
+                res = rank + hand.get(0);
+            case "High Straight Flush, ":
+                res = rank + hand.get(0);
+            case "Royal Flush, ":
+                res = "Royal Flush";
+        }
+        return res;
     }
 }

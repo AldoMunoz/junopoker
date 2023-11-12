@@ -65,15 +65,10 @@ public class TableService {
                 e.printStackTrace();
             }
             table.setHandOver(false);
-            System.out.println(table.getSmallBlindIndex());
             moveBlinds(table);
-            System.out.println(table.getSmallBlindIndex());
             initiatePot(table);
-            System.out.println(table.getSmallBlindIndex());
             dealCards(table);
-            System.out.println(table.getSmallBlindIndex());
             preFlopBetting(table);
-            System.out.println(table.getSmallBlindIndex());
             if (table.isHandOver()) {
                 completeHand(table);
                 clearTable(table);

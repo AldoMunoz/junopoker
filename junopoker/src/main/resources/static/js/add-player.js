@@ -74,7 +74,7 @@ function subscribeToPlayerTopic(usernameInput, player) {
         };
         //sends message to all users that a player has taken a seat
         stompClient.send("/app/tableEvents", {}, JSON.stringify(playerRequest));
-        //sends message to the player themselves, used to hide other seat buttons
+        //sends message to the player to hide other seat buttons
         stompClient.send("/app/playerEvents", {}, JSON.stringify(playerRequest));
     }
     else console.log("Something went wrong before Websocket could send")
@@ -126,15 +126,81 @@ async function playerEvents(payload) {
         //unsubscribe user for /topic/playerEvents/${}
         stompClient.unsubscribe(`/topic/playerEvents/${message.player.username}`);
     }
-
-    else if (message.type = "DEAL_PRE") {
+    else if (message.type === "DEAL_PRE") {
         console.log("Private deal cards message: ", message);
         const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
         holeCardsDiv.empty();
-
         holeCardsDiv.append(`<img src="/images/cards/${message.cards[0]}.png" alt="Card 1">`)
         holeCardsDiv.append(`<img src="/images/cards/${message.cards[1]}.png" alt="Card 2">`)
+        holeCardsDiv.show();
+    }
+    else if (message.type === "PLAYER_ACTION") {
+        console.log(message);
 
+        //set min bet value, max bet value, pot size, and the seat in slider.js;
+        setMinValue(message.minBet);
+        setMaxValue(message.player.chipCount);
+        setPotSize(message.potSize);
+        setSeat(message.seat);
+
+        //clear the basic actions div, apart from the fold button, which is always required
+        const basicActionsDiv = $(".basic-actions");
+        basicActionsDiv.children().not("#fold").remove();
+        //if the current bet is greater than the player's stack, they can fold or go all-in
+        if(message.currentBet > message.player.chipCount) {
+            //add "all-in" button
+            basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In ${message.player.chipCount}</button>`);
+        }
+        //if the min bet would be greater than the player's stack, they can fold, call, or go all-in
+        else if (message.minBet > message.player.chipCount && message.player.currentBet != message.currentBet) {
+            //add "call" and "all-in" buttons
+            basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
+            basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In ${message.player.chipCount}</button>`)
+        }
+        //if the player's bet is not equal to the table bet, they can fold, call, or raise
+        else if(message.player.currentBet != message.currentBet) {
+            //add "call" and "raise" buttons
+            basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
+            basicActionsDiv.append(`<button id="raise" onclick="onBet()">Raise: </button>`)
+            setBetButtonType('r');
+        }
+        //if both the table's current bet and the player's current bet == 0, they can fold, check, or call
+        //or if the player's current bet is equal to the table's current bet (preflop)
+        else if ((message.player.currentBet == 0 && message.currentBet == 0) || (message.player.currentBet == message.currentBet)) {
+            //add "check" and "bet" buttons
+            basicActionsDiv.append(`<button id="check" onclick="onCheck()">Check</button>`);
+            basicActionsDiv.append(`<button id="bet" onclick="onBet()">Bet: </button>`)
+            setBetButtonType('b');
+        }
+
+        //default the slider and bet value to min bet (0%)
+        const bet = updateSlider(0);
+        updateBetButton(bet);
+        updateInputBox(bet);
+
+        //display the action bar
+        const actionBarDiv = $(".action-bar");
+        actionBarDiv.css("display", "flex");
+    }
+    //code to display cards on hover after a player folds
+    else if (message.type == "FOLD") {
+        //find the player's cards
+        const seatDiv = $(`#seat-${message.seat}`);
+        const cardsDiv = seatDiv.find(".hole-cards");
+        //display the cards on the page with 0 opacity (invisible)
+        cardsDiv.css("opacity", "0");
+        cardsDiv.css("display", "flex");
+
+        cardsDiv.hover(
+            //on hover, display the cards at 50% opacity
+            function() {
+                cardsDiv.css("opacity", "0.5");
+            },
+            //on exit, display the cards at 0% opacity
+            function () {
+                cardsDiv.css("opacity", "0");
+            }
+        )
     }
 }
 

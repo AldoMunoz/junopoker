@@ -83,6 +83,23 @@ h1, h4 {
     height: auto;
 }
 
+/* Board */
+#board {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%);
+    z-index: 2; /* Set a higher z-index to make it appear on top */
+}
+
+#board img {
+    max-width: 7vh;
+    margin: 0 1px; /* Adjust horizontal spacing between the cards */
+}
+
 #total-pot {
     position: absolute;
     display: none;
@@ -173,7 +190,6 @@ h1, h4 {
     margin: 1vh;
 }
 .hole-cards {
-    /*display: none; */
     width: 90%;
     max-width: 13vh;
     height: 50%;
@@ -186,6 +202,28 @@ h1, h4 {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+.player-actions {
+    display: none;
+    /* background-color: */
+    border-radius: 5px;
+    width: 70%;
+    max-width: 13vh;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    top: calc(85%);
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.player-actions p {
+    width: 100%;
+    text-align: center;
+    color: white;
+    margin: 0.2vh;
 }
 .hole-cards img {
     flex: 1;
@@ -354,24 +392,29 @@ select {
     align-items: flex-end;
     margin-right: 2vh;
 }
-
 .custom-bet {
-    margin: 1vh 0;
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    background-color: #333333;
+    margin: 0;
+}
+.inc-bet, .slider-container, .dec-bet, .bet-input {
+    margin: 0 1vh; /* Adjust the horizontal and vertical margins as needed */
 }
 .slider-container {
-    margin: 0 1vh 0 0;
+    display: flex;
+    align-items: center;
     padding: 0;
-    width: 25vh;
-    height: 3vh;
+    width: 20vh;
+    height: 1.25vh;
     background-color: #ddd;
     border-radius: 6vh;
     position: relative;
     cursor: pointer;
 }
-
 .slider-track {
+    flex: 1;
     width: 0;
     height: 100%;
     background-color: #3498db;
@@ -382,8 +425,8 @@ select {
 }
 
 .slider-handle {
-    width: 30px;
-    height: 30px;
+    width: 1.75vh;
+    height: 1.75vh;
     background-color: #fff;
     border: 2px solid #3498db;
     border-radius: 50%;
@@ -394,11 +437,25 @@ select {
     user-drag: none;
     z-index: 1;
 }
-
 #slider-value {
-    max-width: 6.5vh;
-    height: 3vh;
-    margin-left: 1.2vh;
+    text-align: center;
+    max-width: 6vh;
+    height: 1.5vh;
+    white-space: nowrap;
+}
+.inc-bet, .dec-bet {
+    color: white;
+    font-weight: bold;
+    font-size: 2vh;
+    height: auto;
+    line-height: 1; /* Keep the text vertically centered */
+    user-select: none;
+}
+.inc-bet:hover  {
+    cursor: pointer;
+}
+.dec-bet:hover  {
+    cursor: pointer;
 }
 
 .bet-sizes {

@@ -12,6 +12,8 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.util.ArrayList;
+
 @Controller
 public class TableWebSocketController implements TableCallback {
     private SimpMessagingTemplate messagingTemplate;
@@ -20,7 +22,8 @@ public class TableWebSocketController implements TableCallback {
     public TableWebSocketController (SimpMessagingTemplate messagingTemplate, TableService tableService) {
         this.messagingTemplate = messagingTemplate;
         this.tableService = tableService;
-        tableService.setTableCallback(this);
+        //revert this line to not use this if code doesn't work
+        this.tableService.setTableCallback(this);
     }
 
     @MessageMapping("/tableEvents")
@@ -62,7 +65,7 @@ public class TableWebSocketController implements TableCallback {
     }
     @Override
     public void onHoleCardsDealt(String username, int seat, Card[] holeCards) {
-        PublicHoleCardsRequest publicRequest = new PublicHoleCardsRequest();
+        SeatRequest publicRequest = new SeatRequest();
         publicRequest.setType(RequestType.DEAL_PRE);
         publicRequest.setSeat(seat);
 
@@ -76,7 +79,79 @@ public class TableWebSocketController implements TableCallback {
     }
 
     @Override
-    public void onPreFlopBetting(Player player) {
+    //send a request to the front end for the player to input an action (check, bet, or fold)
+    //receive that action and send it to TableService.java using a CompletableFuture
+    public void onPreFlopAction(Player player, int seat, float currentBet, float potSize, float minBet) {
+        SeatRequest publicRequest= new SeatRequest();
+        publicRequest.setType(RequestType.PLAYER_ACTION);
+        publicRequest.setSeat(seat);
 
+        messagingTemplate.convertAndSend("/topic/tableEvents", publicRequest);
+
+        //create a player request object and populate it with the passed fields
+        PlayerActionRequest privateRequest = new PlayerActionRequest();
+        privateRequest.setType(RequestType.PLAYER_ACTION);
+        privateRequest.setPlayer(player);
+        privateRequest.setSeat(seat);
+        privateRequest.setCurrentBet(currentBet);
+        privateRequest.setPotSize(potSize);
+        privateRequest.setMinBet(minBet);
+        //send websocket message to player whose turn is to act
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + player.getUsername(), privateRequest);
+    }
+
+    @Override
+    //Add the player(s) who won the pot and send that via WebSocket Object
+    public void onCompleteHand(Player[] seats) {
+        CompleteHandRequest request = new CompleteHandRequest();
+        request.setType(RequestType.COMPLETE_HAND);
+        request.setSeats(seats);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
+    }
+
+    @Override
+    public void onBoardCardsDealt(ArrayList<Card> cards) {
+        DealBoardCardsRequest request = new DealBoardCardsRequest();
+        request.setType(RequestType.BOARD_CARDS);
+        request.setCards(cards);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
+    }
+
+    @Override
+    public void onCleanUp(boolean isHandOver) {
+        CleanUpRequest request = new CleanUpRequest();
+        request.setType(RequestType.CLEAN_UP);
+        request.setHandOver(isHandOver);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
+    }
+
+    @MessageMapping("/playerActionEvent")
+    public void returnPreFlopAction(@Payload PlayerActionResponse response) {
+        tableService.handlePlayerAction(response);
+    }
+
+    @Override
+    public void onEndPlayerAction(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize) {
+        EndPlayerActionRequest request = new EndPlayerActionRequest();
+        request.setType(RequestType.END_PLAYER_ACTION);
+        request.setAction(action);
+        request.setUsername(username);
+        request.setSeat(seatIndex);
+        request.setBet(betAmount);
+        request.setStackSize(stackSize);
+        request.setPotSize(potSize);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
+    }
+
+    @MessageMapping("/foldEvent")
+    public void foldEvent(@Payload FoldRequest request) {
+        SeatRequest seatRequest = new SeatRequest();
+        seatRequest.setType(request.getType());
+        seatRequest.setSeat(request.getSeat());
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + request.getUsername(), seatRequest);
     }
 }

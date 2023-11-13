@@ -1,9 +1,10 @@
 package com.v1.junopoker.dto;
 
-import com.v1.junopoker.model.Card;
 import lombok.Data;
+
 @Data
-public class PublicHoleCardsRequest {
+public class FoldRequest {
     private RequestType type;
+    private String username;
     private int seat;
 }

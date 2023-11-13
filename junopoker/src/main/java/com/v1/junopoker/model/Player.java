@@ -9,6 +9,6 @@ public class Player {
     private Card[] holeCards = null;
     private Hand hand = null;
     private boolean inHand = false;
-    private int currentBet = 0;
+    private float currentBet = 0;
     private boolean isActive = false;
 }

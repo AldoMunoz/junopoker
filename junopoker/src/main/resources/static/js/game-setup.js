@@ -21,6 +21,9 @@ $(document).ready(function () {
                 fetch("/getTableData")
                     .then(response => response.json())
                     .then(tableData => {
+                        //set the small blind = 1;
+                        setSmallBlind(tableData.stakes[0]);
+
                         $('#game-type').text(`Game Type: ${tableData.gameType}`);
                         $('#stakes').text(`Stakes: ${tableData.stakes[0]}/${tableData.stakes[1]}`);
                     })
@@ -45,6 +48,9 @@ $(document).ready(function () {
                     console.log("Table data created and stored in HttpSession");
                     // Establish WebSocket connection
                     establishWebSocketConnection();
+
+                    //set the small blind = 1;
+                    setSmallBlind(1);
 
                     // Populate the <h4> headers with the selected game type and stakes
                     $('#game-type').text(`Game Type: Texas Hold'em`);
@@ -99,17 +105,28 @@ function tableEvents(payload) {
     //parse the body of the message
     let message = JSON.parse(payload.body);
 
+    //TODO: Make this a switch-case
     //view logic for when a new player takes a seat
     if(message.type === "SIT") sitTableEvent(message);
-
     //view logic for when player stands up from seat
     else if(message.type === "STAND") standTableEvent(message);
     //view logic for when button is set
     else if(message.type === "MOVE_BUTTON") moveButtonEvent(message);
     //view logic for when blinds are set and collected
     else if(message.type === "INIT_POT") initPotEvent(message);
-    //logic for when error occurred, most likely in payload body
+    //view logic for displaying player hole cards
     else if(message.type === "DEAL_PRE") dealHoleCardsEvent(message);
+    //view logic for highlighting which player's turn it is.
+    else if (message.type === "PLAYER_ACTION") playerActionEvent(message);
+    //view logic for un-highlighting which players turn it is
+    else if(message.type === "END_PLAYER_ACTION") endPlayerActionEvent(message);
+    //view logic for when the hand has ended
+    else if (message.type === "COMPLETE_HAND") completeHandEvent(message);
+    //view logic for dealing the flop
+    else if (message.type === "BOARD_CARDS") dealBoardCardsEvent(message);
+    //view logic for cleaning up the table in between streets
+    else if(message.type === "CLEAN_UP") cleanUpEvent(message);
+    //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
 }
 
@@ -118,7 +135,6 @@ function sitTableEvent(message) {
     const seatDiv = $(`#seat-${message.seat}`);
     seatDiv.show();
     seatDiv.empty();
-
 
     const playerInfoDiv = $("<div class='player-info'></div>");
 
@@ -131,14 +147,14 @@ function sitTableEvent(message) {
     playerPanelDiv.append(`<p class="player-chip-counts" id="chip-count-${message.seat}">${message.player.chipCount}</p>`);
 
     const holeCardDiv =$("<div class='hole-cards'></div>");
-    /*holeCardDiv.append(`<img src="/images/cards/JACK_C.png" alt="Image 1">`);
-    holeCardDiv.append(`<img src="/images/cards/JACK_H.png" alt="Image 1">`);
-    */
-    //holeCardDiv.append(`<p class="player-action-display" id="action-display-${i}"></p>`)
+
+    const playerActionsDiv = $("<div class='player-actions'></div>");
+    playerActionsDiv.append(`<p></p>`);
 
     playerInfoDiv.append(playerIconDiv);
     playerInfoDiv.append(playerPanelDiv);
     playerInfoDiv.append(holeCardDiv);
+    playerInfoDiv.append(playerActionsDiv);
 
     seatDiv.append(playerInfoDiv);
 }
@@ -188,7 +204,6 @@ function moveButtonEvent(message) {
             button.css('left', '43%');
             break;
     }
-    stompClient.send()
 }
 
 function initPotEvent(message) {
@@ -204,7 +219,7 @@ function initPotEvent(message) {
     bbBetDisplay.find('p').text(message.bbAmount);
 
     const oldSBChipCount = parseInt($(`#chip-count-${message.smallBlind}`).text());
-    const newSBChipCount = oldBBChipCount - message.sbAmount;
+    const newSBChipCount = oldSBChipCount - message.sbAmount;
     $(`#chip-count-${message.smallBlind}`).text(newSBChipCount);
 
 
@@ -214,18 +229,224 @@ function initPotEvent(message) {
     sbBetDisplay.css("display", "flex");
     sbBetDisplay.find('p').text(message.sbAmount);
 
-    //TODO
-    //display potAmount
-    //fill it with correct amount
-    const totalPot = $("#total-pot")
-    totalPot.css("display", "flex")
-    totalPot.text(`Total Pot: ${message.potSize}`)
+    //Display Total Pot text and populate it with the pot size
+    const totalPot = $("#total-pot");
+    totalPot.css("display", "flex");
+    totalPot.text(`Total Pot: ${message.potSize}`);
 }
 
 function dealHoleCardsEvent(message) {
     const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
+    holeCardsDiv.empty();
     holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
     holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
+    holeCardsDiv.show();
+}
+
+function playerActionEvent(message) {
+    const seatDiv = $(`#seat-${message.seat}`);
+    const playerInfoImg = seatDiv.find(".panel-img");
+
+    playerInfoImg.attr("src", "/images/player-info-on-turn.png");
+}
+function endPlayerActionEvent(message) {
+    console.log("End player action event: ", message);
+    //find the player's seat div and unhighlight their player panel
+    const seatDiv = $(`#seat-${message.seat}`);
+    const playerInfoImg = seatDiv.find(".panel-img");
+    playerInfoImg.attr("src", "/images/player-info.png");
+
+    //if they folded
+    if(message.action === "F") {
+        //hide their cards
+        const cardsDiv = seatDiv.find(".hole-cards");
+        cardsDiv.hide();
+
+        //creates and sends message to controller
+        //allows the user who folded to see their cards on hover until the hand ends
+        const request = {
+            type: "FOLD",
+            username: message.username,
+            seat: message.seat
+        }
+        //sends request to controller to modify the display of the cards for the folded player
+        stompClient.send("/app/foldEvent", {}, JSON.stringify(request));
+    }
+    //if they check
+    else if (message.action == "C")  {
+        //nothing happens (except for display bubble)
+    }
+    //if they called (P stands for "pay")
+    else if(message.action === "P") {
+        //update player's bet display
+        const betDisplayDiv = $(`#bet-display-${message.seat}`);
+        const betElement = betDisplayDiv.find(".player-bet-display");
+        const previousBet = parseFloat(betElement.text());
+        const newBet = previousBet + message.bet;
+        betElement.text(newBet);
+        betDisplayDiv.show();
+
+        //update player's chip count
+        const chipCountElement = seatDiv.find(".player-chip-counts");
+        chipCountElement.text(message.stackSize);
+
+        //update the pot size
+        const potElement = $("#total-pot");
+        potElement.text("Total Pot: " + message.potSize);
+    }
+    else if (message.action === "B") {
+        //update player's bet display
+        const betDisplayDiv = $(`#bet-display-${message.seat}`);
+        const betElement = betDisplayDiv.find(".player-bet-display");
+        betElement.text(message.bet);
+        betDisplayDiv.show();
+
+        //update player's chip count
+        const chipCountElement = seatDiv.find(".player-chip-counts");
+        chipCountElement.text(message.stackSize);
+
+        //update the pot size
+        const potElement = $("#total-pot");
+        potElement.text("Total Pot: " + message.potSize);
+    }
+    else {
+        console.log("Error occurred in END PLAYER ACTION")
+    }
+    //display an action bubble under the player icon briefly displaying what action the user took
+    displayActionBubble(message.seat, message.action);
+}
+function displayActionBubble(seat, action) {
+    const seatDiv = $(`#seat-${seat}`);
+    const playerActionsDiv = seatDiv.find(".player-actions");
+    const pTag = playerActionsDiv.find("p");
+
+    switch(action) {
+        case "F":
+            pTag.text("Fold");
+            playerActionsDiv.css("background-color", "grey");
+            break;
+        case "C":
+            pTag.text("Check");
+            playerActionsDiv.css("background-color", "grey");
+            break;
+        case "P":
+            pTag.text("Call");
+            playerActionsDiv.css("background-color", "blue");
+            break;
+        case "B":
+            pTag.text("Bet")
+            playerActionsDiv.css("background-color", "orange");
+            break;
+    }
+
+    //display the action bubble on the screen
+    playerActionsDiv.css("display", "block");
+
+    // Use setTimeout to revert the changes after one second (1000 milliseconds)
+    setTimeout(function() {
+        //stops displaying the action bubble, resets the text to empty
+        playerActionsDiv.css("display", "none");
+        pTag.text("");
+    }, 1000);
+}
+
+//Completes closing actions after the hand has ended
+function completeHandEvent(message) {
+    //hides the bet displays for each player
+    hideBetDisplays();
+
+    //list of winner(s) seat positions, used to display winner message
+    let winners = []
+    //Find the winners
+    //Change their player icon to display the updated stack size
+    for (let i = 0; i < message.seats.length; i++) {
+        if(message.seats[i] != null && message.seats[i].inHand === true) {
+            //push the index of the winner to winners array
+            winners.push(i);
+            $(`#chip-count-${i}`).text(message.seats[i].chipCount);
+            console.log("Updated chip count");
+        }
+    }
+
+    //Set Total Pot display = 0;
+    $("#total-pot").text("Total Pot: 0")
+
+    // Create a Promise for the winner animations
+    function animateWinners() {
+        return new Promise(resolve => {
+            const winnerPromises = winners.map(winner => {
+                return new Promise(winnerResolve => {
+                    const seatDiv = $(`#seat-${winner}`);
+                    const playerActionsDiv = seatDiv.find(".player-actions");
+                    const pTag = playerActionsDiv.find("p");
+
+                    pTag.text("WINNER");
+                    playerActionsDiv.css("background-color", "green");
+
+                    // Display the action bubble on the screen
+                    playerActionsDiv.css("display", "block");
+
+                    // Use setTimeout to revert the changes after three seconds (3000 milliseconds)
+                    setTimeout(function() {
+                        // Stops displaying the action bubble, resets the text to empty
+                        playerActionsDiv.css("display", "none");
+                        pTag.text("");
+                        winnerResolve(); // Resolve the individual winner animation
+                    }, 3000);
+                });
+            });
+
+            // Wait for all winner animations to complete
+            Promise.all(winnerPromises).then(() => {
+                resolve(); // Resolve the parent promise once all winners are done
+            });
+        });
+    }
+    // Execute winner animations and then proceed to the next loop
+    animateWinners().then(() => {
+        //Remove each player's hole cards
+        for (let i = 0; i < message.seats.length; i++) {
+            if (message.seats[i] != null) {
+                const seatDiv = $(`#seat-${i}`);
+                const holeCardsDiv = seatDiv.find(".hole-cards");
+                holeCardsDiv.empty();
+            }
+        }
+        //Clear the board
+        $("#board").empty();
+    });
+}
+
+//Reset and hide the bet displays
+function hideBetDisplays() {
+    for(let i = 0; i < 5; i++) {
+        const betDisplayDiv = $(`#bet-display-${i}`);
+        const betElement = betDisplayDiv.find(".player-bet-display");
+        betElement.text("");
+        betDisplayDiv.hide();
+    }
+}
+
+//Displays the flop cards
+function dealBoardCardsEvent(message) {
+    //TODO add some timing between the dealing of each card
+    for (let i = 0; i < message.cards.length; i++) {
+        const flopCard = new  $('<img>');
+        flopCard.attr("src", `/images/cards/${message.cards[i]}.png`);
+        flopCard.attr("alt", `Board Card ${i}`);
+
+        $("#board").append(flopCard);
+    }
+}
+
+//cleans up view information between hands
+function cleanUpEvent(message) {
+    //hides the bet displays for each player
+    if (message.handOver === true) {
+        $("#total-pot").css("display", "none")
+        $("#total-pot").text(`Total Pot: `)
+    }
+    hideBetDisplays();
 }
 
 /*HANDLE TABLE DATA SUBMISSION
@@ -303,6 +524,7 @@ function populateTable(seats) {
         }
         //if seat is taken, show player icon with correct player information
         else {
+            //TODO: create a separate method for this;
             const seatDiv = $(`#seat-${i}`);
             seatDiv.empty();
 
@@ -316,16 +538,14 @@ function populateTable(seats) {
             playerPanelDiv.append(`<p class="player-chip-counts" id="chip-count-${i}">${seats[i].chipCount}</p>`);
 
             const holeCardDiv =$("<div class='hole-cards'></div>");
-            /*holeCardDiv.append(`<img src="/images/cards/JACK_C.png" alt="Image 1">`);
-            holeCardDiv.append(`<img src="/images/cards/JACK_H.png" alt="Image 1">`);
-            */
 
-            //playerTextDiv.append(`<p class="player-action-display" id="action-display-${i}"></p>`)
+            const playerActionsDiv = $("<div class='player-actions'></div>");
+            playerActionsDiv.append(`<p></p>`);
 
             playerInfoDiv.append(playerIconDiv);
             playerInfoDiv.append(playerPanelDiv);
             playerInfoDiv.append(holeCardDiv);
-
+            playerInfoDiv.append(playerActionsDiv);
 
             seatDiv.append(playerInfoDiv);
         }

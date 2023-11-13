@@ -58,7 +58,7 @@ public class TableService {
         while (table.getSeatedPlayerCount() > 1) {
             // Add a 3-second delay between hand rounds
             try {
-                Thread.sleep(3000); // Sleep for 3000 milliseconds (3 seconds)
+                Thread.sleep(4000); // Sleep for 3000 milliseconds (3 seconds)
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

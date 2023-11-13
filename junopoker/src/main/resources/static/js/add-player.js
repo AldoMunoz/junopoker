@@ -86,122 +86,130 @@ async function playerEvents(payload) {
     //parse message body
     let message = JSON.parse(payload.body);
 
-    //logic for when player takes a seat
-    if(message.type == "SIT") {
-        //fetch array of table seats
-        const seats = await fetchTableSeats();
+    //function for when player takes a seat
+    if(message.type == "SIT") await sitPlayerEvent(message);
+    //function for when player stands from table
+    else if(message.type === "STAND") await standPlayerEvent(message);
+    //function for dealing player's private hold cards
+    else if (message.type === "DEAL_PRE") privateDealHoleCardsEvent(message);
+    //function for setting up and displaying player's private action HUD
+    else if (message.type === "PLAYER_ACTION") privatePlayerActionEvent(message);
+    //function to display cards on hover after a player folds
+    else if (message.type == "FOLD") foldEvent(message);
+}
+async function sitPlayerEvent(message) {
+    //fetch array of table seats
+    const seats = await fetchTableSeats();
 
-        //loop to hide all seat buttons once the player sits
-        let seatedPlayerCount = 0;
-        for (let i = 0; i < seats.length; i++) {
-            if (seats[i] === null) {
-                const seatDiv = $(`#seat-${i}`);
-                seatDiv.hide();
-            }
-            //count the amount of seated players at the table
-            else seatedPlayerCount++;
+    //loop to hide all seat buttons once the player sits
+    let seatedPlayerCount = 0;
+    for (let i = 0; i < seats.length; i++) {
+        if (seats[i] === null) {
+            const seatDiv = $(`#seat-${i}`);
+            seatDiv.hide();
         }
-
-        //show the settings bar
-        const settingsBar = $('.settings-bar');
-        settingsBar.css("display", "flex");
-        //associates the settings bar with a specific seat
-        //so, for example, the controller knows who to remove when a player clicks the "stand" button
-        settingsBar.attr("data-seat", message.seat);
-
-        if(seatedPlayerCount > 1) {
-           const response = await fetch("/startGame");
-           const table = await response.json();
-           stompClient.send("/app/startGame", {}, JSON.stringify(table))
-        }
+        //count the amount of seated players at the table
+        else seatedPlayerCount++;
     }
-    //logic for when player stands from table
-    else if(message.type === "STAND") {
-        const seats = await fetchTableSeats();
-        populateTable(seats);
 
-        //hide settings bar
-        const settingsBar = $('.settings-bar');
-        settingsBar.css("display", "none");
-        //unsubscribe user for /topic/playerEvents/${}
-        stompClient.unsubscribe(`/topic/playerEvents/${message.player.username}`);
+    //show the settings bar
+    const settingsBar = $('.settings-bar');
+    settingsBar.css("display", "flex");
+    //associates the settings bar with a specific seat
+    //so, for example, the controller knows who to remove when a player clicks the "stand" button
+    settingsBar.attr("data-seat", message.seat);
+
+    if(seatedPlayerCount > 1) {
+        const response = await fetch("/startGame");
+        const table = await response.json();
+        stompClient.send("/app/startGame", {}, JSON.stringify(table))
     }
-    else if (message.type === "DEAL_PRE") {
-        console.log("Private deal cards message: ", message);
-        const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
-        holeCardsDiv.empty();
-        holeCardsDiv.append(`<img src="/images/cards/${message.cards[0]}.png" alt="Card 1">`)
-        holeCardsDiv.append(`<img src="/images/cards/${message.cards[1]}.png" alt="Card 2">`)
-        holeCardsDiv.show();
+}
+async function standPlayerEvent(message) {
+    const seats = await fetchTableSeats();
+    populateTable(seats);
+
+    //hide settings bar
+    const settingsBar = $('.settings-bar');
+    settingsBar.css("display", "none");
+    //unsubscribe user for /topic/playerEvents/${}
+    stompClient.unsubscribe(`/topic/playerEvents/${message.player.username}`);
+}
+function privateDealHoleCardsEvent(message) {
+    console.log("Private deal cards message: ", message);
+    const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
+    holeCardsDiv.empty();
+    holeCardsDiv.append(`<img src="/images/cards/${message.cards[0]}.png" alt="Card 1">`)
+    holeCardsDiv.append(`<img src="/images/cards/${message.cards[1]}.png" alt="Card 2">`)
+    holeCardsDiv.css("opacity", "100");
+    holeCardsDiv.show();
+}
+
+function privatePlayerActionEvent(message) {
+    //set min bet value, max bet value, pot size, and the seat in slider.js;
+    setMinValue(message.minBet);
+    setMaxValue(message.player.chipCount);
+    setPotSize(message.potSize);
+    setSeat(message.seat);
+
+    //clear the basic actions div, apart from the fold button, which is always required
+    const basicActionsDiv = $(".basic-actions");
+    basicActionsDiv.children().not("#fold").remove();
+    //if the current bet is greater than the player's stack, they can fold or go all-in
+    if(message.currentBet > message.player.chipCount) {
+        //add "all-in" button
+        basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In ${message.player.chipCount}</button>`);
     }
-    else if (message.type === "PLAYER_ACTION") {
-        console.log(message);
-
-        //set min bet value, max bet value, pot size, and the seat in slider.js;
-        setMinValue(message.minBet);
-        setMaxValue(message.player.chipCount);
-        setPotSize(message.potSize);
-        setSeat(message.seat);
-
-        //clear the basic actions div, apart from the fold button, which is always required
-        const basicActionsDiv = $(".basic-actions");
-        basicActionsDiv.children().not("#fold").remove();
-        //if the current bet is greater than the player's stack, they can fold or go all-in
-        if(message.currentBet > message.player.chipCount) {
-            //add "all-in" button
-            basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In ${message.player.chipCount}</button>`);
-        }
-        //if the min bet would be greater than the player's stack, they can fold, call, or go all-in
-        else if (message.minBet > message.player.chipCount && message.player.currentBet != message.currentBet) {
-            //add "call" and "all-in" buttons
-            basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
-            basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In ${message.player.chipCount}</button>`)
-        }
-        //if the player's bet is not equal to the table bet, they can fold, call, or raise
-        else if(message.player.currentBet != message.currentBet) {
-            //add "call" and "raise" buttons
-            basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
-            basicActionsDiv.append(`<button id="raise" onclick="onBet()">Raise: </button>`)
-            setBetButtonType('r');
-        }
+    //if the min bet would be greater than the player's stack, they can fold, call, or go all-in
+    else if (message.minBet > message.player.chipCount && message.player.currentBet != message.currentBet) {
+        //add "call" and "all-in" buttons
+        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
+        basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In ${message.player.chipCount}</button>`)
+    }
+    //if the player's bet is not equal to the table bet, they can fold, call, or raise
+    else if(message.player.currentBet != message.currentBet) {
+        //add "call" and "raise" buttons
+        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
+        basicActionsDiv.append(`<button id="raise" onclick="onBet()">Raise: </button>`)
+        setBetButtonType('r');
+    }
         //if both the table's current bet and the player's current bet == 0, they can fold, check, or call
-        //or if the player's current bet is equal to the table's current bet (preflop)
-        else if ((message.player.currentBet == 0 && message.currentBet == 0) || (message.player.currentBet == message.currentBet)) {
-            //add "check" and "bet" buttons
-            basicActionsDiv.append(`<button id="check" onclick="onCheck()">Check</button>`);
-            basicActionsDiv.append(`<button id="bet" onclick="onBet()">Bet: </button>`)
-            setBetButtonType('b');
+    //or if the player's current bet is equal to the table's current bet (preflop)
+    else if ((message.player.currentBet == 0 && message.currentBet == 0) || (message.player.currentBet == message.currentBet)) {
+        //add "check" and "bet" buttons
+        basicActionsDiv.append(`<button id="check" onclick="onCheck()">Check</button>`);
+        basicActionsDiv.append(`<button id="bet" onclick="onBet()">Bet: </button>`)
+        setBetButtonType('b');
+    }
+
+    //default the slider and bet value to min bet (0%)
+    const bet = updateSlider(0);
+    updateBetButton(bet);
+    updateInputBox(bet);
+
+    //display the action bar
+    const actionBarDiv = $(".action-bar");
+    actionBarDiv.css("display", "flex");
+}
+
+function foldEvent(message) {
+    //find the player's cards
+    const seatDiv = $(`#seat-${message.seat}`);
+    const cardsDiv = seatDiv.find(".hole-cards");
+    //display the cards on the page with 0 opacity (invisible)
+    cardsDiv.css("opacity", "0");
+    cardsDiv.css("display", "flex");
+
+    cardsDiv.hover(
+        //on hover, display the cards at 50% opacity
+        function() {
+            cardsDiv.css("opacity", "0.5");
+        },
+        //on exit, display the cards at 0% opacity
+        function () {
+            cardsDiv.css("opacity", "0");
         }
-
-        //default the slider and bet value to min bet (0%)
-        const bet = updateSlider(0);
-        updateBetButton(bet);
-        updateInputBox(bet);
-
-        //display the action bar
-        const actionBarDiv = $(".action-bar");
-        actionBarDiv.css("display", "flex");
-    }
-    //code to display cards on hover after a player folds
-    else if (message.type == "FOLD") {
-        //find the player's cards
-        const seatDiv = $(`#seat-${message.seat}`);
-        const cardsDiv = seatDiv.find(".hole-cards");
-        //display the cards on the page with 0 opacity (invisible)
-        cardsDiv.css("opacity", "0");
-        cardsDiv.css("display", "flex");
-
-        cardsDiv.hover(
-            //on hover, display the cards at 50% opacity
-            function() {
-                cardsDiv.css("opacity", "0.5");
-            },
-            //on exit, display the cards at 0% opacity
-            function () {
-                cardsDiv.css("opacity", "0");
-            }
-        )
-    }
+    )
 }
 
 // Function to open the player modal

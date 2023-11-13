@@ -75,6 +75,12 @@ public class TableWebSocketController implements TableCallback {
         privateRequest.setCards(holeCards);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", publicRequest);
+        // Add a slight delay between messages
+        try {
+            Thread.sleep(100); // Sleep for 100 milliseconds
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         messagingTemplate.convertAndSend("/topic/playerEvents/" + username, privateRequest);
     }
 

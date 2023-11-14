@@ -403,7 +403,7 @@ public class HandService {
             case "Two Pair, " -> rank + hand.get(0) + "'s & " + hand.get(2) + "'s";
             case "High Straight, " -> hand.get(0) + " High Straight";
             case "High Flush, " -> hand.get(0) + " High Flush";
-            case "Full House, " -> rank + hand.get(0) + "'s & " + hand.get(3) + "'s";
+            case "Full House, " -> rank + hand.get(0) + "'s full of " + hand.get(3) + "'s";
             case "High Straight Flush, " -> hand.get(0) + " High Straight Flush";
             case "Royal Flush, " -> "Royal Flush";
             default -> null;

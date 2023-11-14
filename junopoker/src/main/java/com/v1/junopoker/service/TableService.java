@@ -554,8 +554,10 @@ public class TableService {
                 HandService handService = new HandService();
                 table.getSeats()[i].getHand().setHandRanking(handService.findHandRanking(hand));
 
-                //TODO callback method to each individual player with their hand ranking
-                String toStringHand = handService.toString(table.getSeats()[i].getHand().getFiveCardHand(), table.getSeats()[i].getHand().getHandRanking());
+                // TODO callback method to each individual player with their hand ranking
+                String toStringHand = handService.toString(table.getSeats()[i].getHand().getFiveCardHand(),
+                        table.getSeats()[i].getHand().getHandRanking());
+                System.out.println(toStringHand);
             }
         }
     }
@@ -578,6 +580,13 @@ public class TableService {
         //reset the table fields
         table.setPot(0);
         table.setSeatedFoldCount(0);
+
+        // heads-up edge case
+        if (table.getSeatedPlayerCount() == 2) {
+            int sb = table.getSmallBlindIndex();
+            table.setSmallBlindIndex(table.getBigBlindIndex());
+            table.setBigBlindIndex(sb);
+        }
 
         invokeCleanUpCallback(table.isHandOver());
     }

@@ -358,12 +358,42 @@ public class HandService {
         hand.getFiveCardHand()[pos] = card;
     }
 
-    //TODO: Given a 5 card hand and a known handRanking, provide a readable string version of the hand
-    //TODO: look at HandRanking.java to see the strings you have to complete
-    //TODO: For example, if you're given the fiveCardHand [4,4,4,4,A] and handRanking FOUR_OF_A_KIND,
-    //TODO: the result of this function should be "Four of a Kind, 4's"
+    // TODO: Given a 5 card hand and a known handRanking, provide a readable string
+    // version of the hand
+    // TODO: look at HandRanking.java to see the strings you have to complete
+    // TODO: For example, if you're given the fiveCardHand [4,4,4,4,A] and
+    // handRanking FOUR_OF_A_KIND,
+    // TODO: the result of this function should be "Four of a Kind, 4's"
     public String toString(Card[] fiveCardHand, HandRanking handRanking) {
-        //TIP: use handRanking.getHand() for the string
-        return "";
+        String rank = handRanking.getHand() + ", ";
+        ArrayList<String> hand = new ArrayList<>();
+        for (Card c : fiveCardHand) {
+            switch (c.getVal()) {
+                case 2 -> hand.add("2");
+                case 3 -> hand.add("3");
+                case 4 -> hand.add("4");
+                case 5 -> hand.add("5");
+                case 6 -> hand.add("6");
+                case 7 -> hand.add("7");
+                case 8 -> hand.add("8");
+                case 9 -> hand.add("9");
+                case 10 -> hand.add("10");
+                case 11 -> hand.add("J");
+                case 12 -> hand.add("Q");
+                case 13 -> hand.add("K");
+                case 14 -> hand.add("A");
+            }
+        }
+        return switch (rank) {
+            case "High, " -> hand.get(0) + " High";
+            case "One Pair, ", "Three of a Kind, ", "Four of a Kind, " -> rank + hand.get(0) + "'s";
+            case "Two Pair, " -> rank + hand.get(0) + "'s & " + hand.get(2) + "'s";
+            case "High Straight, " -> hand.get(0) + " High Straight";
+            case "High Flush, " -> hand.get(0) + " High Flush";
+            case "Full House, " -> rank + hand.get(0) + "'s full of " + hand.get(3) + "'s";
+            case "High Straight Flush, " -> hand.get(0) + " High Straight Flush";
+            case "Royal Flush, " -> "Royal Flush";
+            default -> null;
+        };
     }
 }

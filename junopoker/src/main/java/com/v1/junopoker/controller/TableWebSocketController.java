@@ -13,6 +13,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 @Controller
 public class TableWebSocketController implements TableCallback {
@@ -108,10 +109,10 @@ public class TableWebSocketController implements TableCallback {
 
     @Override
     //Add the player(s) who won the pot and send that via WebSocket Object
-    public void onCompleteHand(Player[] seats) {
+    public void onCompleteHand(HashMap<Integer, Player> indexAndWinner) {
         CompleteHandRequest request = new CompleteHandRequest();
         request.setType(RequestType.COMPLETE_HAND);
-        request.setSeats(seats);
+        request.setIndexAndWinner(indexAndWinner);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
@@ -123,6 +124,16 @@ public class TableWebSocketController implements TableCallback {
         request.setCards(cards);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
+    }
+
+    @Override
+    public void onHandRanking(String handRanking, String username) {
+        HandRankingRequest request = new HandRankingRequest();
+        request.setType(RequestType.HAND_RANKING);
+        request.setHandRanking(handRanking);
+        request.setUsername(username);
+
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + request.getUsername(), request);
     }
 
     @Override

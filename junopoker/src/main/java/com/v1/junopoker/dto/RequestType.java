@@ -16,5 +16,7 @@ public enum RequestType {
     COMPLETE_HAND,
     BOARD_CARDS,
 
+    HAND_RANKING,
+
     CLEAN_UP
 }

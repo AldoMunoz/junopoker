@@ -94,6 +94,7 @@ async function playerEvents(payload) {
     else if (message.type === "DEAL_PRE") privateDealHoleCardsEvent(message);
     //function for setting up and displaying player's private action HUD
     else if (message.type === "PLAYER_ACTION") privatePlayerActionEvent(message);
+    else if(message.type === "HAND_RANKING") handRankingEvent(message);
     //function to display cards on hover after a player folds
     else if (message.type == "FOLD") foldEvent(message);
 }
@@ -143,6 +144,9 @@ function privateDealHoleCardsEvent(message) {
     holeCardsDiv.append(`<img src="/images/cards/${message.cards[1]}.png" alt="Card 2">`)
     holeCardsDiv.css("opacity", "100");
     holeCardsDiv.show();
+
+    $("#hand-ranking").text("");
+    $("#hand-ranking").hide();
 }
 
 function privatePlayerActionEvent(message) {
@@ -190,6 +194,12 @@ function privatePlayerActionEvent(message) {
     //display the action bar
     const actionBarDiv = $(".action-bar");
     actionBarDiv.css("display", "flex");
+}
+
+function handRankingEvent(message) {
+    console.log("Hand Ranking Event: ", message)
+    $("#hand-ranking").text(message.handRanking);
+    $("#hand-ranking").show();
 }
 
 function foldEvent(message) {

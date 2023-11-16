@@ -352,19 +352,17 @@ function displayActionBubble(seat, action) {
 
 //Completes closing actions after the hand has ended
 function completeHandEvent(message) {
+    console.log("Complete Hand message: ", message);
     //hides the bet displays for each player
     hideBetDisplays();
 
-    //list of winner(s) seat positions, used to display winner message
-    let winners = []
     //Find the winners
     //Change their player icon to display the updated stack size
-    for (let i = 0; i < message.seats.length; i++) {
-        if(message.seats[i] != null && message.seats[i].inHand === true) {
-            //push the index of the winner to winners array
-            winners.push(i);
-            $(`#chip-count-${i}`).text(message.seats[i].chipCount);
+    for(let index in message.indexAndWinner) {
+        if(message.indexAndWinner.hasOwnProperty(index)) {
+            $(`#chip-count-${index}`).text(message.indexAndWinner[index].chipCount);
             console.log("Updated chip count");
+
         }
     }
 
@@ -374,9 +372,9 @@ function completeHandEvent(message) {
     // Create a Promise for the winner animations
     function animateWinners() {
         return new Promise(resolve => {
-            const winnerPromises = winners.map(winner => {
+            const winnerPromises = Object.keys(message.indexAndWinner).map(index => {
                 return new Promise(winnerResolve => {
-                    const seatDiv = $(`#seat-${winner}`);
+                    const seatDiv = $(`#seat-${index}`);
                     const playerActionsDiv = seatDiv.find(".player-actions");
                     const pTag = playerActionsDiv.find("p");
 
@@ -405,12 +403,10 @@ function completeHandEvent(message) {
     // Execute winner animations and then proceed to the next loop
     animateWinners().then(() => {
         //Remove each player's hole cards
-        for (let i = 0; i < message.seats.length; i++) {
-            if (message.seats[i] != null) {
-                const seatDiv = $(`#seat-${i}`);
-                const holeCardsDiv = seatDiv.find(".hole-cards");
-                holeCardsDiv.empty();
-            }
+        for (let i = 0; i < 6; i++) {
+            const seatDiv = $(`#seat-${i}`);
+            const holeCardsDiv = seatDiv.find(".hole-cards");
+            holeCardsDiv.empty();
         }
         //Clear the board
         $("#board").empty();

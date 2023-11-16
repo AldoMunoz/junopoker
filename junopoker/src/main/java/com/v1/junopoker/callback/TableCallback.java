@@ -4,6 +4,7 @@ import com.v1.junopoker.model.Card;
 import com.v1.junopoker.model.Player;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public interface TableCallback {
     void onButtonSet(int buttonIndex);
@@ -16,10 +17,11 @@ public interface TableCallback {
 
     void onEndPlayerAction(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize);
 
-    void onCompleteHand(Player[] seats);
+    void onCompleteHand(HashMap<Integer, Player> indexAndWinner);
 
     void onBoardCardsDealt(ArrayList<Card> cards);
 
+    void onHandRanking(String handRanking, String username);
     void onCleanUp(boolean isHandOver);
 
 }

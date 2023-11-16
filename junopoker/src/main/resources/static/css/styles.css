@@ -385,6 +385,12 @@ select {
     background-color: #45a049;
 }
 
+#hand-ranking {
+    text-align: right;
+    margin: 0 2vh 0 0;
+
+}
+
 /*Area dealing with player actions */
 .action-bar {
     display: none;

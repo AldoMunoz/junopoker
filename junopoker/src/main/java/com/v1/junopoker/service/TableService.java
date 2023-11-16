@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -56,9 +57,8 @@ public class TableService {
 
         //game will run while there are at least 2 people seated at the table
         while (table.getSeatedPlayerCount() > 1) {
-            // Add a 3-second delay between hand rounds
             try {
-                Thread.sleep(4000); // Sleep for 3000 milliseconds (3 seconds)
+                Thread.sleep(4000); // Sleep for 4 seconds
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -134,12 +134,6 @@ public class TableService {
             }
         }
     }
-    //callback function used to send position info to the front-end
-    private void invokeButtonCallback(int buttonIndex) {
-        if(tableCallback != null) {
-            tableCallback.onButtonSet(buttonIndex);
-        }
-    }
 
     //collects blinds and adds them to the pot
     public void initiatePot (Table table) {
@@ -177,12 +171,6 @@ public class TableService {
 
         invokeInitPotCallback(table.getSmallBlindIndex(), table.getBigBlindIndex(), sbAmount, bbAmount, table.getPot());
     }
-    private void invokeInitPotCallback(int sbIndex, int bbIndex, double sbAmount, double bbAmount, double potSize) {
-        if(tableCallback != null) {
-            tableCallback.onPotInit(sbIndex, bbIndex, sbAmount, bbAmount, potSize);
-        }
-    }
-
 
     //deals cards preflop to all players
     public void dealCards (Table table) {
@@ -206,12 +194,6 @@ public class TableService {
         }
     }
 
-    private void invokeDealHoleCardsCallback(String username, int seat, Card[] holeCards) {
-        if(tableCallback != null) {
-            tableCallback.onHoleCardsDealt(username, seat, holeCards);
-        }
-    }
-
     //deals the flop out
     public void dealFlop (Table table) {
         DeckService deckService = new DeckService();
@@ -228,17 +210,11 @@ public class TableService {
         invokeDealBoardCardsCallback(table.getBoard());
     }
 
-    private void invokeDealBoardCardsCallback(ArrayList<Card> cards) {
-        if(tableCallback != null) {
-            tableCallback.onBoardCardsDealt(cards);
-        }
-    }
-
     //deals the turn or river card
     public void dealTurnOrRiver (Table table) {
         DeckService deckService = deckServiceFactory.createDeckService();
 
-        //TODO this might be too memory intensive, might be easier to create seperate callback method for a turn/river card
+        //TODO this might be too memory intensive, might be better to create seperate callback method for a turn/river card
         //draws a card and adds it to an array (makes it compatible with the callback method)
         Card card = deckService.drawCard(table.getDeck());
         ArrayList<Card> cards = new ArrayList<>();
@@ -298,20 +274,6 @@ public class TableService {
 
         //handle betting round actions from players
         playerAction(table, currPlayerIndex, false);
-    }
-
-    public void cleanUp(Table table) {
-        //clean up table currentBet and player current bets
-        table.setCurrentBet(0);
-        for (Player player : table.getSeats()) {
-            if (player != null) player.setCurrentBet(0);
-        }
-        invokeCleanUpCallback(table.isHandOver());
-    }
-    public void invokeCleanUpCallback(boolean isHandOver) {
-        if(tableCallback != null) {
-            tableCallback.onCleanUp(isHandOver);
-        }
     }
 
     //handles player actions during the betting round until the betting round is over
@@ -443,29 +405,28 @@ public class TableService {
             }
         }
     }
-    private void invokePreFlopActionCallback(Player player, int seat, float currentBet, float potSize, float minBet) {
-        if(tableCallback != null) {
-            tableCallback.onPreFlopAction(player, seat, currentBet, potSize, minBet);
-        }
-    }
 
-    private void invokeEndPlayerActionCallback(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize) {
-        if(tableCallback != null) {
-            tableCallback.onEndPlayerAction(action, username, seatIndex, betAmount, stackSize, potSize);
+    public void cleanUp(Table table) {
+        //clean up table currentBet and player current bets
+        table.setCurrentBet(0);
+        for (Player player : table.getSeats()) {
+            if (player != null) player.setCurrentBet(0);
         }
+        invokeCleanUpCallback(table.isHandOver());
     }
 
     public void completeHand(Table table) {
-        // Initializing the best made hand rank
         ArrayList<Player> winners = new ArrayList<>();
+        HashMap<Integer, Player> indexAndWinner = new HashMap<>();
+
         // Only going through the if when there are at least two winners, more efficient
         if (table.getSeatedFoldCount() != table.getSeatedPlayerCount() - 1) {
             HandRanking max_rank = null;
             Player[] players = table.getSeats();
             for (Player player : players) {
-                if (player == null || !player.isInHand()) {
+                if (player == null || !player.isInHand())
                     continue;
-                } else if (max_rank == null)
+                else if (max_rank == null)
                     max_rank = player.getHand().getHandRanking();
                 else if (player.getHand().getHandRanking().getRanking() > max_rank.getRanking())
                     max_rank = player.getHand().getHandRanking();
@@ -481,6 +442,7 @@ public class TableService {
             for (Player player : potential_winners) {
                 if (winners.size() == 0) {
                     winners.add(player);
+                    indexAndWinner.put(getSeatOfPlayer(table, player.getUsername()), player);
                     continue;
                 }
                 int hand_pos = 0;
@@ -506,21 +468,25 @@ public class TableService {
                 // the next iteration since a player with a worse hand will not be a winner.
                 if (decided && winners.size() == 0) {
                     winners.add(player);
+                    indexAndWinner.put(getSeatOfPlayer(table, player.getUsername()), player);
                 }
                 // if we iterated through the whole hand and decided is false, then we know the current
                 // player in potential_winners has an equal strength hand to the current winner(s), so
                 // that player is added.
-                else if (hand_pos == 5)
+                else if (hand_pos == 5) {
                     winners.add(player);
+                    indexAndWinner.put(getSeatOfPlayer(table, player.getUsername()), player);
+                }
             }
             // Chip stacks of players in winners are updated to contain pot/winners.size()
             // additional chips.
         }
-        // else is a general case for a single winner
+        //case for a single winner
         else {
             for (Player player : table.getSeats()) {
                 if (player != null && player.isInHand()) {
                     winners.add(player);
+                    indexAndWinner.put(getSeatOfPlayer(table, player.getUsername()), player);
                 }
             }
         }
@@ -530,17 +496,11 @@ public class TableService {
         }
 
         //invoke callback method for ending the hand (clean up front end)
-        invokeCompleteHandCallback(table.getSeats());
+        invokeCompleteHandCallback(indexAndWinner);
 
         //hand is now over
         table.setHandOver(true);
     }
-    private void invokeCompleteHandCallback(Player[] seats) {
-        if(tableCallback != null) {
-            tableCallback.onCompleteHand(seats);
-        }
-    }
-
 
     //Goes through the list of players and reassigns Hand value after turn and river
     public void getHandRankings(Table table) {
@@ -551,13 +511,13 @@ public class TableService {
                 Hand hand = new Hand(table.getSeats()[i].getHoleCards(), table.getBoard());
                 table.getSeats()[i].setHand(hand);
 
+                //assigns a handRanking to the player
                 HandService handService = new HandService();
                 table.getSeats()[i].getHand().setHandRanking(handService.findHandRanking(hand));
 
-                // TODO callback method to each individual player with their hand ranking
-                String toStringHand = handService.toString(table.getSeats()[i].getHand().getFiveCardHand(),
-                        table.getSeats()[i].getHand().getHandRanking());
-                System.out.println(toStringHand);
+                //sends a message with a string of the hand ranking to the front end
+                invokeHandRankingCallback(handService.toString(table.getSeats()[i].getHand().getFiveCardHand(),
+                        table.getSeats()[i].getHand().getHandRanking()), table.getSeats()[i].getUsername());
             }
         }
     }
@@ -591,7 +551,66 @@ public class TableService {
         invokeCleanUpCallback(table.isHandOver());
     }
 
+    //given a certain seat index, find the player at that seat
     public Player getPlayerAtSeat(Table table, int seat) {
         return table.getSeats()[seat];
+    }
+
+
+    //given a certain player username, find which seat they are sitting at
+    private int getSeatOfPlayer(Table table, String username) {
+        for (int i = 0; i < table.getSeats().length; i++) {
+            if(table.getSeats()[i] != null && table.getSeats()[i].getUsername().equals(username))
+                return i;
+        }
+        return -1;
+    }
+
+
+    //callback function used to send position info to the front-end
+    private void invokeButtonCallback(int buttonIndex) {
+        if(tableCallback != null) {
+            tableCallback.onButtonSet(buttonIndex);
+        }
+    }
+    private void invokeInitPotCallback(int sbIndex, int bbIndex, double sbAmount, double bbAmount, double potSize) {
+        if(tableCallback != null) {
+            tableCallback.onPotInit(sbIndex, bbIndex, sbAmount, bbAmount, potSize);
+        }
+    }
+    private void invokeDealHoleCardsCallback(String username, int seat, Card[] holeCards) {
+        if(tableCallback != null) {
+            tableCallback.onHoleCardsDealt(username, seat, holeCards);
+        }
+    }
+    private void invokeDealBoardCardsCallback(ArrayList<Card> cards) {
+        if(tableCallback != null) {
+            tableCallback.onBoardCardsDealt(cards);
+        }
+    }
+    public void invokeCleanUpCallback(boolean isHandOver) {
+        if(tableCallback != null) {
+            tableCallback.onCleanUp(isHandOver);
+        }
+    }
+    private void invokePreFlopActionCallback(Player player, int seat, float currentBet, float potSize, float minBet) {
+        if(tableCallback != null) {
+            tableCallback.onPreFlopAction(player, seat, currentBet, potSize, minBet);
+        }
+    }
+    private void invokeEndPlayerActionCallback(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize) {
+        if(tableCallback != null) {
+            tableCallback.onEndPlayerAction(action, username, seatIndex, betAmount, stackSize, potSize);
+        }
+    }
+    private void invokeCompleteHandCallback(HashMap<Integer, Player> indexAndWinner) {
+        if(tableCallback != null) {
+            tableCallback.onCompleteHand(indexAndWinner);
+        }
+    }
+    private void invokeHandRankingCallback(String handRanking, String username) {
+        if(tableCallback != null) {
+            tableCallback.onHandRanking(handRanking, username);
+        }
     }
 }

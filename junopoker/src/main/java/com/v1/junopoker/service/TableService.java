@@ -354,6 +354,28 @@ public class TableService {
                     else if(action == 'C' && bet == 0) {
                         invokeEndPlayerActionCallback('C', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, 0, 0, 0);
                     }
+                    //if they are all-in
+                    else if(action == 'A') {
+                        //update player chip count
+                        table.getSeats()[currPlayerIndex].setChipCount(0);
+
+                        //update the pot size of the table
+                        //TODO: math might be wrong
+                        table.setPot
+                                (table.getPot() + (bet - table.getSeats()[currPlayerIndex].getCurrentBet()));
+                        //update the player's current bet
+                        table.getSeats()[currPlayerIndex].setCurrentBet(bet);
+
+                        //check if the bet amount is greater than currentBet
+                        if(bet > table.getCurrentBet()) {
+                            //if it is, set the current bet to previous bet and current bet to the player's bet
+                            previousBet = table.getCurrentBet();
+                            table.setCurrentBet(bet);
+                            minBet = (table.getCurrentBet() - previousBet) + table.getCurrentBet();
+                        }
+
+                        invokeEndPlayerActionCallback('A', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot());
+                    }
                     //if they bet:
                     else if (action == 'B' && bet >= minBet) {
                         //update player chip count

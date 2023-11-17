@@ -32,16 +32,13 @@ function updateSlider(percentage) {
 
     lastSliderPercentage = percentage;
 
-    const bet = getBetValueFromPercentage(percentage);
-    return bet;
+    return getBetValueFromPercentage(percentage);
 }
 
 //Converts a given bet value to a percentage of the max bet that player can make
 function getBetValueFromPercentage(percentage) {
     const betValue = minValue + (percentage/100) * (maxValue - minValue);
-    const formattedValue = betValue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-
-    return formattedValue;
+    return betValue.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
 }
 
 //changes the text in the "Bet" or the "Raise" button
@@ -145,7 +142,7 @@ function onInputChange(input) {
     }
     //if the input hasn't changed, do nothing
     //for example if user changed input from "4.00" to "4.0"
-    else if(input == (lastSliderPercentage / 100) * (maxValue - minValue) + minValue) {
+    else if(input === (lastSliderPercentage / 100) * (maxValue - minValue) + minValue) {
         if (duplicate) updateInputBox(input);
     }
     //else, just update the slider and the bet button to show the correct values
@@ -202,8 +199,8 @@ function onCall() {
 function onBet() {
     //retrieve the bet amount from the "bet" or "raise" button
     let button = null;
-    if(betButtonType == 'b') button = $("#bet");
-    if(betButtonType == 'r') button = $("#raise");
+    if(betButtonType === 'b') button = $("#bet");
+    if(betButtonType === 'r') button = $("#raise");
 
     const bet = getBetValue(button);
 
@@ -222,7 +219,16 @@ function onAllIn() {
     let button = $('#all-in');
     const bet = getBetValue(button);
 
-    //TODO finish this at some point
+    //create response object
+    const response = {
+        action: 'A',
+        betAmount: bet,
+    }
+
+    hideActionBar();
+
+    //send WebSocket response to back end
+    stompClient.send("/app/playerActionEvent", {}, JSON.stringify(response));
 }
 
 //extracts the text from the "bet" button to get the float value of the bet
@@ -237,9 +243,7 @@ function getBetValue(button) {
         let numberString = numberMatch[0];
 
         // Parse the number to a float
-        let parsedNumber = parseFloat(numberString);
-
-        return parsedNumber;
+        return parseFloat(numberString);
     } else {
         return -1;
     }

@@ -337,6 +337,11 @@ function displayActionBubble(seat, action) {
             pTag.text("Bet")
             playerActionsDiv.css("background-color", "orange");
             break;
+        case "A":
+            pTag.text("All-In")
+            playerActionsDiv.css("background-color", "red");
+            break;
+            //TODO create a function that displays an all in button on the table
     }
 
     //display the action bubble on the screen
@@ -355,6 +360,8 @@ function completeHandEvent(message) {
     console.log("Complete Hand message: ", message);
     //hides the bet displays for each player
     hideBetDisplays();
+
+    //TODO showdown function
 
     //Find the winners
     //Change their player icon to display the updated stack size
@@ -520,7 +527,6 @@ function populateTable(seats) {
         }
         //if seat is taken, show player icon with correct player information
         else {
-            //TODO: create a separate method for this;
             const seatDiv = $(`#seat-${i}`);
             seatDiv.empty();
 

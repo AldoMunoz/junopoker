@@ -12,4 +12,6 @@ public class EndPlayerActionRequest {
     private float bet;
     private float stackSize;
     private float potSize;
+    private float currentStreetPotSize;
+    private boolean isPreFlop;
 }

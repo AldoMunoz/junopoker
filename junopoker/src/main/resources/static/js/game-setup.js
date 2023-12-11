@@ -312,6 +312,12 @@ function endPlayerActionEvent(message) {
     else {
         console.log("Error occurred in END PLAYER ACTION")
     }
+    //display and/or update the current street pot size:
+    if(message.currentStreetPotSize > 0 && message.preFlop === false) {
+        $("#csp-text").text(`$ ${message.currentStreetPotSize}`);
+        $("#current-street-pot").css("display", "flex");
+    }
+
     //display an action bubble under the player icon briefly displaying what action the user took
     displayActionBubble(message.seat, message.action);
 }
@@ -369,7 +375,6 @@ function completeHandEvent(message) {
         if(message.indexAndWinner.hasOwnProperty(index)) {
             $(`#chip-count-${index}`).text(message.indexAndWinner[index].chipCount);
             console.log("Updated chip count");
-
         }
     }
 
@@ -417,10 +422,13 @@ function completeHandEvent(message) {
         }
         //Clear the board
         $("#board").empty();
+        //Clear and hide current pot size display
+        $("#csp-text").text();
+        $("#current-street-pot").css("display", "none");
     });
 }
 
-//Reset and hide the bet displays
+//Reset and hide the bet displays and current street pot display
 function hideBetDisplays() {
     for(let i = 0; i < 5; i++) {
         const betDisplayDiv = $(`#bet-display-${i}`);
@@ -428,6 +436,8 @@ function hideBetDisplays() {
         betElement.text("");
         betDisplayDiv.hide();
     }
+    $("#csp-text").text();
+    $("#current-street-pot").css("display", "none");
 }
 
 //Displays the flop cards

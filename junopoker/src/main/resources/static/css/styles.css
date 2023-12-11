@@ -112,6 +112,35 @@ h1, h4 {
     color: yellow;
 }
 
+#current-street-pot {
+    position: absolute;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    top: 70%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%);
+
+    background-color: rgba(100, 100, 100, 0.5); /* Light grey with 50% transparency */
+    border-radius: 0.75vh; /* Rounded edges */
+    overflow: hidden; /* Ensure rounded corners are applied to the inner elements */
+
+    /* Optional: Add padding for better spacing */
+    padding: 0.25vh;
+}
+
+#current-street-pot img {
+    max-width: 3.5vh;
+    display: block; /* Make sure the image doesn't interfere with text alignment */
+    float: left; /* Float the image to the left */
+    margin-right: 0.75vh; /* Optional: Add some space between image and text */
+}
+
+#current-street-pot p {
+    margin: 0; /* Remove default margin to ensure elements are aligned properly */
+}
+
 /*Seats, Seat Buttons, Individual Seats*/
 .seats {
     border-radius: 5px;

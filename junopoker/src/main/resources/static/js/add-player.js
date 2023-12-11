@@ -159,16 +159,20 @@ function privatePlayerActionEvent(message) {
     //clear the basic actions div, apart from the fold button, which is always required
     const basicActionsDiv = $(".basic-actions");
     basicActionsDiv.children().not("#fold").remove();
+    //boolean to decide if the slider should be displayed or not
+    let limitActions = false;
     //if the current bet is greater than the player's stack, they can fold or go all-in
-    if(message.currentBet > message.player.chipCount) {
+    if(message.currentBet > message.player.chipCount ) {
         //add "all-in" button
-        basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In ${message.player.chipCount}</button>`);
+        basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In: ${message.player.chipCount}</button>`);
+        limitActions = true;
     }
     //if the min bet would be greater than the player's stack, they can fold, call, or go all-in
     else if (message.minBet > message.player.chipCount && message.player.currentBet != message.currentBet) {
         //add "call" and "all-in" buttons
         basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
-        basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In ${message.player.chipCount}</button>`)
+        basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In: ${message.player.chipCount}</button>`)
+        limitActions = true;
     }
     //if the player's bet is not equal to the table bet, they can fold, call, or raise
     else if(message.player.currentBet != message.currentBet) {
@@ -176,14 +180,16 @@ function privatePlayerActionEvent(message) {
         basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
         basicActionsDiv.append(`<button id="raise" onclick="onBet()">Raise: </button>`)
         setBetButtonType('r');
+        limitActions = false;
     }
-        //if both the table's current bet and the player's current bet == 0, they can fold, check, or call
+    //if both the table's current bet and the player's current bet == 0, they can fold, check, or call
     //or if the player's current bet is equal to the table's current bet (preflop)
     else if ((message.player.currentBet == 0 && message.currentBet == 0) || (message.player.currentBet == message.currentBet)) {
         //add "check" and "bet" buttons
         basicActionsDiv.append(`<button id="check" onclick="onCheck()">Check</button>`);
         basicActionsDiv.append(`<button id="bet" onclick="onBet()">Bet: </button>`)
         setBetButtonType('b');
+        limitActions = false;
     }
 
     //default the slider and bet value to min bet (0%)
@@ -192,8 +198,16 @@ function privatePlayerActionEvent(message) {
     updateInputBox(bet);
 
     //display the action bar
-    const actionBarDiv = $(".action-bar");
-    actionBarDiv.css("display", "flex");
+    if (limitActions === true) {
+        $(".custom-bet").css("display", "none");
+        $(".bet-sizes").css("display", "none");
+        $(".action-bar").css("display", "flex");
+    }
+    else {
+        $(".custom-bet").css("display", "flex");
+        $(".bet-sizes").css("display", "flex");
+        $(".action-bar").css("display", "flex");
+    }
 }
 
 function handRankingEvent(message) {

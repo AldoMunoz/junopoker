@@ -266,6 +266,8 @@ public class TableService {
         int smallBlind = table.getSmallBlindIndex();
         Player[] seats = table.getSeats();
 
+        table.setCurrentStreetPot(0);
+
         //Identify who will be first to act
         int currPlayerIndex = smallBlind;
         while (seats[currPlayerIndex] == null) {
@@ -348,11 +350,11 @@ public class TableService {
                         table.setSeatedFoldCount(table.getSeatedFoldCount()+1);
                         table.getSeats()[currPlayerIndex].setInHand(false);
 
-                        invokeEndPlayerActionCallback('F', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, 0, 0, 0);
+                        invokeEndPlayerActionCallback('F', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, 0, 0, 0, 0, isPreFlop);
                     }
                     //if they check:
                     else if(action == 'C' && bet == 0) {
-                        invokeEndPlayerActionCallback('C', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, 0, 0, 0);
+                        invokeEndPlayerActionCallback('C', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, 0, 0, 0, 0, isPreFlop);
                     }
                     //if they are all-in
                     else if(action == 'A') {
@@ -360,9 +362,13 @@ public class TableService {
                         table.getSeats()[currPlayerIndex].setChipCount(0);
 
                         //update the pot size of the table
-                        //TODO: math might be wrong
                         table.setPot
                                 (table.getPot() + (bet - table.getSeats()[currPlayerIndex].getCurrentBet()));
+
+                        //update the pot size of the current street
+                        table.setCurrentStreetPot
+                                (table.getCurrentStreetPot() + (bet - table.getSeats()[currPlayerIndex].getCurrentBet()));
+
                         //update the player's current bet
                         table.getSeats()[currPlayerIndex].setCurrentBet(bet);
 
@@ -374,7 +380,8 @@ public class TableService {
                             minBet = (table.getCurrentBet() - previousBet) + table.getCurrentBet();
                         }
 
-                        invokeEndPlayerActionCallback('A', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot());
+                        //sends message to the controller to update the user's stack size, bet display, and the pot size
+                        invokeEndPlayerActionCallback('A', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot(),  table.getCurrentStreetPot(), isPreFlop);
                     }
                     //if they bet:
                     else if (action == 'B' && bet >= minBet) {
@@ -384,6 +391,8 @@ public class TableService {
                         //update the pot size of the table
                         table.setPot
                                 (table.getPot() + (bet - table.getSeats()[currPlayerIndex].getCurrentBet()));
+                        //update the pot size of the current street
+                        table.setCurrentStreetPot(table.getCurrentStreetPot() + bet);
                         //update the player's current bet
                         table.getSeats()[currPlayerIndex].setCurrentBet(bet);
 
@@ -395,7 +404,7 @@ public class TableService {
                             minBet = (table.getCurrentBet() - previousBet) + table.getCurrentBet();
                         }
                         //sends message to the controller to update the user's stack size, bet display, and the pot size
-                        invokeEndPlayerActionCallback('B', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot());
+                        invokeEndPlayerActionCallback('B', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot(), table.getCurrentStreetPot(), isPreFlop);
                     }
                     //if they calL:
                     else if(action == 'P') {
@@ -403,11 +412,13 @@ public class TableService {
                         table.getSeats()[currPlayerIndex].setChipCount(table.getSeats()[currPlayerIndex].getChipCount() - bet);
                         //update the pot size of the table
                         table.setPot(table.getPot() + bet);
+                        //update the pot size of the current street
+                        table.setCurrentStreetPot(table.getCurrentStreetPot() + bet);
                         //update the player's current bet
                         table.getSeats()[currPlayerIndex].setCurrentBet(table.getSeats()[currPlayerIndex].getCurrentBet() + bet);
 
                         //sends message to the controller to update the user's stack size, bet display, and the pot size
-                        invokeEndPlayerActionCallback('P', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot());
+                        invokeEndPlayerActionCallback('P', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot(),  table.getCurrentStreetPot(), isPreFlop);
                     }
                     else {
                         System.out.println("wrong action or bet input");
@@ -431,6 +442,7 @@ public class TableService {
     public void cleanUp(Table table) {
         //clean up table currentBet and player current bets
         table.setCurrentBet(0);
+        table.setCurrentStreetPot(0);
         for (Player player : table.getSeats()) {
             if (player != null) player.setCurrentBet(0);
         }
@@ -620,9 +632,9 @@ public class TableService {
             tableCallback.onPreFlopAction(player, seat, currentBet, potSize, minBet);
         }
     }
-    private void invokeEndPlayerActionCallback(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize) {
+    private void invokeEndPlayerActionCallback(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize, float currentStreetPotSize, boolean isPreFlop) {
         if(tableCallback != null) {
-            tableCallback.onEndPlayerAction(action, username, seatIndex, betAmount, stackSize, potSize);
+            tableCallback.onEndPlayerAction(action, username, seatIndex, betAmount, stackSize, potSize, currentStreetPotSize, isPreFlop);
         }
     }
     private void invokeCompleteHandCallback(HashMap<Integer, Player> indexAndWinner) {

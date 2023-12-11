@@ -151,7 +151,7 @@ public class TableWebSocketController implements TableCallback {
     }
 
     @Override
-    public void onEndPlayerAction(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize) {
+    public void onEndPlayerAction(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize, float currentStreetPotSize, boolean isPreFlop) {
         EndPlayerActionRequest request = new EndPlayerActionRequest();
         request.setType(RequestType.END_PLAYER_ACTION);
         request.setAction(action);
@@ -160,6 +160,8 @@ public class TableWebSocketController implements TableCallback {
         request.setBet(betAmount);
         request.setStackSize(stackSize);
         request.setPotSize(potSize);
+        request.setCurrentStreetPotSize(currentStreetPotSize);
+        request.setPreFlop(isPreFlop);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }

@@ -13,6 +13,7 @@ public class Table {
     private String gameType;
     private final int seatCount;
     private float pot;
+    private float currentStreetPot;
     private final int[] stakes;
     //Changed "players" to "seats", more accurate
     private Player[] seats;

@@ -15,7 +15,7 @@ public interface TableCallback {
 
     void onPreFlopAction(Player player, int seat, float currentBet, float potSize, float minBet);
 
-    void onEndPlayerAction(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize);
+    void onEndPlayerAction(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize, float currentStreetPotSize, boolean isPreFlop);
 
     void onCompleteHand(HashMap<Integer, Player> indexAndWinner);
 
@@ -23,5 +23,4 @@ public interface TableCallback {
 
     void onHandRanking(String handRanking, String username);
     void onCleanUp(boolean isHandOver);
-
 }

@@ -91,6 +91,7 @@ public class TableService {
             cleanUp(table);
             dealTurnOrRiver(table);
             postFlopBetting(table);
+            showdown(table);
             completeHand(table);
             clearTable(table);
         }
@@ -439,6 +440,7 @@ public class TableService {
         }
     }
 
+    //resets all values that the table tracks after each street, sends a callback method to represent the reset values in the front-end
     public void cleanUp(Table table) {
         //clean up table currentBet and player current bets
         table.setCurrentBet(0);
@@ -449,6 +451,22 @@ public class TableService {
         invokeCleanUpCallback(table.isHandOver());
     }
 
+    //sends a hashmap of the seats and players who are still in the hand to the front end
+    public void showdown(Table table) {
+        //if there's only one player in the hand, continue
+        if(table.getSeatedPlayerCount() - table.getSeatedFoldCount() == 1);
+        //else find the players who are still in the hand and their seats
+        else {
+            HashMap<Integer, Player> indexAndPlayer = new HashMap<>();
+            for (int i = 0; i < table.getSeats().length; i++) {
+                if (table.getSeats()[i] != null && table.getSeats()[i].isInHand()) {
+                    indexAndPlayer.put(i, table.getSeats()[i]);
+                }
+            }
+            invokeShowdownCallback(indexAndPlayer);
+        }
+    }
+
     public void completeHand(Table table) {
         ArrayList<Player> winners = new ArrayList<>();
         HashMap<Integer, Player> indexAndWinner = new HashMap<>();
@@ -457,15 +475,15 @@ public class TableService {
         if (table.getSeatedFoldCount() != table.getSeatedPlayerCount() - 1) {
             HandRanking max_rank = null;
             Player[] players = table.getSeats();
+            //loop to find the highest hand rank among the players seated and in the hand
             for (Player player : players) {
-                if (player == null || !player.isInHand())
-                    continue;
+                if (player == null || !player.isInHand());
                 else if (max_rank == null)
                     max_rank = player.getHand().getHandRanking();
                 else if (player.getHand().getHandRanking().getRanking() > max_rank.getRanking())
                     max_rank = player.getHand().getHandRanking();
             }
-            // Appending all players with hand rank equal to the max rank
+            //Appends all players with hand rank equal to the max rank
             ArrayList<Player> potential_winners = new ArrayList();
             for (Player player : players) {
                 if (player != null && player.isInHand() &&
@@ -635,6 +653,12 @@ public class TableService {
     private void invokeEndPlayerActionCallback(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize, float currentStreetPotSize, boolean isPreFlop) {
         if(tableCallback != null) {
             tableCallback.onEndPlayerAction(action, username, seatIndex, betAmount, stackSize, potSize, currentStreetPotSize, isPreFlop);
+        }
+    }
+
+    private void invokeShowdownCallback(HashMap<Integer, Player> indexAndPlayer) {
+        if(tableCallback != null) {
+            tableCallback.onShowdown(indexAndPlayer);
         }
     }
     private void invokeCompleteHandCallback(HashMap<Integer, Player> indexAndWinner) {

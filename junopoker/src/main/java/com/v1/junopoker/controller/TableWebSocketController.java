@@ -110,9 +110,9 @@ public class TableWebSocketController implements TableCallback {
     @Override
     //Add the player(s) who won the pot and send that via WebSocket Object
     public void onCompleteHand(HashMap<Integer, Player> indexAndWinner) {
-        CompleteHandRequest request = new CompleteHandRequest();
+        IntPlayerMapRequest request = new IntPlayerMapRequest();
         request.setType(RequestType.COMPLETE_HAND);
-        request.setIndexAndWinner(indexAndWinner);
+        request.setIndexAndPlayer(indexAndWinner);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
@@ -162,6 +162,15 @@ public class TableWebSocketController implements TableCallback {
         request.setPotSize(potSize);
         request.setCurrentStreetPotSize(currentStreetPotSize);
         request.setPreFlop(isPreFlop);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
+    }
+
+    @Override
+    public void onShowdown(HashMap<Integer, Player> indexAndPlayer) {
+        IntPlayerMapRequest request = new IntPlayerMapRequest();
+        request.setType(RequestType.SHOWDOWN);
+        request.setIndexAndPlayer(indexAndPlayer);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }

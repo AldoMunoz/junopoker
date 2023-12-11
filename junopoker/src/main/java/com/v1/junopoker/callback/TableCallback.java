@@ -17,6 +17,7 @@ public interface TableCallback {
 
     void onEndPlayerAction(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize, float currentStreetPotSize, boolean isPreFlop);
 
+    void onShowdown(HashMap<Integer, Player> indexAndPlayer);
     void onCompleteHand(HashMap<Integer, Player> indexAndWinner);
 
     void onBoardCardsDealt(ArrayList<Card> cards);

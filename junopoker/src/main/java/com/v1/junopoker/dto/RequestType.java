@@ -12,10 +12,9 @@ public enum RequestType {
     CHECK,
     CALL,
     BET,
-
     COMPLETE_HAND,
+    SHOWDOWN,
     BOARD_CARDS,
-
     HAND_RANKING,
 
     CLEAN_UP

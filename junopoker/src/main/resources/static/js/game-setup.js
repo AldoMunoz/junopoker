@@ -120,6 +120,8 @@ function tableEvents(payload) {
     else if (message.type === "PLAYER_ACTION") playerActionEvent(message);
     //view logic for un-highlighting which players turn it is
     else if(message.type === "END_PLAYER_ACTION") endPlayerActionEvent(message);
+    //view logic for showdown
+    else if (message.type === "SHOWDOWN") showdownEvent(message);
     //view logic for when the hand has ended
     else if (message.type === "COMPLETE_HAND") completeHandEvent(message);
     //view logic for dealing the flop
@@ -131,6 +133,8 @@ function tableEvents(payload) {
 }
 
 function sitTableEvent(message) {
+    //console.log("sit", message);
+
     //hide the seat button that the player selected
     const seatDiv = $(`#seat-${message.seat}`);
     seatDiv.show();
@@ -159,7 +163,9 @@ function sitTableEvent(message) {
     seatDiv.append(playerInfoDiv);
 }
 function standTableEvent(message) {
-    //replace the player icon with seat button, and then hide it from view
+    //console.log("stand", message);
+
+    //replaces the player icon with seat button, and then hide it from view
     //we hide it so that seated players can't see or select another seat
     const seatDiv = $(`#seat-${message.seat}`);
     seatDiv.empty();
@@ -170,7 +176,8 @@ function standTableEvent(message) {
     else seatDiv.show();
 }
 function moveButtonEvent(message) {
-    console.log(message);
+    console.log("move button", message);
+
     const button = $('#dealer-button')
     switch(message.button) {
         case 0:
@@ -207,6 +214,8 @@ function moveButtonEvent(message) {
 }
 
 function initPotEvent(message) {
+    //console.log("initiate pot", message);
+
     const oldBBChipCount = parseInt($(`#chip-count-${message.bigBlind}`).text());
     const newBBChipCount = oldBBChipCount - message.bbAmount;
     $(`#chip-count-${message.bigBlind}`).text(newBBChipCount);
@@ -236,6 +245,8 @@ function initPotEvent(message) {
 }
 
 function dealHoleCardsEvent(message) {
+    //console.log(deal hole cards", message);
+
     const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
     holeCardsDiv.empty();
     holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
@@ -244,13 +255,16 @@ function dealHoleCardsEvent(message) {
 }
 
 function playerActionEvent(message) {
+    //console.log("player action event", message);
+
     const seatDiv = $(`#seat-${message.seat}`);
     const playerInfoImg = seatDiv.find(".panel-img");
 
     playerInfoImg.attr("src", "/images/player-info-on-turn.png");
 }
 function endPlayerActionEvent(message) {
-    console.log("End player action event: ", message);
+    //console.log("End player action event: ", message);
+
     //find the player's seat div and unhighlight their player panel
     const seatDiv = $(`#seat-${message.seat}`);
     const playerInfoImg = seatDiv.find(".panel-img");
@@ -321,6 +335,7 @@ function endPlayerActionEvent(message) {
     //display an action bubble under the player icon briefly displaying what action the user took
     displayActionBubble(message.seat, message.action);
 }
+
 function displayActionBubble(seat, action) {
     const seatDiv = $(`#seat-${seat}`);
     const playerActionsDiv = seatDiv.find(".player-actions");
@@ -361,19 +376,32 @@ function displayActionBubble(seat, action) {
     }, 1000);
 }
 
+//displays the whole cards of the players still in the hand
+function showdownEvent(message) {
+    //console.log("SHOWDOWN", message);
+
+    //loops through hash map and publicly displays the hole cards of each player currently in the hand
+    for (let index in message.indexAndPlayer) {
+        const holeCardsDiv = $(`#seat-${index} .hole-cards`)
+        holeCardsDiv.empty();
+        holeCardsDiv.append(`<img src="/images/cards/${message.indexAndPlayer[index].holeCards[0]}.png" alt="Card 1">`)
+        holeCardsDiv.append(`<img src="/images/cards/${message.indexAndPlayer[index].holeCards[1]}.png" alt="Card 1">`)
+        holeCardsDiv.show();
+    }
+}
+
 //Completes closing actions after the hand has ended
 function completeHandEvent(message) {
-    console.log("Complete Hand message: ", message);
+    //console.log("Complete Hand message: ", message);
+
     //hides the bet displays for each player
     hideBetDisplays();
 
-    //TODO showdown function
-
     //Find the winners
     //Change their player icon to display the updated stack size
-    for(let index in message.indexAndWinner) {
-        if(message.indexAndWinner.hasOwnProperty(index)) {
-            $(`#chip-count-${index}`).text(message.indexAndWinner[index].chipCount);
+    for(let index in message.indexAndPlayer) {
+        if(message.indexAndPlayer.hasOwnProperty(index)) {
+            $(`#chip-count-${index}`).text(message.indexAndPlayer[index].chipCount);
             console.log("Updated chip count");
         }
     }
@@ -384,7 +412,7 @@ function completeHandEvent(message) {
     // Create a Promise for the winner animations
     function animateWinners() {
         return new Promise(resolve => {
-            const winnerPromises = Object.keys(message.indexAndWinner).map(index => {
+            const winnerPromises = Object.keys(message.indexAndPlayer).map(index => {
                 return new Promise(winnerResolve => {
                     const seatDiv = $(`#seat-${index}`);
                     const playerActionsDiv = seatDiv.find(".player-actions");
@@ -442,7 +470,8 @@ function hideBetDisplays() {
 
 //Displays the flop cards
 function dealBoardCardsEvent(message) {
-    //TODO add some timing between the dealing of each card
+    //console.log("Deal hole cards event", message);
+
     for (let i = 0; i < message.cards.length; i++) {
         const flopCard = new  $('<img>');
         flopCard.attr("src", `/images/cards/${message.cards[i]}.png`);
@@ -454,6 +483,8 @@ function dealBoardCardsEvent(message) {
 
 //cleans up view information between hands
 function cleanUpEvent(message) {
+    //console.log("Clean up event", message);
+
     //hides the bet displays for each player
     if (message.handOver === true) {
         $("#total-pot").css("display", "none")

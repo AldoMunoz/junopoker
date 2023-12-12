@@ -9,7 +9,7 @@ public class PlayerActionRequest {
     private RequestType type;
     private Player player;
     private int seat;
-    private float currentBet;
-    private float potSize;
-    private float minBet;
+    private double currentBet;
+    private double potSize;
+    private double minBet;
 }

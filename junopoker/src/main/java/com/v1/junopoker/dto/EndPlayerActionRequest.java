@@ -9,9 +9,9 @@ public class EndPlayerActionRequest {
     private char action;
     private String username;
     private int seat;
-    private float bet;
-    private float stackSize;
-    private float potSize;
-    private float currentStreetPotSize;
+    private double bet;
+    private double stackSize;
+    private double potSize;
+    private double currentStreetPotSize;
     private boolean isPreFlop;
 }

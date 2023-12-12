@@ -13,9 +13,9 @@ public interface TableCallback {
 
     void onHoleCardsDealt(String username, int seat, Card[] holeCards);
 
-    void onPreFlopAction(Player player, int seat, float currentBet, float potSize, float minBet);
+    void onPreFlopAction(Player player, int seat, double currentBet, double potSize, double minBet);
 
-    void onEndPlayerAction(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize, float currentStreetPotSize, boolean isPreFlop);
+    void onEndPlayerAction(char action, String username, int seatIndex, double betAmount, double stackSize, double potSize, double currentStreetPotSize, boolean isPreFlop);
 
     void onShowdown(HashMap<Integer, Player> indexAndPlayer);
     void onCompleteHand(HashMap<Integer, Player> indexAndWinner);

@@ -241,7 +241,8 @@ function initPotEvent(message) {
     //Display Total Pot text and populate it with the pot size
     const totalPot = $("#total-pot");
     totalPot.css("display", "flex");
-    totalPot.text(`Total Pot: ${message.potSize}`);
+    //TODO fix math
+    totalPot.text(`Total Pot: ${message.potSize.toLocaleString()}`);
 }
 
 function dealHoleCardsEvent(message) {
@@ -302,7 +303,7 @@ function endPlayerActionEvent(message) {
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");
-        chipCountElement.text(message.stackSize);
+        chipCountElement.text(message.stackSize.toFixed(2));
 
         //update the pot size
         const potElement = $("#total-pot");
@@ -318,7 +319,7 @@ function endPlayerActionEvent(message) {
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");
-        chipCountElement.text(message.stackSize);
+        chipCountElement.text(message.stackSize.toFixed(2));
 
         //update the pot size
         const potElement = $("#total-pot");
@@ -333,7 +334,7 @@ function endPlayerActionEvent(message) {
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");
-        chipCountElement.text(message.stackSize);
+        chipCountElement.text(message.stackSize.toFixed(2));
 
         //update the pot size
         const potElement = $("#total-pot");
@@ -394,7 +395,7 @@ function displayActionBubble(seat, action) {
 
 //displays the whole cards of the players still in the hand
 function showdownEvent(message) {
-    console.log("SHOWDOWN", message);
+    //console.log("SHOWDOWN", message);
 
     //loops through hash map and publicly displays the hole cards of each player currently in the hand
     for (let index in message.indexAndPlayer) {

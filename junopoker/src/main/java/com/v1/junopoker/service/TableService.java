@@ -7,6 +7,7 @@ import com.v1.junopoker.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
@@ -166,30 +167,56 @@ public class TableService {
         int bigBlindIndex = table.getBigBlindIndex();
         int[] stakes = table.getStakes();
 
-        float sbAmount = stakes[0];
-        float bbAmount = stakes[1];
+        double sbAmount = stakes[0];
+        double bbAmount = stakes[1];
 
         //BB collection
         if (seats[bigBlindIndex].getChipCount() > stakes[1]) {
-            table.setPot(table.getPot()+stakes[1]);
+            BigDecimal bDPot = new BigDecimal(Double.toString(table.getPot()));
+            BigDecimal bDBigBlind = new BigDecimal(Double.toString(stakes[1]));
+            BigDecimal bDNewPot = bDPot.add(bDBigBlind);
+            bDNewPot = bDNewPot.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+            table.setPot(bDNewPot.doubleValue());
+
             seats[bigBlindIndex].setChipCount(seats[bigBlindIndex].getChipCount()-stakes[1]);
         }
         //edge case, if the players stack size is less than the blind
         else {
             bbAmount = seats[bigBlindIndex].getChipCount();
-            table.setPot(table.getPot() + seats[bigBlindIndex].getChipCount());
+
+            BigDecimal bDPot = new BigDecimal(Double.toString(table.getPot()));
+            BigDecimal bDBigBlind = new BigDecimal(Double.toString(seats[bigBlindIndex].getChipCount()));
+            BigDecimal bDNewPot = bDPot.add(bDBigBlind);
+            bDNewPot = bDNewPot.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+            table.setPot(bDNewPot.doubleValue());
+
             seats[bigBlindIndex].setChipCount(0);
         }
 
         //SB collection
         if (seats[smallBlindIndex].getChipCount() > stakes[0]) {
-            table.setPot(table.getPot()+stakes[0]);
+            BigDecimal bDPot = new BigDecimal(Double.toString(table.getPot()));
+            BigDecimal bDSmallBlind = new BigDecimal(Double.toString(stakes[0]));
+            BigDecimal bDNewPot = bDPot.add(bDSmallBlind);
+            bDNewPot = bDNewPot.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+            table.setPot(bDNewPot.doubleValue());
+
             seats[smallBlindIndex].setChipCount(seats[smallBlindIndex].getChipCount()-stakes[0]);
         }
         //edge case, if the players stack size is less than the blind
         else {
             sbAmount = seats[smallBlindIndex].getChipCount();
-            table.setPot(table.getPot() + seats[smallBlindIndex].getChipCount());
+
+            BigDecimal bDPot = new BigDecimal(Double.toString(table.getPot()));
+            BigDecimal bDSmallBlind = new BigDecimal(Double.toString(seats[smallBlindIndex].getChipCount()));
+            BigDecimal bDNewPot = bDPot.add(bDSmallBlind);
+            bDNewPot = bDNewPot.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+            table.setPot(bDNewPot.doubleValue());
+
             seats[smallBlindIndex].setChipCount(0);
         }
 
@@ -309,9 +336,9 @@ public class TableService {
         boolean firstAction = true;
         int seatedPlayerCount = table.getSeatedPlayerCount();
         int[] stakes = table.getStakes();
-        float previousBet = 0;
+        double previousBet = 0;
 
-        float minBet;
+        double minBet;
         if(isPreFlop) minBet = (table.getCurrentBet() - previousBet) + table.getCurrentBet();
         else minBet = table.getStakes()[1];
 
@@ -363,7 +390,7 @@ public class TableService {
                 try {
                     PlayerActionResponse playerActionResponse = future.get();
                     char action = playerActionResponse.getAction();
-                    float bet = playerActionResponse.getBetAmount();
+                    double bet = playerActionResponse.getBetAmount();
 
                     //if they fold:
                     if (action == 'F' && bet == 0) {
@@ -382,7 +409,12 @@ public class TableService {
                         table.getSeats()[currPlayerIndex].setChipCount(0);
 
                         //update the pot size of the table
-                        table.setPot(table.getPot() + bet);
+                        BigDecimal bDPot = new BigDecimal(Double.toString(table.getPot()));
+                        BigDecimal bDBet = new BigDecimal(Double.toString(bet));
+                        BigDecimal bDNewPot = bDPot.add(bDBet);
+                        bDNewPot = bDNewPot.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+                        table.setPot(bDNewPot.doubleValue());
 
                         //update the pot size of the current street
                         table.setCurrentStreetPot
@@ -411,9 +443,18 @@ public class TableService {
                         //update player chip count
                         table.getSeats()[currPlayerIndex].setChipCount
                                 (table.getSeats()[currPlayerIndex].getChipCount() + table.getSeats()[currPlayerIndex].getCurrentBet() - bet);
+
                         //update the pot size of the table
-                        table.setPot
-                                (table.getPot() + (bet - table.getSeats()[currPlayerIndex].getCurrentBet()));
+                        BigDecimal bDPot = new BigDecimal(Double.toString(table.getPot()));
+                        BigDecimal bDBet = new BigDecimal(Double.toString(bet));
+                        BigDecimal bDCurrentBet = new BigDecimal(Double.toString(table.getSeats()[currPlayerIndex].getCurrentBet()));
+
+                        BigDecimal difference = bDBet.subtract(bDCurrentBet);
+                        BigDecimal bDNewPot = difference.add(bDPot);
+                        bDNewPot = bDNewPot.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+                        table.setPot(bDNewPot.doubleValue());
+
                         //update the pot size of the current street
                         table.setCurrentStreetPot(table.getCurrentStreetPot() + bet);
                         //update the player's current bet
@@ -439,8 +480,15 @@ public class TableService {
                     else if(action == 'P') {
                         //update player chip count
                         table.getSeats()[currPlayerIndex].setChipCount(table.getSeats()[currPlayerIndex].getChipCount() - bet);
+
                         //update the pot size of the table
-                        table.setPot(table.getPot() + bet);
+                        BigDecimal bDPot = new BigDecimal(Double.toString(table.getPot()));
+                        BigDecimal bDBet = new BigDecimal(Double.toString(bet));
+                        BigDecimal bDNewPot = bDPot.add(bDBet);
+                        bDNewPot = bDNewPot.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+                        table.setPot(bDNewPot.doubleValue());
+
                         //update the pot size of the current street
                         table.setCurrentStreetPot(table.getCurrentStreetPot() + bet);
                         //update the player's current bet
@@ -721,12 +769,12 @@ public class TableService {
             tableCallback.onCleanUp(isHandOver);
         }
     }
-    private void invokePreFlopActionCallback(Player player, int seat, float currentBet, float potSize, float minBet) {
+    private void invokePreFlopActionCallback(Player player, int seat, double currentBet, double potSize, double minBet) {
         if(tableCallback != null) {
             tableCallback.onPreFlopAction(player, seat, currentBet, potSize, minBet);
         }
     }
-    private void invokeEndPlayerActionCallback(char action, String username, int seatIndex, float betAmount, float stackSize, float potSize, float currentStreetPotSize, boolean isPreFlop) {
+    private void invokeEndPlayerActionCallback(char action, String username, int seatIndex, double betAmount, double stackSize, double potSize, double currentStreetPotSize, boolean isPreFlop) {
         if(tableCallback != null) {
             tableCallback.onEndPlayerAction(action, username, seatIndex, betAmount, stackSize, potSize, currentStreetPotSize, isPreFlop);
         }

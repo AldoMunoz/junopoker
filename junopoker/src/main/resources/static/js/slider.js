@@ -10,6 +10,7 @@ let lastSliderPercentage = 0;
 let potSize = 0;
 let seatNo = -1;
 let betButtonType = ''
+let currentBet = 0;
 
 function getSliderPercentage(event) {
     const containerRect = sliderContainer[0].getBoundingClientRect();
@@ -91,7 +92,7 @@ function decrementBet() {
 
 //Changes the buttons and sliders when the user clicks on one of the default bet sizes
 function changeBetSize(size) {
-    const betSize = (size/100)*potSize;
+    const betSize = (size/100) * (2*currentBet + potSize) + currentBet;
 
     //if BetSize is greater than the max value they can bet, default to the max value
     if (betSize > maxValue) {
@@ -110,6 +111,9 @@ function changeBetSize(size) {
 
 //handles when user manually inputs a bet value
 function onInputChange(input) {
+    //removes non-numeric characters and extra periods
+    input = input.replace(/[^\d.]+/g, '');
+
     let inputArray = input.split('.');
 
     //Check and corrects the input box if there is more than one period
@@ -124,8 +128,19 @@ function onInputChange(input) {
         input = inputArray.join('.');
     }
 
+    // Convert the input to a numeric value
+    let numericInput = parseFloat(input);
+
+    // Check if the numericInput is a valid number
+    if (isNaN(numericInput)) {
+        // Handle the case where the input is not a valid number (e.g., due to multiple periods)
+        // You might want to display an error message or take appropriate action
+        console.error("Invalid input:", input);
+        return;
+    }
+
     //if the input in the box is less than the minimum value a user can bet:
-    if(input < minValue) {
+    if(numericInput < minValue) {
         //set slider to 0, adjust buttons accordingly
         const bet= updateSlider(0);
         updateBetButton(bet);
@@ -134,7 +149,7 @@ function onInputChange(input) {
         if(duplicate) updateInputBox(input);
     }
     //if the input value is greater than the maximum value a user can bet:
-    else if(input > maxValue) {
+    else if(numericInput > maxValue) {
         //default the input back down to the max value
         const bet = updateSlider(100);
         updateBetButton(bet);
@@ -142,7 +157,7 @@ function onInputChange(input) {
     }
     //if the input hasn't changed, do nothing
     //for example if user changed input from "4.00" to "4.0"
-    else if(input === (lastSliderPercentage / 100) * (maxValue - minValue) + minValue) {
+    else if(numericInput === (lastSliderPercentage / 100) * (maxValue - minValue) + minValue) {
         if (duplicate) updateInputBox(input);
     }
     //else, just update the slider and the bet button to show the correct values
@@ -278,6 +293,11 @@ function setPotSize(value) {
 //sets the seat number of the player who is currently acting
 function setSeat(seat) {
     seatNo = seat;
+}
+
+//sets the current bet to the last bet that was made
+function setCurrentBet(bet) {
+    currentBet = bet;
 }
 
 //sets

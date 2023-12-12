@@ -12,8 +12,8 @@ import java.util.ArrayList;
 public class Table {
     private String gameType;
     private final int seatCount;
-    private float pot;
-    private float currentStreetPot;
+    private double pot;
+    private double currentStreetPot;
     private final int[] stakes;
     //Changed "players" to "seats", more accurate
     private Player[] seats;
@@ -26,7 +26,7 @@ public class Table {
     private int bigBlindIndex;
     private int smallBlindIndex;
     private int dealerButton;
-    private float currentBet;
+    private double currentBet;
     private boolean gameRunning;
     private boolean handOver;
     private boolean actionComplete;

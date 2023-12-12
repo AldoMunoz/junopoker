@@ -99,6 +99,8 @@ async function playerEvents(payload) {
     else if (message.type == "FOLD") foldEvent(message);
 }
 async function sitPlayerEvent(message) {
+    //console.log("Sit ", message);
+
     //fetch array of table seats
     const seats = await fetchTableSeats();
 
@@ -127,6 +129,8 @@ async function sitPlayerEvent(message) {
     }
 }
 async function standPlayerEvent(message) {
+    //console.log("Stand ", message);
+
     const seats = await fetchTableSeats();
     populateTable(seats);
 
@@ -137,6 +141,7 @@ async function standPlayerEvent(message) {
     stompClient.unsubscribe(`/topic/playerEvents/${message.player.username}`);
 }
 function privateDealHoleCardsEvent(message) {
+    //console.log("Private deal hole cards ", message);
     console.log("Private deal cards message: ", message);
     const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
     holeCardsDiv.empty();
@@ -150,11 +155,14 @@ function privateDealHoleCardsEvent(message) {
 }
 
 function privatePlayerActionEvent(message) {
+    //console.log("Private player action ", message);
+
     //set min bet value, max bet value, pot size, and the seat in slider.js;
     setMinValue(message.minBet);
     setMaxValue(message.player.chipCount + message.player.currentBet);
     setPotSize(message.potSize);
     setSeat(message.seat);
+    setCurrentBet(message.currentBet);
 
     //clear the basic actions div, apart from the fold button, which is always required
     const basicActionsDiv = $(".basic-actions");
@@ -170,14 +178,14 @@ function privatePlayerActionEvent(message) {
     //if the min bet would be greater than the player's stack, they can fold, call, or go all-in
     else if (message.minBet > message.player.chipCount && message.player.currentBet != message.currentBet) {
         //add "call" and "all-in" buttons
-        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
+        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${(message.currentBet-message.player.currentBet).toFixed(2)}</button>`)
         basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In: ${message.player.chipCount}</button>`)
         limitActions = true;
     }
     //if the player's bet is not equal to the table bet, they can fold, call, or raise
     else if(message.player.currentBet != message.currentBet) {
         //add "call" and "raise" buttons
-        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${message.currentBet-message.player.currentBet}</button>`)
+        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${(message.currentBet-message.player.currentBet).toFixed(2)}</button>`)
         basicActionsDiv.append(`<button id="raise" onclick="onBet()">Raise: </button>`)
         setBetButtonType('r');
         limitActions = false;
@@ -211,12 +219,16 @@ function privatePlayerActionEvent(message) {
 }
 
 function handRankingEvent(message) {
+    //console.log("Hand Ranking ", message);
+
     console.log("Hand Ranking Event: ", message)
     $("#hand-ranking").text(message.handRanking);
     $("#hand-ranking").show();
 }
 
 function foldEvent(message) {
+    //console.log("Fold event ", message);
+
     //find the player's cards
     const seatDiv = $(`#seat-${message.seat}`);
     const cardsDiv = seatDiv.find(".hole-cards");

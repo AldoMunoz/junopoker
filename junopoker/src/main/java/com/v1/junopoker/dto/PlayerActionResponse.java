@@ -5,8 +5,8 @@ import lombok.Data;
 @Data
 public class PlayerActionResponse {
     private char action;
-    private float betAmount;
+    private double betAmount;
     private int seat;
-    private float stackSize;
-    private float potSize;
+    private double stackSize;
+    private double potSize;
 }

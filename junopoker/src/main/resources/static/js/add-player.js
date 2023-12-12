@@ -152,7 +152,7 @@ function privateDealHoleCardsEvent(message) {
 function privatePlayerActionEvent(message) {
     //set min bet value, max bet value, pot size, and the seat in slider.js;
     setMinValue(message.minBet);
-    setMaxValue(message.player.chipCount);
+    setMaxValue(message.player.chipCount + message.player.currentBet);
     setPotSize(message.potSize);
     setSeat(message.seat);
 

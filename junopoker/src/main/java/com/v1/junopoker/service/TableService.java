@@ -34,7 +34,6 @@ public class TableService {
         this.playerActionResponse.complete(playerActionResponse);
     }
 
-
     //adds a player to the players list, gives them a chip count and a specific seat
     public void addPlayer (Table table, Player player, int seat) {
         if (table.getSeats()[seat] == null) table.getSeats()[seat] = player;
@@ -57,37 +56,61 @@ public class TableService {
 
         //game will run while there are at least 2 people seated at the table
         while (table.getSeatedPlayerCount() > 1) {
-            try {
-                Thread.sleep(4000); // Sleep for 4 seconds
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            sleepTimer(4000);
+
             table.setHandOver(false);
             moveBlinds(table);
             initiatePot(table);
             dealCards(table);
+
             preFlopBetting(table);
-            if(table.isHandOver()) {
+            //if action is complete
+            //showdown, runout, complete hand, clear table, continue
+            if(table.isActionComplete()) {
+                showdown(table);
+                dealRunout(table);
                 completeHand(table);
                 clearTable(table);
                 continue;
             }
+            else if(table.isHandOver()) {
+                completeHand(table);
+                clearTable(table);
+                continue;
+            }
+
             cleanUp(table);
             dealFlop(table);
             postFlopBetting(table);
-            if(table.isHandOver()) {
+            if(table.isActionComplete()) {
+                showdown(table);
+                dealRunout(table);
                 completeHand(table);
                 clearTable(table);
                 continue;
             }
+            else if(table.isHandOver()) {
+                completeHand(table);
+                clearTable(table);
+                continue;
+            }
+
             cleanUp(table);
             dealTurnOrRiver(table);
             postFlopBetting(table);
-            if(table.isHandOver()) {
+            if(table.isActionComplete()) {
+                showdown(table);
+                dealRunout(table);
                 completeHand(table);
                 clearTable(table);
                 continue;
             }
+            else if(table.isHandOver()) {
+                completeHand(table);
+                clearTable(table);
+                continue;
+            }
+
             cleanUp(table);
             dealTurnOrRiver(table);
             postFlopBetting(table);
@@ -215,7 +238,7 @@ public class TableService {
     public void dealTurnOrRiver (Table table) {
         DeckService deckService = deckServiceFactory.createDeckService();
 
-        //TODO this might be too memory intensive, might be better to create seperate callback method for a turn/river card
+        //TODO this might be too memory intensive, might be better to create separate callback method for a turn/river card
         //draws a card and adds it to an array (makes it compatible with the callback method)
         Card card = deckService.drawCard(table.getDeck());
         ArrayList<Card> cards = new ArrayList<>();
@@ -299,12 +322,8 @@ public class TableService {
                 table.setHandOver(true);
                 break;
             }
-            // skips any empty seats or folded players
-            /*if (table.getSeats()[currPlayerIndex] == null || !table.getSeats()[currPlayerIndex].isInHand()) {
-                currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
-            }*/
             //PRE-FLOP
-            //if we've looped back to the original raiser and player CurrentBet = table CurrentBet, action is over
+            //if we've looped back to the original raiser and player currentBet = table CurrentBet, action is over
             else if (isPreFlop &&
                     table.getSeats()[currPlayerIndex].getCurrentBet() == table.getCurrentBet() &&
                     table.getCurrentBet() > stakes[1])
@@ -363,8 +382,7 @@ public class TableService {
                         table.getSeats()[currPlayerIndex].setChipCount(0);
 
                         //update the pot size of the table
-                        table.setPot
-                                (table.getPot() + (bet - table.getSeats()[currPlayerIndex].getCurrentBet()));
+                        table.setPot(table.getPot() + bet);
 
                         //update the pot size of the current street
                         table.setCurrentStreetPot
@@ -380,6 +398,10 @@ public class TableService {
                             table.setCurrentBet(bet);
                             minBet = (table.getCurrentBet() - previousBet) + table.getCurrentBet();
                         }
+
+                        //increment the tables all-in count by 1, mark the player as all-in
+                        table.setAllInCount(table.getAllInCount()+1);
+                        table.getSeats()[currPlayerIndex].setAllIn(true);
 
                         //sends message to the controller to update the user's stack size, bet display, and the pot size
                         invokeEndPlayerActionCallback('A', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot(),  table.getCurrentStreetPot(), isPreFlop);
@@ -404,6 +426,12 @@ public class TableService {
                             table.setCurrentBet(bet);
                             minBet = (table.getCurrentBet() - previousBet) + table.getCurrentBet();
                         }
+
+                        //check if player is all in
+                        if(table.getSeats()[currPlayerIndex].getChipCount() == 0) {
+                            table.getSeats()[currPlayerIndex].setAllIn(true);
+                            table.setAllInCount(table.getAllInCount() + 1);
+                        }
                         //sends message to the controller to update the user's stack size, bet display, and the pot size
                         invokeEndPlayerActionCallback('B', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot(), table.getCurrentStreetPot(), isPreFlop);
                     }
@@ -418,6 +446,12 @@ public class TableService {
                         //update the player's current bet
                         table.getSeats()[currPlayerIndex].setCurrentBet(table.getSeats()[currPlayerIndex].getCurrentBet() + bet);
 
+                        //check if player is all in
+                        if(table.getSeats()[currPlayerIndex].getChipCount() == 0) {
+                            table.setAllInCount(table.getAllInCount() + 1);
+                            table.getSeats()[currPlayerIndex].setAllIn(true);
+                        }
+
                         //sends message to the controller to update the user's stack size, bet display, and the pot size
                         invokeEndPlayerActionCallback('P', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot(),  table.getCurrentStreetPot(), isPreFlop);
                     }
@@ -425,12 +459,19 @@ public class TableService {
                         System.out.println("wrong action or bet input");
                     }
 
-                    //loops over seats to get the next player to act
+                    //if all the active players are all in, action is over
+                    if(table.getAllInCount() == table.getSeatedPlayerCount() - table.getSeatedFoldCount()) {
+                        table.setActionComplete(true);
+                        break;
+                    }
+
+                    //move currPlayerIndex over by 1
                     currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
                     //loops until a non-empty seat with non-folded player
                     while (table.getSeats()[currPlayerIndex] == null || !(table.getSeats()[currPlayerIndex].isInHand())) {
                         currPlayerIndex = (currPlayerIndex + 1) % table.getSeatCount();
                     }
+
                     //first action has now taken place, set to false
                     firstAction = false;
                 } catch (InterruptedException | ExecutionException e) {
@@ -467,6 +508,30 @@ public class TableService {
         }
     }
 
+    //calculates how many community cards need to be dealt, and then deals them with a sleep timer for dramatic effect
+    public void dealRunout (Table table) {
+        //if all in pre-flop, deal flop, turn, and river
+        if(table.getBoard().size() == 0) {
+            sleepTimer(3000);
+            dealFlop(table);
+            sleepTimer(3000);
+            dealTurnOrRiver(table);
+            sleepTimer(3000);
+            dealTurnOrRiver(table);
+        }
+        //else if all in on flop, deal turn and river
+        else if(table.getBoard().size() == 3) {
+            sleepTimer(3000);
+            dealTurnOrRiver(table);
+            sleepTimer(3000);
+            dealTurnOrRiver(table);
+        }
+        //else if all in on turn, deal river
+        else if(table.getBoard().size() == 4) {
+            sleepTimer(3000);
+            dealTurnOrRiver(table);
+        }
+    }
     public void completeHand(Table table) {
         ArrayList<Player> winners = new ArrayList<>();
         HashMap<Integer, Player> indexAndWinner = new HashMap<>();
@@ -583,6 +648,7 @@ public class TableService {
             if (table.getSeats()[i] != (null)) {
                 table.getSeats()[i].setHand(null);
                 table.getSeats()[i].setInHand(true);
+                table.getSeats()[i].setAllIn(false);
             }
         }
         //joins the deck together
@@ -592,8 +658,10 @@ public class TableService {
         //reset the table fields
         table.setPot(0);
         table.setSeatedFoldCount(0);
+        table.setActionComplete(false);
+        table.setAllInCount(0);
 
-        // heads-up edge case
+        //heads-up edge case to switch blinds correctly
         if (table.getSeatedPlayerCount() == 2) {
             int sb = table.getSmallBlindIndex();
             table.setSmallBlindIndex(table.getBigBlindIndex());
@@ -618,6 +686,14 @@ public class TableService {
         return -1;
     }
 
+    //method that adds a delay between actions
+    private void sleepTimer(int milliseconds) {
+        try {
+            Thread.sleep(milliseconds); // Sleep for 4 seconds
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     //callback function used to send position info to the front-end
     private void invokeButtonCallback(int buttonIndex) {

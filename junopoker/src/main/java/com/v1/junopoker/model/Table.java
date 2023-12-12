@@ -21,6 +21,7 @@ public class Table {
     //Changed "playerCount" to "seatedPlayerCount", more specific
     private int seatedPlayerCount;
     private int seatedFoldCount;
+    private int allInCount;
     private Deck deck;
     private int bigBlindIndex;
     private int smallBlindIndex;
@@ -28,6 +29,7 @@ public class Table {
     private float currentBet;
     private boolean gameRunning;
     private boolean handOver;
+    private boolean actionComplete;
     private DeckService deckService;
 
     //initiates table
@@ -45,5 +47,6 @@ public class Table {
         dealerButton = -1;
         gameRunning = false;
         handOver = false;
+        actionComplete = false;
     }
 }

@@ -308,12 +308,28 @@ function endPlayerActionEvent(message) {
         const potElement = $("#total-pot");
         potElement.text("Total Pot: " + message.potSize);
     }
+    //if they bet
     else if (message.action === "B") {
         //update player's bet display
         const betDisplayDiv = $(`#bet-display-${message.seat}`);
         const betElement = betDisplayDiv.find(".player-bet-display");
         betElement.text(message.bet);
         betDisplayDiv.show();
+
+        //update player's chip count
+        const chipCountElement = seatDiv.find(".player-chip-counts");
+        chipCountElement.text(message.stackSize);
+
+        //update the pot size
+        const potElement = $("#total-pot");
+        potElement.text("Total Pot: " + message.potSize);
+    }
+    else if (message.action === "A") {
+        //update player's bet display
+        const betDisplayDiv = $(`#bet-display-${message.seat}`);
+        const betElement = betDisplayDiv.find(".player-bet-display");
+        const allInAmount = parseFloat(betElement.text()) + message.bet;
+        betElement.text(allInAmount);
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");
@@ -378,7 +394,7 @@ function displayActionBubble(seat, action) {
 
 //displays the whole cards of the players still in the hand
 function showdownEvent(message) {
-    //console.log("SHOWDOWN", message);
+    console.log("SHOWDOWN", message);
 
     //loops through hash map and publicly displays the hole cards of each player currently in the hand
     for (let index in message.indexAndPlayer) {

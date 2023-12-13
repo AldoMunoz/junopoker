@@ -178,14 +178,28 @@ function privatePlayerActionEvent(message) {
     //if the min bet would be greater than the player's stack, they can fold, call, or go all-in
     else if (message.minBet > message.player.chipCount && message.player.currentBet != message.currentBet) {
         //add "call" and "all-in" buttons
-        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${(message.currentBet-message.player.currentBet).toFixed(2)}</button>`)
+        const callAmount = message.currentBet - message.player.currentBet;
+
+        if (Number.isInteger(callAmount));
+        else {
+            let decimalPlaces = Math.min(2, (callAmount.toString().split('.')[1] || []).length);
+            callAmount.toFixed(decimalPlaces);
+        }
+        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${callAmount}</button>`)
         basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In: ${message.player.chipCount}</button>`)
         limitActions = true;
     }
     //if the player's bet is not equal to the table bet, they can fold, call, or raise
     else if(message.player.currentBet != message.currentBet) {
         //add "call" and "raise" buttons
-        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${(message.currentBet-message.player.currentBet).toFixed(2)}</button>`)
+        const callAmount = message.currentBet - message.player.currentBet;
+
+        if (Number.isInteger(callAmount));
+        else {
+            let decimalPlaces = Math.min(2, (callAmount.toString().split('.')[1] || []).length);
+            callAmount.toFixed(decimalPlaces);
+        }
+        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${callAmount}</button>`)
         basicActionsDiv.append(`<button id="raise" onclick="onBet()">Raise: </button>`)
         setBetButtonType('r');
         limitActions = false;

@@ -11,5 +11,7 @@ public class Player {
     private boolean inHand = false;
     private boolean isAllIn = false;
     private double currentBet = 0;
+    private double startingStackThisHand;
+    private double amountBetThisHand = 0;
     private boolean isActive = false;
 }

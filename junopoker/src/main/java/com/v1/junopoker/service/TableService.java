@@ -61,6 +61,7 @@ public class TableService {
 
             table.setHandOver(false);
             moveBlinds(table);
+            trackStartingStacks(table);
             initiatePot(table);
             dealCards(table);
 
@@ -137,7 +138,7 @@ public class TableService {
 
     //moves the BB and SB to the next player
     //sets or moves the button
-    public void moveBlinds(Table table) {
+    private void moveBlinds(Table table) {
         //SB is set to person who was just BB
         table.setSmallBlindIndex(table.getBigBlindIndex());
 
@@ -160,8 +161,17 @@ public class TableService {
         }
     }
 
+    //tracks each players starting stack at the beginning of each hand (used for side pots and all-in tracking)
+    private void trackStartingStacks(Table table) {
+        for (int i = 0; i < table.getSeatCount(); i++) {
+            if(table.getSeats()[i] != null) {
+                table.getSeats()[i].setStartingStackThisHand(table.getSeats()[i].getChipCount());
+            }
+        }
+    }
+
     //collects blinds and adds them to the pot
-    public void initiatePot (Table table) {
+    private void initiatePot (Table table) {
         Player[] seats = table.getSeats();
         int smallBlindIndex = table.getSmallBlindIndex();
         int bigBlindIndex = table.getBigBlindIndex();
@@ -224,7 +234,7 @@ public class TableService {
     }
 
     //deals cards preflop to all players
-    public void dealCards (Table table) {
+    private void dealCards (Table table) {
         //the deck will be organized in a random order before the round starts
         DeckService deckService = new DeckService();
         deckService.shuffleCards(table.getDeck());
@@ -246,7 +256,7 @@ public class TableService {
     }
 
     //deals the flop out
-    public void dealFlop (Table table) {
+    private void dealFlop (Table table) {
         DeckService deckService = new DeckService();
 
         //add 3 cards to the board
@@ -262,7 +272,7 @@ public class TableService {
     }
 
     //deals the turn or river card
-    public void dealTurnOrRiver (Table table) {
+    private void dealTurnOrRiver (Table table) {
         DeckService deckService = deckServiceFactory.createDeckService();
 
         //TODO this might be too memory intensive, might be better to create separate callback method for a turn/river card
@@ -282,7 +292,7 @@ public class TableService {
     }
 
     //deals with the pre-flop betting rounds
-    public void preFlopBetting (Table table) {
+    private void preFlopBetting (Table table) {
         //creating local fields for SB, BB, stakes, seats
         int smallBlind = table.getSmallBlindIndex();
         int bigBlind = table.getBigBlindIndex();
@@ -312,7 +322,7 @@ public class TableService {
             table.setSmallBlindIndex(temp);
         }
     }
-    public void postFlopBetting(Table table) {
+    private void postFlopBetting(Table table) {
         //set fields
         int smallBlind = table.getSmallBlindIndex();
         Player[] seats = table.getSeats();
@@ -330,7 +340,7 @@ public class TableService {
     }
 
     //handles player actions during the betting round until the betting round is over
-    public void playerAction(Table table, int currPlayerIndex, boolean isPreFlop) {
+    private void playerAction(Table table, int currPlayerIndex, boolean isPreFlop) {
         int firstToActIndex = currPlayerIndex;
         boolean actionOver = false;
         boolean firstAction = true;
@@ -405,8 +415,12 @@ public class TableService {
                     }
                     //if they are all-in
                     else if(action == 'A') {
-                        //update player chip count
+                        //update and track player fields
                         table.getSeats()[currPlayerIndex].setChipCount(0);
+                        //TODO math might be wrong
+                        table.getSeats()[currPlayerIndex].setAmountBetThisHand(table.getSeats()[currPlayerIndex].getAmountBetThisHand() +
+                                (bet - table.getSeats()[currPlayerIndex].getCurrentBet()));
+                        table.getSeats()[currPlayerIndex].setAllIn(true);
 
                         //update the pot size of the table
                         BigDecimal bDPot = new BigDecimal(Double.toString(table.getPot()));
@@ -416,12 +430,18 @@ public class TableService {
 
                         table.setPot(bDNewPot.doubleValue());
 
-                        //update the pot size of the current street
-                        table.setCurrentStreetPot
-                                (table.getCurrentStreetPot() + (bet - table.getSeats()[currPlayerIndex].getCurrentBet()));
-
-                        //update the player's current bet
+                        //sets the player's current bet to the bet they just made
                         table.getSeats()[currPlayerIndex].setCurrentBet(bet);
+
+                        //update the pot size of the current street
+                        BigDecimal bDCurrentStreetPot = new BigDecimal(Double.toString(table.getCurrentStreetPot()));
+                        BigDecimal bDPlayerCurrentBet = new BigDecimal(Double.toString(table.getSeats()[currPlayerIndex].getCurrentBet()));
+
+                        BigDecimal difference = bDBet.subtract(bDPlayerCurrentBet);
+                        BigDecimal bdNewCurrentStreetPot = bDCurrentStreetPot.add(difference);
+                        bdNewCurrentStreetPot = bdNewCurrentStreetPot.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+                        table.setCurrentStreetPot(bdNewCurrentStreetPot.doubleValue());
 
                         //check if the bet amount is greater than currentBet
                         if(bet > table.getCurrentBet()) {
@@ -433,16 +453,22 @@ public class TableService {
 
                         //increment the tables all-in count by 1, mark the player as all-in
                         table.setAllInCount(table.getAllInCount()+1);
-                        table.getSeats()[currPlayerIndex].setAllIn(true);
 
                         //sends message to the controller to update the user's stack size, bet display, and the pot size
                         invokeEndPlayerActionCallback('A', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot(),  table.getCurrentStreetPot(), isPreFlop);
                     }
                     //if they bet:
                     else if (action == 'B' && bet >= minBet) {
-                        //update player chip count
+                        //update and track player fields
                         table.getSeats()[currPlayerIndex].setChipCount
                                 (table.getSeats()[currPlayerIndex].getChipCount() + table.getSeats()[currPlayerIndex].getCurrentBet() - bet);
+                        //TODO math might be wrong
+                        table.getSeats()[currPlayerIndex].setAmountBetThisHand(table.getSeats()[currPlayerIndex].getAmountBetThisHand() + bet);
+                        //check if player is all in
+                        if(table.getSeats()[currPlayerIndex].getChipCount() == 0) {
+                            table.getSeats()[currPlayerIndex].setAllIn(true);
+                            table.setAllInCount(table.getAllInCount() + 1);
+                        }
 
                         //update the pot size of the table
                         BigDecimal bDPot = new BigDecimal(Double.toString(table.getPot()));
@@ -455,10 +481,16 @@ public class TableService {
 
                         table.setPot(bDNewPot.doubleValue());
 
-                        //update the pot size of the current street
-                        table.setCurrentStreetPot(table.getCurrentStreetPot() + bet);
-                        //update the player's current bet
+                        //change the player's current bet to the bet they just made
                         table.getSeats()[currPlayerIndex].setCurrentBet(bet);
+
+                        //update the pot size of the current street
+                        BigDecimal bDCurrentStreetPot = new BigDecimal(Double.toString(table.getCurrentStreetPot()));
+                        BigDecimal bDNewCurrentStreetPot = bDBet.add(bDCurrentStreetPot);
+                        bDNewCurrentStreetPot = bDNewCurrentStreetPot.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+                        table.setCurrentStreetPot(bDNewCurrentStreetPot.doubleValue());
+
 
                         //check if the bet amount is greater than currentBet
                         if(bet > table.getCurrentBet()) {
@@ -468,11 +500,6 @@ public class TableService {
                             minBet = (table.getCurrentBet() - previousBet) + table.getCurrentBet();
                         }
 
-                        //check if player is all in
-                        if(table.getSeats()[currPlayerIndex].getChipCount() == 0) {
-                            table.getSeats()[currPlayerIndex].setAllIn(true);
-                            table.setAllInCount(table.getAllInCount() + 1);
-                        }
                         //sends message to the controller to update the user's stack size, bet display, and the pot size
                         invokeEndPlayerActionCallback('B', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot(), table.getCurrentStreetPot(), isPreFlop);
                     }
@@ -480,6 +507,13 @@ public class TableService {
                     else if(action == 'P') {
                         //update player chip count
                         table.getSeats()[currPlayerIndex].setChipCount(table.getSeats()[currPlayerIndex].getChipCount() - bet);
+                        //TODO math might be wrong
+                        table.getSeats()[currPlayerIndex].setAmountBetThisHand(table.getSeats()[currPlayerIndex].getAmountBetThisHand() + bet);
+                        //check if player is all in
+                        if(table.getSeats()[currPlayerIndex].getChipCount() == 0) {
+                            table.setAllInCount(table.getAllInCount() + 1);
+                            table.getSeats()[currPlayerIndex].setAllIn(true);
+                        }
 
                         //update the pot size of the table
                         BigDecimal bDPot = new BigDecimal(Double.toString(table.getPot()));
@@ -489,16 +523,15 @@ public class TableService {
 
                         table.setPot(bDNewPot.doubleValue());
 
-                        //update the pot size of the current street
-                        table.setCurrentStreetPot(table.getCurrentStreetPot() + bet);
-                        //update the player's current bet
+                        //change the current bet to the bet that was just made
                         table.getSeats()[currPlayerIndex].setCurrentBet(table.getSeats()[currPlayerIndex].getCurrentBet() + bet);
 
-                        //check if player is all in
-                        if(table.getSeats()[currPlayerIndex].getChipCount() == 0) {
-                            table.setAllInCount(table.getAllInCount() + 1);
-                            table.getSeats()[currPlayerIndex].setAllIn(true);
-                        }
+                        //update the pot size of the current street
+                        BigDecimal bDCurrentStreetPot = new BigDecimal(Double.toString(table.getCurrentStreetPot()));
+                        BigDecimal bDNewCurrentStreetPot = bDBet.add(bDCurrentStreetPot);
+                        bDNewCurrentStreetPot = bDNewCurrentStreetPot.setScale(2, BigDecimal.ROUND_HALF_UP);
+
+                        table.setCurrentStreetPot(bDNewCurrentStreetPot.doubleValue());
 
                         //sends message to the controller to update the user's stack size, bet display, and the pot size
                         invokeEndPlayerActionCallback('P', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot(),  table.getCurrentStreetPot(), isPreFlop);
@@ -530,7 +563,7 @@ public class TableService {
     }
 
     //resets all values that the table tracks after each street, sends a callback method to represent the reset values in the front-end
-    public void cleanUp(Table table) {
+    private void cleanUp(Table table) {
         //clean up table currentBet and player current bets
         table.setCurrentBet(0);
         table.setCurrentStreetPot(0);
@@ -541,7 +574,7 @@ public class TableService {
     }
 
     //sends a hashmap of the seats and players who are still in the hand to the front end
-    public void showdown(Table table) {
+    private void showdown(Table table) {
         //if there's only one player in the hand, continue
         if(table.getSeatedPlayerCount() - table.getSeatedFoldCount() == 1);
         //else find the players who are still in the hand and their seats
@@ -557,7 +590,7 @@ public class TableService {
     }
 
     //calculates how many community cards need to be dealt, and then deals them with a sleep timer for dramatic effect
-    public void dealRunout (Table table) {
+    private void dealRunout (Table table) {
         //if all in pre-flop, deal flop, turn, and river
         if(table.getBoard().size() == 0) {
             sleepTimer(3000);
@@ -580,7 +613,7 @@ public class TableService {
             dealTurnOrRiver(table);
         }
     }
-    public void completeHand(Table table) {
+    private void completeHand(Table table) {
         ArrayList<Player> winners = new ArrayList<>();
         HashMap<Integer, Player> indexAndWinner = new HashMap<>();
 
@@ -668,7 +701,7 @@ public class TableService {
     }
 
     //Goes through the list of players and reassigns Hand value after turn and river
-    public void getHandRankings(Table table) {
+    private void getHandRankings(Table table) {
         //iterates through players, gets their hand ranking, and sets it
         for (int i = 0; i < table.getSeatCount(); i++) {
             if (table.getSeats()[i] != (null)) {
@@ -688,7 +721,7 @@ public class TableService {
     }
 
     //Resets Player and Table fields
-    public void clearTable(Table table) {
+    private void clearTable(Table table) {
         DeckService deckService = new DeckService();
 
         //resets player hands and hand statuses

@@ -12,6 +12,7 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -53,7 +54,8 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
     @Override
-    public void onPotInit(int sbIndex, int bbIndex, double sbAmount, double bbAmount, double potSize) {
+    public void onPotInit(int sbIndex, int bbIndex, BigDecimal sbAmount, BigDecimal bbAmount, BigDecimal potSize) {
+        System.out.println("entered on pot init");
         InitPotRequest request = new InitPotRequest();
         request.setType(RequestType.INIT_POT);
         request.setSmallBlind(sbIndex);
@@ -63,6 +65,7 @@ public class TableWebSocketController implements TableCallback {
         request.setPotSize(potSize);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
+        System.out.println("message sent?");
     }
     @Override
     public void onHoleCardsDealt(String username, int seat, Card[] holeCards) {
@@ -88,7 +91,7 @@ public class TableWebSocketController implements TableCallback {
     @Override
     //send a request to the front end for the player to input an action (check, bet, or fold)
     //receive that action and send it to TableService.java using a CompletableFuture
-    public void onPreFlopAction(Player player, int seat, double currentBet, double potSize, double minBet) {
+    public void onPreFlopAction(Player player, int seat, BigDecimal currentBet, BigDecimal potSize, BigDecimal minBet) {
         SeatRequest publicRequest= new SeatRequest();
         publicRequest.setType(RequestType.PLAYER_ACTION);
         publicRequest.setSeat(seat);
@@ -151,7 +154,7 @@ public class TableWebSocketController implements TableCallback {
     }
 
     @Override
-    public void onEndPlayerAction(char action, String username, int seatIndex, double betAmount, double stackSize, double potSize, double currentStreetPotSize, boolean isPreFlop) {
+    public void onEndPlayerAction(char action, String username, int seatIndex, BigDecimal betAmount, BigDecimal stackSize, BigDecimal potSize, BigDecimal currentStreetPotSize, boolean isPreFlop) {
         EndPlayerActionRequest request = new EndPlayerActionRequest();
         request.setType(RequestType.END_PLAYER_ACTION);
         request.setAction(action);

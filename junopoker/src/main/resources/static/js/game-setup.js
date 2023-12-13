@@ -214,9 +214,9 @@ function moveButtonEvent(message) {
 }
 
 function initPotEvent(message) {
-    //console.log("initiate pot", message);
+    console.log("initiate pot", message);
 
-    const oldBBChipCount = parseInt($(`#chip-count-${message.bigBlind}`).text());
+    const oldBBChipCount = parseFloat($(`#chip-count-${message.bigBlind}`).text());
     const newBBChipCount = oldBBChipCount - message.bbAmount;
     $(`#chip-count-${message.bigBlind}`).text(newBBChipCount);
 
@@ -227,7 +227,7 @@ function initPotEvent(message) {
     bbBetDisplay.css("display", "flex");
     bbBetDisplay.find('p').text(message.bbAmount);
 
-    const oldSBChipCount = parseInt($(`#chip-count-${message.smallBlind}`).text());
+    const oldSBChipCount = parseFloat($(`#chip-count-${message.smallBlind}`).text());
     const newSBChipCount = oldSBChipCount - message.sbAmount;
     $(`#chip-count-${message.smallBlind}`).text(newSBChipCount);
 
@@ -303,14 +303,7 @@ function endPlayerActionEvent(message) {
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");
-
-        let finalStackSize = message.stackSize;
-        if(Number.isInteger(message.stackSize));
-        else {
-            let decimalPlaces = Math.min(2, (message.stackSize.toString().split('.')[1] || []).length);
-            finalStackSize = finalStackSize.toFixed(decimalPlaces);
-        }
-        chipCountElement.text(finalStackSize);
+        chipCountElement.text(message.stackSize);
 
         //update the pot size
         const potElement = $("#total-pot");
@@ -326,14 +319,7 @@ function endPlayerActionEvent(message) {
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");
-
-        let finalStackSize = message.stackSize;
-        if(Number.isInteger(message.stackSize));
-        else {
-            let decimalPlaces = Math.min(2, (message.stackSize.toString().split('.')[1] || []).length);
-            finalStackSize = finalStackSize.toFixed(decimalPlaces);
-        }
-        chipCountElement.text(finalStackSize);
+        chipCountElement.text(message.stackSize);
 
         //update the pot size
         const potElement = $("#total-pot");
@@ -348,14 +334,7 @@ function endPlayerActionEvent(message) {
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");
-
-        let finalStackSize = message.stackSize;
-        if(Number.isInteger(message.stackSize));
-        else {
-            let decimalPlaces = Math.min(2, (message.stackSize.toString().split('.')[1] || []).length);
-            finalStackSize = finalStackSize.toFixed(decimalPlaces);
-        }
-        chipCountElement.text(finalStackSize);
+        chipCountElement.text(message.stackSize);
 
         //update the pot size
         const potElement = $("#total-pot");

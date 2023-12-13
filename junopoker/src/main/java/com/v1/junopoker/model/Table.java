@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 @Getter
@@ -12,9 +13,9 @@ import java.util.ArrayList;
 public class Table {
     private String gameType;
     private final int seatCount;
-    private double pot;
-    private double currentStreetPot;
-    private final int[] stakes;
+    private BigDecimal pot;
+    private BigDecimal currentStreetPot;
+    private final BigDecimal[] stakes;
     //Changed "players" to "seats", more accurate
     private Player[] seats;
     private ArrayList<Card> board;
@@ -26,14 +27,14 @@ public class Table {
     private int bigBlindIndex;
     private int smallBlindIndex;
     private int dealerButton;
-    private double currentBet;
+    private BigDecimal currentBet;
     private boolean gameRunning;
     private boolean handOver;
     private boolean actionComplete;
     private DeckService deckService;
 
     //initiates table
-    public Table (String gameType, int[] stakes) {
+    public Table (String gameType, BigDecimal[] stakes) {
         this.stakes = stakes;
         this.gameType = gameType;
 
@@ -48,5 +49,7 @@ public class Table {
         gameRunning = false;
         handOver = false;
         actionComplete = false;
+        pot = BigDecimal.valueOf(0);
+        currentStreetPot = BigDecimal.valueOf(0);
     }
 }

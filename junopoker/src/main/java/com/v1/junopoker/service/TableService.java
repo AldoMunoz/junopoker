@@ -186,6 +186,7 @@ public class TableService {
             table.setPot(table.getPot().add(stakes[1]));
 
             //deduct big blind from the player's stack
+            seats[bigBlindIndex].setAmountBetThisHand(stakes[1]);
             seats[bigBlindIndex].setChipCount((seats[bigBlindIndex].getChipCount().subtract(stakes[1])).setScale(2, BigDecimal.ROUND_HALF_UP));
         }
         //edge case, if the players stack size is less than the blind
@@ -194,6 +195,7 @@ public class TableService {
 
             table.setPot((table.getPot().add(seats[bigBlindIndex].getChipCount())).setScale(2, BigDecimal.ROUND_HALF_UP));
 
+            seats[bigBlindIndex].setAmountBetThisHand(seats[bigBlindIndex].getChipCount());
             seats[bigBlindIndex].setChipCount(BigDecimal.valueOf(0));
         }
 
@@ -203,6 +205,7 @@ public class TableService {
             table.setPot((table.getPot().add(stakes[0])).setScale(2, BigDecimal.ROUND_HALF_UP));
 
             //deduct small blind from the player's stack
+            seats[smallBlindIndex].setAmountBetThisHand(stakes[0]);
             seats[smallBlindIndex].setChipCount((seats[smallBlindIndex].getChipCount().subtract(stakes[0])).setScale(2, BigDecimal.ROUND_HALF_UP));
         }
         //edge case, if the players stack size is less than the blind
@@ -211,6 +214,7 @@ public class TableService {
 
             table.setPot((table.getPot().add(seats[smallBlindIndex].getChipCount())).setScale(2, BigDecimal.ROUND_HALF_UP));
 
+            seats[smallBlindIndex].setAmountBetThisHand(seats[smallBlindIndex].getChipCount());
             seats[smallBlindIndex].setChipCount(BigDecimal.valueOf(0));
         }
 
@@ -403,9 +407,13 @@ public class TableService {
                     else if(action == 'A') {
                         //update and track player fields
                         table.getSeats()[currPlayerIndex].setChipCount(BigDecimal.valueOf(0));
-                        //TODO math might be wrong
-                        table.getSeats()[currPlayerIndex].setAmountBetThisHand(table.getSeats()[currPlayerIndex].getAmountBetThisHand().add(
-                                (bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet()))));
+                        if(table.getCurrentBet().compareTo(bet) > 0) {
+                            table.getSeats()[currPlayerIndex].setAmountBetThisHand(table.getSeats()[currPlayerIndex].getAmountBetThisHand().add(bet));
+                        }
+                        else {
+                            table.getSeats()[currPlayerIndex].setAmountBetThisHand(table.getSeats()[currPlayerIndex].getAmountBetThisHand().add(
+                                    (bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet()))));
+                        }
                         table.getSeats()[currPlayerIndex].setAllIn(true);
 
                         //update the pot size of the table
@@ -436,8 +444,8 @@ public class TableService {
                         //update and track player fields
                         table.getSeats()[currPlayerIndex].setChipCount
                                 (table.getSeats()[currPlayerIndex].getChipCount().add(table.getSeats()[currPlayerIndex].getCurrentBet()).subtract(bet));
-                        //TODO math might be wrong
-                        table.getSeats()[currPlayerIndex].setAmountBetThisHand(table.getSeats()[currPlayerIndex].getAmountBetThisHand().add(bet));
+                        table.getSeats()[currPlayerIndex].setAmountBetThisHand(table.getSeats()[currPlayerIndex].getAmountBetThisHand().add(
+                                bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet())));
                         //check if player is all in
                         if(table.getSeats()[currPlayerIndex].getChipCount().compareTo(BigDecimal.valueOf(0)) == 0) {
                             table.getSeats()[currPlayerIndex].setAllIn(true);
@@ -468,7 +476,6 @@ public class TableService {
                     else if(action == 'P') {
                         //update player chip count
                         table.getSeats()[currPlayerIndex].setChipCount(table.getSeats()[currPlayerIndex].getChipCount().subtract(bet));
-                        //TODO math might be wrong
                         table.getSeats()[currPlayerIndex].setAmountBetThisHand(table.getSeats()[currPlayerIndex].getAmountBetThisHand().add(bet));
                         //check if player is all in
                         if(table.getSeats()[currPlayerIndex].getChipCount().compareTo(BigDecimal.valueOf(0)) == 0) {
@@ -492,10 +499,32 @@ public class TableService {
                         System.out.println("wrong action or bet input");
                     }
 
-                    //if all the active players are all in, action is over
+                    //if all the active players are all-in action is over
                     if(table.getAllInCount() == table.getSeatedPlayerCount() - table.getSeatedFoldCount()) {
                         table.setActionComplete(true);
                         break;
+                    }
+                    //else if all the active players - 1 are all-in, check to see if action is over
+                    else if(table.getAllInCount() - table.getSeatedPlayerCount() - table.getSeatedFoldCount() >= -1) {
+                        BigDecimal threshold = BigDecimal.valueOf(0);
+                        Player notAllInPlayer = null;
+
+                        //loop through the players to see the largest starting stack out of the all-in players
+                        for (int i = 0; i < table.getSeatCount(); i++) {
+                            if(table.getSeats()[i] != null && table.getSeats()[i].isInHand() && table.getSeats()[i].isAllIn()) {
+                                if(table.getSeats()[i].getAmountBetThisHand().compareTo(threshold) >= 0) {
+                                    threshold = table.getSeats()[i].getAmountBetThisHand();
+                                }
+                            }
+                            //find and save the non-all in player
+                            else if(table.getSeats()[i] != null && table.getSeats()[i].isInHand())
+                                notAllInPlayer = table.getSeats()[i];
+                        }
+                        //if the amount the non-all in player has bet this hand is greater than the largest stack out of the all-in players, then action is over
+                        if(notAllInPlayer.getAmountBetThisHand().compareTo(threshold) >= 0) {
+                            table.setActionComplete(true);
+                            break;
+                        }
                     }
 
                     //move currPlayerIndex over by 1

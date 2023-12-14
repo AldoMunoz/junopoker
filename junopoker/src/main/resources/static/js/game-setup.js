@@ -105,7 +105,6 @@ function tableEvents(payload) {
     //parse the body of the message
     let message = JSON.parse(payload.body);
 
-    //TODO: Make this a switch-case
     //view logic for when a new player takes a seat
     if(message.type === "SIT") sitTableEvent(message);
     //view logic for when player stands up from seat
@@ -241,7 +240,6 @@ function initPotEvent(message) {
     //Display Total Pot text and populate it with the pot size
     const totalPot = $("#total-pot");
     totalPot.css("display", "flex");
-    //TODO fix math
     totalPot.text(`Total Pot: ${message.potSize.toLocaleString()}`);
 }
 

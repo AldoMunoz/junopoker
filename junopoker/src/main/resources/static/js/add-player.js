@@ -155,7 +155,7 @@ function privateDealHoleCardsEvent(message) {
 }
 
 function privatePlayerActionEvent(message) {
-    //console.log("Private player action ", message);
+    console.log("Private player action ", message);
 
     //set min bet value, max bet value, pot size, and the seat in slider.js;
     setMinValue(message.minBet);
@@ -169,8 +169,10 @@ function privatePlayerActionEvent(message) {
     basicActionsDiv.children().not("#fold").remove();
     //boolean to decide if the slider should be displayed or not
     let limitActions = false;
+
+    //TODO confirm what all in button should represent
     //if the current bet is greater than the player's stack, they can fold or go all-in
-    if(message.currentBet > message.player.chipCount ) {
+    if(message.currentBet > message.player.chipCount + message.player.currentBet) {
         //add "all-in" button
         basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In: ${message.player.chipCount}</button>`);
         limitActions = true;
@@ -179,7 +181,7 @@ function privatePlayerActionEvent(message) {
     else if (message.minBet > message.player.chipCount && message.player.currentBet != message.currentBet) {
         const CurrentBet = new BigNumber(message.currentBet.toString());
         const PlayerCurrentBet = new BigNumber(message.player.currentBet.toString());
-        const CallAmount = CurrentBet.minus(PlayerCurrentBet);
+        const ChipCount = new BigNumber(message.player.chipCount.toString());
 
         //add "call" and "all-in" buttons
         basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${CallAmount}</button>`)

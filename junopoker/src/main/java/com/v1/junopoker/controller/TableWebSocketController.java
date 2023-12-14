@@ -55,7 +55,6 @@ public class TableWebSocketController implements TableCallback {
     }
     @Override
     public void onPotInit(int sbIndex, int bbIndex, BigDecimal sbAmount, BigDecimal bbAmount, BigDecimal potSize) {
-        System.out.println("entered on pot init");
         InitPotRequest request = new InitPotRequest();
         request.setType(RequestType.INIT_POT);
         request.setSmallBlind(sbIndex);
@@ -65,7 +64,6 @@ public class TableWebSocketController implements TableCallback {
         request.setPotSize(potSize);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
-        System.out.println("message sent?");
     }
     @Override
     public void onHoleCardsDealt(String username, int seat, Card[] holeCards) {

@@ -327,8 +327,8 @@ function endPlayerActionEvent(message) {
         //update player's bet display
         const betDisplayDiv = $(`#bet-display-${message.seat}`);
         const betElement = betDisplayDiv.find(".player-bet-display");
-        const allInAmount = parseFloat(betElement.text()) + message.bet;
-        betElement.text(allInAmount);
+        //const allInAmount = parseFloat(betElement.text()) + message.bet;
+        betElement.text(message.bet);
 
         //update player's chip count
         const chipCountElement = seatDiv.find(".player-chip-counts");

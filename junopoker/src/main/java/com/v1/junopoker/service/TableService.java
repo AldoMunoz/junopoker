@@ -417,13 +417,13 @@ public class TableService {
                         table.getSeats()[currPlayerIndex].setAllIn(true);
 
                         //update the pot size of the table
-                        table.setPot((table.getPot().add(bet)).setScale(2, BigDecimal.ROUND_HALF_UP));
-
-                        //sets the player's current bet to the bet they just made
-                        table.getSeats()[currPlayerIndex].setCurrentBet(bet);
+                        table.setPot((table.getPot().add((bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet())))).setScale(2, BigDecimal.ROUND_HALF_UP));
 
                         //update the pot size of the current street
                         table.setCurrentStreetPot((table.getCurrentStreetPot().add(bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet()))).setScale(2, BigDecimal.ROUND_HALF_UP));
+
+                        //sets the player's current bet to the bet they just made
+                        table.getSeats()[currPlayerIndex].setCurrentBet(bet);
 
                         //check if the bet amount is greater than currentBet
                         if(bet.compareTo(table.getCurrentBet()) > 0) {
@@ -440,7 +440,7 @@ public class TableService {
                         invokeEndPlayerActionCallback('A', table.getSeats()[currPlayerIndex].getUsername(), currPlayerIndex, bet, table.getSeats()[currPlayerIndex].getChipCount(), table.getPot(),  table.getCurrentStreetPot(), isPreFlop);
                     }
                     //if they bet:
-                    else if (action == 'B' && bet.compareTo(minBet) >= 0) {
+                    else if (action == 'B') {
                         //update and track player fields
                         table.getSeats()[currPlayerIndex].setChipCount
                                 (table.getSeats()[currPlayerIndex].getChipCount().add(table.getSeats()[currPlayerIndex].getCurrentBet()).subtract(bet));
@@ -455,11 +455,11 @@ public class TableService {
                         //update the pot size of the table
                         table.setPot((table.getPot().add(bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet()))).setScale(2, BigDecimal.ROUND_HALF_UP));
 
+                        //update the pot size of the current street
+                        table.setCurrentStreetPot((table.getCurrentStreetPot().add((bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet())))).setScale(2, BigDecimal.ROUND_HALF_UP));
+
                         //change the player's current bet to the bet they just made
                         table.getSeats()[currPlayerIndex].setCurrentBet(bet);
-
-                        //update the pot size of the current street
-                        table.setCurrentStreetPot((bet.add(table.getCurrentStreetPot())).setScale(2, BigDecimal.ROUND_HALF_UP));
 
                         //check if the bet amount is greater than currentBet
                         if(bet.compareTo(table.getCurrentBet()) > 0) {

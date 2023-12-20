@@ -170,39 +170,40 @@ function privatePlayerActionEvent(message) {
     //boolean to decide if the slider should be displayed or not
     let limitActions = false;
 
-    //TODO confirm what all in button should represent
     //if the current bet is greater than the player's stack, they can fold or go all-in
-    if(message.currentBet > message.player.chipCount + message.player.currentBet) {
+    if(message.currentBet >= message.player.chipCount + message.player.currentBet) {
+        const ChipCount = new BigNumber(message.player.chipCount);
+        const PlayerCurrentBet = new BigNumber(message.player.currentBet);
+
         //add "all-in" button
-        basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In: ${message.player.chipCount}</button>`);
+        basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In: ${ChipCount.plus(PlayerCurrentBet)}</button>`);
         limitActions = true;
     }
     //if the min bet would be greater than the player's stack, they can fold, call, or go all-in
-    else if (message.minBet > message.player.chipCount && message.player.currentBet != message.currentBet) {
+    else if (message.minBet > message.player.chipCount && message.player.currentBet !== message.currentBet) {
         const CurrentBet = new BigNumber(message.currentBet.toString());
         const PlayerCurrentBet = new BigNumber(message.player.currentBet.toString());
         const ChipCount = new BigNumber(message.player.chipCount.toString());
 
         //add "call" and "all-in" buttons
-        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${CallAmount}</button>`)
-        basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In: ${message.player.chipCount}</button>`)
+        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${CurrentBet.minus(PlayerCurrentBet)}</button>`)
+        basicActionsDiv.append(`<button id="all-in" onclick="onAllIn()">All-In: ${ChipCount.plus(PlayerCurrentBet)}</button>`)
         limitActions = true;
     }
     //if the player's bet is not equal to the table bet, they can fold, call, or raise
-    else if(message.player.currentBet != message.currentBet) {
+    else if(message.player.currentBet !== message.currentBet) {
         const CurrentBet = new BigNumber(message.currentBet.toString());
         const PlayerCurrentBet = new BigNumber(message.player.currentBet.toString());
-        const CallAmount = CurrentBet.minus(PlayerCurrentBet);
 
         //add "call" and "raise" buttons
-        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${CallAmount}</button>`)
+        basicActionsDiv.append(`<button id="call" onclick="onCall()">Call: ${CurrentBet.minus(PlayerCurrentBet)}</button>`)
         basicActionsDiv.append(`<button id="raise" onclick="onBet()">Raise: </button>`)
         setBetButtonType('r');
         limitActions = false;
     }
     //if both the table's current bet and the player's current bet == 0, they can fold, check, or call
     //or if the player's current bet is equal to the table's current bet (preflop)
-    else if ((message.player.currentBet == 0 && message.currentBet == 0) || (message.player.currentBet == message.currentBet)) {
+    else if ((message.player.currentBet === 0 && message.currentBet === 0) || (message.player.currentBet === message.currentBet)) {
         //add "check" and "bet" buttons
         basicActionsDiv.append(`<button id="check" onclick="onCheck()">Check</button>`);
         basicActionsDiv.append(`<button id="bet" onclick="onBet()">Bet: </button>`)

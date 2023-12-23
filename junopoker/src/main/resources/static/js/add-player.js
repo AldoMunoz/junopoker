@@ -38,8 +38,8 @@ function submitPlayerData() {
         }).then(response => {
             // Check if the response is successful (status code 2xx)
             if (!response.ok) {
-                throw new Error('Network response was not ok');
                 console.log("error occurred creating player")
+                throw new Error('Network response was not ok');
             }
             return response.json();
         }).then(data => {
@@ -87,19 +87,22 @@ async function playerEvents(payload) {
     let message = JSON.parse(payload.body);
 
     //function for when player takes a seat
-    if(message.type == "SIT") await sitPlayerEvent(message);
+    if(message.type === "SIT") await sitPlayerEvent(message);
     //function for when player stands from table
     else if(message.type === "STAND") await standPlayerEvent(message);
     //function for dealing player's private hold cards
     else if (message.type === "DEAL_PRE") privateDealHoleCardsEvent(message);
     //function for setting up and displaying player's private action HUD
     else if (message.type === "PLAYER_ACTION") privatePlayerActionEvent(message);
+    //function for displaying player's hand ranking
     else if(message.type === "HAND_RANKING") handRankingEvent(message);
+    //function for displaying rebuy modal
+    else if(message.type === "REBUY") rebuyEvent(message);
     //function to display cards on hover after a player folds
-    else if (message.type == "FOLD") foldEvent(message);
+    else if (message.type === "FOLD") foldEvent(message);
 }
 async function sitPlayerEvent(message) {
-    //console.log("Sit ", message);
+    console.log("Sit ", message);
 
     //fetch array of table seats
     const seats = await fetchTableSeats();
@@ -218,7 +221,7 @@ function privatePlayerActionEvent(message) {
 
     //display the action bar
     if (limitActions === true) {
-        $(".custom-bet").css("display", "none");;
+        $(".custom-bet").css("display", "none");
         $(".bet-sizes").css("display", "none");
         $(".action-bar").css("display", "flex");
     }
@@ -230,13 +233,25 @@ function privatePlayerActionEvent(message) {
 }
 
 function handRankingEvent(message) {
-    //console.log("Hand Ranking ", message);
+    //console.log("Hand Ranking Event: ", message);
 
-    console.log("Hand Ranking Event: ", message)
     $("#hand-ranking").text(message.handRanking);
     $("#hand-ranking").show();
 }
 
+//Displays rebuy modal for the player
+function rebuyEvent(message) {
+    console.log("Rebuy", message);
+
+    //Pass seat index to the modal
+    $("#rebuyModal").data("seatIndex", message.seatIndex);
+    $("#rebuyModal").data("tableId", message.tableId);
+
+    //open modal
+    $("#rebuyModal").show();
+}
+
+//Makes the player's hole cards visible on-hover after folding
 function foldEvent(message) {
     //console.log("Fold event ", message);
 
@@ -259,7 +274,7 @@ function foldEvent(message) {
     )
 }
 
-// Function to open the player modal
+//Opens the player modal
 function openAddPlayerModal(buttonNumber) {
     // Show the modal
     $("#addUserModal").show();
@@ -267,8 +282,32 @@ function openAddPlayerModal(buttonNumber) {
     currentButtonNumber = buttonNumber;
     console.log("Seat value in openAddPlayerModal", currentButtonNumber);
 }
-// Function to close the player modal
+//Closes the player modal
 function closeAddPlayerModal() {
     // Hide the modal
     $("#addUserModal").hide();
+}
+//Closes the rebuy modal and unsubscribes the player from their personal WebSocket connection
+function closeRebuyModal() {
+    //TODO unsubscribe the player from their personal WebSocket connection
+    $("#rebuyModal").hide();
+}
+
+//Adds the player back into the game at the earliest convenience
+function completeRebuy() {
+    //hide the modal immediately to prevent double buy-in
+    $("#rebuyModal").hide();
+
+    let rebuyAmount = new BigNumber($("#rebuyAmount").val());
+
+    //Create DTO to send to controller with the rebuy amount and the seat index of the player
+    const rebuyDTO = {
+        type: "REBUY",
+        rebuyAmount: rebuyAmount.toString(),
+        seatIndex: $("#rebuyModal").data("seatIndex"),
+        tableId: $("#rebuyModal").data("tableId")
+    };
+
+    //sends message to controller with rebuy information
+    stompClient.send("/app/rebuy", {}, JSON.stringify(rebuyDTO));
 }

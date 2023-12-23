@@ -42,6 +42,7 @@ public class TableController {
     @PostMapping("/storeTableData")
     public ResponseEntity<String> storeTableData(@RequestBody Table table, HttpSession session) {
         session.setAttribute("table", table);
+        tableService.registerTable(table);
         return ResponseEntity.ok().body("{\"status\": \"stored\"}");
     }
 
@@ -64,6 +65,7 @@ public class TableController {
     @GetMapping("/startGame")
     public ResponseEntity<Table> startGame(HttpSession session) {
         Table sessionTable = (Table) session.getAttribute("table");
+        System.out.println("startGame in TableController: " + sessionTable.getTABLE_ID());
         return ResponseEntity.ok(sessionTable);
     }
 }

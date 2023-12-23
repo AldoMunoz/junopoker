@@ -34,7 +34,7 @@ $(document).ready(function () {
                 console.log("Table data does not exist in HttpSession, creating table...");
                 //creates default table object
                 const defaultTableData = {
-                    gameType: "Texas Hold'em",
+                    gameType: "NLH",
                     stakes: [1, 2]
                 };
                 //store the table data in the HttpSession
@@ -53,7 +53,7 @@ $(document).ready(function () {
                     setSmallBlind(1);
 
                     // Populate the <h4> headers with the selected game type and stakes
-                    $('#game-type').text(`Game Type: Texas Hold'em`);
+                    $('#game-type').text(`Game Type: NLH`);
                     $('#stakes').text(`Stakes: 1/2`);
                 }).catch(error => {
                     console.error('Error occurred while storing table data:', error);
@@ -407,7 +407,7 @@ function showdownEvent(message) {
 
 //Completes closing actions after the hand has ended
 function completeHandEvent(message) {
-    //console.log("Complete Hand message: ", message);
+    console.log("Complete Hand message: ", message);
 
     //hides the bet displays for each player
     hideBetDisplays();
@@ -424,39 +424,8 @@ function completeHandEvent(message) {
     //Set Total Pot display = 0;
     $("#total-pot").text("Total Pot: 0")
 
-    // Create a Promise for the winner animations
-    function animateWinners() {
-        return new Promise(resolve => {
-            const winnerPromises = Object.keys(message.indexAndPlayer).map(index => {
-                return new Promise(winnerResolve => {
-                    const seatDiv = $(`#seat-${index}`);
-                    const playerActionsDiv = seatDiv.find(".player-actions");
-                    const pTag = playerActionsDiv.find("p");
-
-                    pTag.text("WINNER");
-                    playerActionsDiv.css("background-color", "green");
-
-                    // Display the action bubble on the screen
-                    playerActionsDiv.css("display", "block");
-
-                    // Use setTimeout to revert the changes after three seconds (3000 milliseconds)
-                    setTimeout(function() {
-                        // Stops displaying the action bubble, resets the text to empty
-                        playerActionsDiv.css("display", "none");
-                        pTag.text("");
-                        winnerResolve(); // Resolve the individual winner animation
-                    }, 3000);
-                });
-            });
-
-            // Wait for all winner animations to complete
-            Promise.all(winnerPromises).then(() => {
-                resolve(); // Resolve the parent promise once all winners are done
-            });
-        });
-    }
     // Execute winner animations and then proceed to the next loop
-    animateWinners().then(() => {
+    animateWinners(message.indexAndPlayer).then(() => {
         //Remove each player's hole cards
         for (let i = 0; i < 6; i++) {
             const seatDiv = $(`#seat-${i}`);
@@ -468,6 +437,38 @@ function completeHandEvent(message) {
         //Clear and hide current pot size display
         $("#csp-text").text();
         $("#current-street-pot").css("display", "none");
+    });
+}
+
+// Create a Promise for the winner animations
+function animateWinners(indexAndPlayer) {
+    return new Promise(resolve => {
+        const winnerPromises = Object.keys(indexAndPlayer).map(index => {
+            return new Promise(winnerResolve => {
+                const seatDiv = $(`#seat-${index}`);
+                const playerActionsDiv = seatDiv.find(".player-actions");
+                const pTag = playerActionsDiv.find("p");
+
+                pTag.text("WINNER");
+                playerActionsDiv.css("background-color", "green")
+                //Display the action bubble on the screen
+                playerActionsDiv.css("display", "block");
+
+                // Use setTimeout to revert the changes after three seconds (3000 milliseconds)
+                setTimeout(function() {
+                    // Stops displaying the action bubble, resets the text to empty
+                    playerActionsDiv.css("display", "none");
+                    pTag.text("");
+                    winnerResolve(); // Resolve the individual winner animation
+                }, 3000);
+
+            });
+        });
+
+        // Wait for all winner animations to complete
+        Promise.all(winnerPromises).then(() => {
+            resolve(); // Resolve the parent promise once all winners are done
+        });
     });
 }
 

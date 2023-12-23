@@ -24,5 +24,7 @@ public interface TableCallback {
     void onBoardCardsDealt(ArrayList<Card> cards);
 
     void onHandRanking(String handRanking, String username);
+
+    void onRebuy(String username, int seatIndex, String tableId);
     void onCleanUp(boolean isHandOver);
 }

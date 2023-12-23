@@ -16,6 +16,6 @@ public enum RequestType {
     SHOWDOWN,
     BOARD_CARDS,
     HAND_RANKING,
-
+    REBUY,
     CLEAN_UP
 }

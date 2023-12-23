@@ -556,3 +556,17 @@ select {
 .basic-actions button:hover {
     background-color: #c0392b;
 }
+
+@keyframes winnerAnimation {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0);
+    }
+}
+.winner-animation {
+    animation: winnerAnimation 3s ease-out;
+}

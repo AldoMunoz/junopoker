@@ -111,6 +111,15 @@
             <button id="submitBtn" onclick="submitPlayerData()">Submit</button>
         </div>
     </div>
+    <!--Modal for when a player needs to rebuy into the game-->
+    <div id="rebuyModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRebuyModal()">&times;</span>
+            <label for="rebuyAmount">Rebuy: </label>
+            <input type="text" id="rebuyAmount">
+            <button id="rebuyBtn" onclick="completeRebuy()">Sit</button>
+        </div>
+    </div>
     <!--Area that deals with player actions-->
     <h6 id="hand-ranking"></h6>
     <div class="action-bar">

@@ -42,7 +42,13 @@ public class TableWebSocketController implements TableCallback {
 
     @MessageMapping("/startGame")
     public void startGame(@Payload Table table) {
+        System.out.println("startGame, TableWebSocketController: " + table.getTABLE_ID());
         tableService.runGame(table);
+    }
+
+    @MessageMapping("/rebuy")
+    public void rebuy(@Payload RebuyResponse request) {
+        tableService.rebuyPlayer(request.getRebuyAmount(), request.getSeatIndex(), request.getTableId());
     }
 
     @Override
@@ -69,7 +75,7 @@ public class TableWebSocketController implements TableCallback {
     public void onHoleCardsDealt(String username, int seat, Card[] holeCards) {
         SeatRequest publicRequest = new SeatRequest();
         publicRequest.setType(RequestType.DEAL_PRE);
-        publicRequest.setSeat(seat);
+        publicRequest.setSeatIndex(seat);
 
         PrivateHoleCardsRequest privateRequest = new PrivateHoleCardsRequest();
         privateRequest.setType(RequestType.DEAL_PRE);
@@ -92,7 +98,7 @@ public class TableWebSocketController implements TableCallback {
     public void onPreFlopAction(Player player, int seat, BigDecimal currentBet, BigDecimal potSize, BigDecimal minBet) {
         SeatRequest publicRequest= new SeatRequest();
         publicRequest.setType(RequestType.PLAYER_ACTION);
-        publicRequest.setSeat(seat);
+        publicRequest.setSeatIndex(seat);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", publicRequest);
 
@@ -138,6 +144,16 @@ public class TableWebSocketController implements TableCallback {
     }
 
     @Override
+    public void onRebuy(String username, int seatIndex, String tableId) {
+        RebuyRequest request = new RebuyRequest();
+        request.setType(RequestType.REBUY);
+        request.setSeatIndex(seatIndex);
+        request.setTableId(tableId);
+
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + username, request);
+    }
+
+    @Override
     public void onCleanUp(boolean isHandOver) {
         CleanUpRequest request = new CleanUpRequest();
         request.setType(RequestType.CLEAN_UP);
@@ -180,7 +196,7 @@ public class TableWebSocketController implements TableCallback {
     public void foldEvent(@Payload FoldRequest request) {
         SeatRequest seatRequest = new SeatRequest();
         seatRequest.setType(request.getType());
-        seatRequest.setSeat(request.getSeat());
+        seatRequest.setSeatIndex(request.getSeat());
         messagingTemplate.convertAndSend("/topic/playerEvents/" + request.getUsername(), seatRequest);
     }
 }

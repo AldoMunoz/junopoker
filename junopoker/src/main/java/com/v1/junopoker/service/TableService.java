@@ -649,7 +649,9 @@ public class TableService {
                     indexAndPlayer.put(i, table.getSeats()[i]);
                 }
             }
+
             invokeShowdownCallback(indexAndPlayer);
+
         }
     }
 
@@ -657,6 +659,7 @@ public class TableService {
     private void dealRunout (Table table) {
         //if all in pre-flop, deal flop, turn, and river
         if(table.getBoard().size() == 0) {
+            stringifyCards(table);
             sleepTimer(3000);
             dealFlop(table);
             sleepTimer(3000);
@@ -677,6 +680,26 @@ public class TableService {
             dealTurnOrRiver(table);
         }
     }
+
+    private void stringifyCards(Table table) {
+        HashMap<String, Integer> cardsAndIndex = new HashMap<>();
+
+        for (int i = 0; i < table.getSEAT_COUNT(); i++) {
+            if(table.getSeats()[i] != null && table.getSeats()[i].isInHand()) {
+                Card[] holeCards = table.getSeats()[i].getHoleCards();
+                String cardsInStringForm = holeCards[0].toString() + holeCards[1].toString();
+                cardsAndIndex.put(cardsInStringForm, i);
+            }
+        }
+
+        String boardInStringForm = "";
+        for (int i = 0; i < table.getBoard().size(); i++) {
+            boardInStringForm = boardInStringForm + table.getBoard().get(i).toString();
+        }
+
+        invokeCalculateEquityCallback(cardsAndIndex, boardInStringForm);
+    }
+
     private void completeHand(Table table) {
         ArrayList<Player> winners = new ArrayList<>();
         HashMap<Integer, Player> indexAndWinner = new HashMap<>();
@@ -890,6 +913,12 @@ public class TableService {
     private void invokeShowdownCallback(HashMap<Integer, Player> indexAndPlayer) {
         if(tableCallback != null) {
             tableCallback.onShowdown(indexAndPlayer);
+        }
+    }
+
+    private void invokeCalculateEquityCallback(HashMap<String, Integer> cardsAndIndex, String boardInStringForm) {
+        if(tableCallback != null) {
+            tableCallback.onCalculateEquity(cardsAndIndex, boardInStringForm);
         }
     }
     private void invokeCompleteHandCallback(HashMap<Integer, Player> indexAndWinner) {

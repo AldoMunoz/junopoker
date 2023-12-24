@@ -216,6 +216,15 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
 
+    public void onCalculateEquity(HashMap<String, Integer> cardsAndIndex, String boardInStringForm) {
+        CalculateEquityRequest request = new CalculateEquityRequest();
+        request.setType(RequestType.CALC_EQUITY);
+        request.setCardsAndIndex(cardsAndIndex);
+        request.setBoardInStringForm(boardInStringForm);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
+    }
+
     @MessageMapping("/foldEvent")
     public void foldEvent(@Payload FoldRequest request) {
         SeatRequest seatRequest = new SeatRequest();

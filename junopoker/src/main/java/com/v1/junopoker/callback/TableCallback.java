@@ -2,6 +2,7 @@ package com.v1.junopoker.callback;
 
 import com.v1.junopoker.model.Card;
 import com.v1.junopoker.model.Player;
+import jakarta.persistence.criteria.CriteriaBuilder;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ public interface TableCallback {
     void onEndPlayerAction(char action, String username, int seatIndex, BigDecimal betAmount, BigDecimal stackSize, BigDecimal potSize, BigDecimal currentStreetPotSize, boolean isPreFlop);
 
     void onShowdown(HashMap<Integer, Player> indexAndPlayer);
+
+    void onCalculateEquity(HashMap<String, Integer> cardsAndIndex, String boardInStringForm);
     void onCompleteHand(HashMap<Integer, Player> indexAndWinner);
 
     void onBoardCardsDealt(ArrayList<Card> cards);

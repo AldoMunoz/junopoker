@@ -15,6 +15,7 @@ public enum RequestType {
     BET,
     COMPLETE_HAND,
     SHOWDOWN,
+    CALC_EQUITY,
     BOARD_CARDS,
     HAND_RANKING,
     REBUY,

@@ -1,6 +1,8 @@
 'use strict'
 // Global Variables
 //whenever a user takes a seat, this number will correspond to the seat they chose
+import {CardGroup} from "poker-odds-calculator";
+
 let currentButtonNumber = -1;
 //WebSocket connection
 let stompClient = null;
@@ -127,6 +129,8 @@ function tableEvents(payload) {
     else if(message.type === "END_PLAYER_ACTION") endPlayerActionEvent(message);
     //view logic for showdown
     else if (message.type === "SHOWDOWN") showdownEvent(message);
+    //sends information in order to calculate view logic for all-in equity
+    else if(message.type === "CALC_EQUITY") calculateEquityEvent(message);
     //view logic for when the hand has ended
     else if (message.type === "COMPLETE_HAND") completeHandEvent(message);
     //view logic for dealing the flop
@@ -418,6 +422,13 @@ function showdownEvent(message) {
         holeCardsDiv.append(`<img src="/images/cards/${message.indexAndPlayer[index].holeCards[1]}.png" alt="Card 1">`)
         holeCardsDiv.show();
     }
+}
+
+//calculate equity of each player using the API and then displays each player's equity by their hand
+function calculateEquityEvent(message) {
+    //console.log("Calculate equity event: ", message);
+
+
 }
 
 //Completes closing actions after the hand has ended

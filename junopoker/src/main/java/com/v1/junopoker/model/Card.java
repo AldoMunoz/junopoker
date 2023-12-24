@@ -76,4 +76,23 @@ public enum Card {
     public String getImagePath() {
         return imagePath;
     }
+
+    @Override
+    public String toString() {
+        if(this.val == 14) {
+            return "A" + this.suit;
+        }
+        else if (this.val == 13) {
+            return "K" + this.suit;
+        }
+        else if (val == 12) {
+            return "Q" + this.suit;
+        }
+        else if (val == 11) {
+            return "J" + this.suit;
+        }
+        else {
+            return "" + this.val + this.suit;
+        }
+    }
 }

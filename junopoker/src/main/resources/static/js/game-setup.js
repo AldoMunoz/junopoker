@@ -10,17 +10,19 @@ let isSeated = false;
 //Create new table if one doesn't exist
 //Create WebSocket connection for the user
 $(document).ready(function () {
-    //check if table exists
-    fetch("checkTableData")
+    fetch("/doesTableExist")
         .then(response => response.json())
-        .then(data=> {
-            //if it does, create a websocket connection for user
-            if(data.status === "exists") {
+        .then(tableExists => {
+            console.log("TableExists:", tableExists);
+            if(tableExists) {
                 console.log("Table exists in HttpSession");
+
                 //fetches table data to populate headers
-                fetch("/getTableData")
+                fetch( `/getTableData`)
                     .then(response => response.json())
                     .then(tableData => {
+                        $("#table-id").val(tableData.tableID);
+
                         //set the small blind = 1;
                         setSmallBlind(tableData.stakes[0]);
 
@@ -29,14 +31,15 @@ $(document).ready(function () {
                     })
                 establishWebSocketConnection();
             }
-            //if not create a default table (1/2 NLH)
-            else if (data.status === "notExists") {
-                console.log("Table data does not exist in HttpSession, creating table...");
+            //else if table doesn't exist
+            else {
+                console.log*("Creating new table...")
                 //creates default table object
                 const defaultTableData = {
                     gameType: "NLH",
                     stakes: [1, 2]
                 };
+
                 //store the table data in the HttpSession
                 fetch("/storeTableData", {
                     method: 'POST',
@@ -44,10 +47,15 @@ $(document).ready(function () {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(defaultTableData)
-                }).then(() => {
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text(); // Assuming the response contains text
+                }).then(tableID => {
                     console.log("Table data created and stored in HttpSession");
-                    // Establish WebSocket connection
-                    establishWebSocketConnection();
+                    //store the table id
+                    $("#table-id").val(tableID);
 
                     //set the small blind = 1;
                     setSmallBlind(1);
@@ -55,13 +63,13 @@ $(document).ready(function () {
                     // Populate the <h4> headers with the selected game type and stakes
                     $('#game-type').text(`Game Type: NLH`);
                     $('#stakes').text(`Stakes: 1/2`);
+
+                    // Establish WebSocket connection
+                    establishWebSocketConnection();
                 }).catch(error => {
                     console.error('Error occurred while storing table data:', error);
                 });
             }
-        })
-        .catch(error => {
-            console.error('Error occurred while checking table data:', error);
         });
 });
 
@@ -83,11 +91,7 @@ async function onConnected() {
     //subscribes users to tableEvents, public topic that will impact the view of all players
     //all messages sent to /topic/table events will be redirected to "tableEvents(payload) method below"
     stompClient.subscribe("/topic/tableEvents", tableEvents);
-
-    //seats is array of table seats
-    const seats = await fetchTableSeats();
-    //populate the table view with players
-    populateTable(seats);
+    stompClient.send("/app/getSeats", {}, $("#table-id").val());
 }
 
 //Displays error message if WebSocket Connection is unsuccessful
@@ -105,8 +109,10 @@ function tableEvents(payload) {
     //parse the body of the message
     let message = JSON.parse(payload.body);
 
+    //view logic for display all players at the table
+    if(message.type === "SEATS") seatsEvent(message);
     //view logic for when a new player takes a seat
-    if(message.type === "SIT") sitTableEvent(message);
+    else if(message.type === "SIT") sitTableEvent(message);
     //view logic for when player stands up from seat
     else if(message.type === "STAND") standTableEvent(message);
     //view logic for when button is set
@@ -125,17 +131,26 @@ function tableEvents(payload) {
     else if (message.type === "COMPLETE_HAND") completeHandEvent(message);
     //view logic for dealing the flop
     else if (message.type === "BOARD_CARDS") dealBoardCardsEvent(message);
+    //view logic for adding on chips
+    else if (message.type === "ADD_ON") addOnEvent(message);
     //view logic for cleaning up the table in between streets
     else if(message.type === "CLEAN_UP") cleanUpEvent(message);
     //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
 }
 
+function seatsEvent(message) {
+    console.log("seats: ", message);
+    $("#table-id").val(message.tableID)
+    console.log("Globally stored table ID", message.tableID);
+    populateTable(message.seats);
+}
+
 function sitTableEvent(message) {
-    //console.log("sit", message);
+    console.log("sit", message);
 
     //hide the seat button that the player selected
-    const seatDiv = $(`#seat-${message.seat}`);
+    const seatDiv = $(`#seat-${message.seatIndex}`);
     seatDiv.show();
     seatDiv.empty();
 
@@ -147,7 +162,7 @@ function sitTableEvent(message) {
     const playerPanelDiv = $("<div class='player-panel'></div>");
     playerPanelDiv.append(`<img class="panel-img" src="/images/player-info.png" alt="Player Info">`)
     playerPanelDiv.append(`<p class="player-usernames">${message.player.username}</p>`);
-    playerPanelDiv.append(`<p class="player-chip-counts" id="chip-count-${message.seat}">${message.player.chipCount}</p>`);
+    playerPanelDiv.append(`<p class="player-chip-counts" id="chip-count-${message.seatIndex}">${message.player.chipCount}</p>`);
 
     const holeCardDiv =$("<div class='hole-cards'></div>");
 
@@ -246,7 +261,7 @@ function initPotEvent(message) {
 function dealHoleCardsEvent(message) {
     //console.log(deal hole cards", message);
 
-    const holeCardsDiv = $(`#seat-${message.seat} .hole-cards`)
+    const holeCardsDiv = $(`#seat-${message.seatIndex} .hole-cards`)
     holeCardsDiv.empty();
     holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
     holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
@@ -497,6 +512,14 @@ function dealBoardCardsEvent(message) {
     }
 }
 
+function addOnEvent(message) {
+    //console.log("Add on: ", message);
+
+    const seatDiv = $(`#seat-${message.seatIndex}`);
+    const chipCountElement = seatDiv.find(".player-chip-counts");
+    chipCountElement.text(message.rebuyAmount);
+}
+
 //cleans up view information between hands
 function cleanUpEvent(message) {
     //console.log("Clean up event", message);
@@ -566,8 +589,8 @@ function submitTableData() {
 //fetches and returns array of table seats
 async function fetchTableSeats() {
     try {
-        const response = await fetch("/getSeats");
-        const seats = await response.json();
+        const seats = stompClient.send("/app/getSeats", {}, ($("#table-id").val()));
+        console.log("fetchTableSeats in game-setup: ", seats);
         return seats;
     } catch (error) {
         console.error('Error occurred while fetching table seats:', error);

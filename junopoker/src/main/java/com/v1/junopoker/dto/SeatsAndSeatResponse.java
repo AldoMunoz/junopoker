@@ -1,12 +1,11 @@
 package com.v1.junopoker.dto;
 
 import com.v1.junopoker.model.Player;
-import lombok.*;
+import lombok.Data;
 
 @Data
-public class PlayerRequest {
+public class SeatsAndSeatResponse {
     private RequestType type;
-    private Player player;
+    private Player[] seats;
     private int seatIndex;
-    private String tableID;
 }

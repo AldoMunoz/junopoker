@@ -2,6 +2,7 @@ package com.v1.junopoker.service;
 
 import com.v1.junopoker.callback.TableCallback;
 import com.v1.junopoker.dto.PlayerActionResponse;
+import com.v1.junopoker.dto.TableRequest;
 import com.v1.junopoker.factory.DeckServiceFactory;
 import com.v1.junopoker.model.*;
 import com.v1.junopoker.registry.TableRegistry;
@@ -45,15 +46,67 @@ public class TableService {
     }
 
     //adds a player to the players list, gives them a chip count and a specific seat
-    public void addPlayer (Table table, Player player, int seat) {
-        if (table.getSeats()[seat] == null) table.getSeats()[seat] = player;
+    public void addPlayer (Table table, Player player, int seatIndex) {
+        if (table.getSeats()[seatIndex] == null) table.getSeats()[seatIndex] = player;
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() + 1);
+    }
+
+    public void addPlayer (String tableID, Player player, int seatIndex) {
+        Table table = tableRegistry.getTableByID(tableID);
+
+        if (table.getSeats()[seatIndex] == null) table.getSeats()[seatIndex] = player;
+        table.setSeatedPlayerCount(table.getSeatedPlayerCount() + 1);
+    }
+
+    //given a certain seat index, find the player at that seat
+    public Player getPlayer(Table table, int seat) {
+        return table.getSeats()[seat];
+    }
+
+    public Player getPlayer(String tableID, int seat) {
+        Table table = tableRegistry.getTableByID(tableID);
+        return table.getSeats()[seat];
+    }
+
+    public void countPlayers(String tableID) {
+        Table table = tableRegistry.getTableByID(tableID);
+
+        if(table.getSeatedPlayerCount() > 1) runGame(table);
     }
 
     //removes player at the given seat
     public void removePlayer(Table table, int seat) {
         table.getSeats()[seat] = null;
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() - 1);
+    }
+
+    public void removePlayer(String tableID, int seat) {
+        Table table = tableRegistry.getTableByID(tableID);
+        table.getSeats()[seat] = null;
+        table.setSeatedPlayerCount(table.getSeatedPlayerCount() - 1);
+    }
+
+    //Returns seat information to the controller
+    public Player[] getSeats(String tableID) {
+        Table table = tableRegistry.getTableByID(tableID);
+        return table.getSeats();
+    }
+
+    public boolean doesTableExist(String tableID) {
+        if(tableRegistry.getTableByID(tableID) == null) return false;
+        else return true;
+    }
+
+    //Returns basic table info to the controller
+    public TableRequest getBasicTableInfo(String tableID) {
+        Table table = tableRegistry.getTableByID(tableID);
+
+        TableRequest request = new TableRequest();
+        request.setStakes(table.getStakes());
+        request.setGameType(table.getGameType());
+        request.setTableID(tableID);
+
+        return request;
     }
 
     //gathers and executes all the functions needed to run ring poker game
@@ -150,29 +203,20 @@ public class TableService {
     }
 
     public void rebuyPlayer(BigDecimal rebuyAmount, int seatIndex, String tableId) {
-        // Check if the tableRegistry is properly initialized
-        if (tableRegistry == null) {
-            System.out.println("Error: tableRegistry is not initialized.");
-            return;
-        }
-
-        // Check if the tableId is not null or empty
-        if (tableId == null || tableId.isEmpty()) {
-            System.out.println("Error: Invalid tableId.");
-            return;
-        }
-
         // Retrieve the table from the registry
         Table table = tableRegistry.getTableByID(tableId);
 
-        // Check if the retrieved table is null
-        if (table == null) {
-            System.out.println("Error: Table not found for tableId " + tableId);
-            return;
-        }
+        //add money to player's stack
+        table.getSeats()[seatIndex].setChipCount(table.getSeats()[seatIndex].getChipCount().add(rebuyAmount));
+        //set status to active
+        table.getSeats()[seatIndex].setActive(true);
+        //set seated player count of the table up 1,
+        table.setSeatedPlayerCount(table.getSeatedPlayerCount()+1);
 
-        // Print the table to the console
-        System.out.println(table);
+        invokeAddOnCallback(seatIndex, rebuyAmount);
+
+        //check player count
+        countPlayers(tableId);
     }
 
     //moves the BB and SB to the next player
@@ -788,12 +832,6 @@ public class TableService {
         invokeCleanUpCallback(table.isHandOver());
     }
 
-    //given a certain seat index, find the player at that seat
-    public Player getPlayerAtSeat(Table table, int seat) {
-        return table.getSeats()[seat];
-    }
-
-
     //given a certain player username, find which seat they are sitting at
     private int getSeatOfPlayer(Table table, String username) {
         for (int i = 0; i < table.getSeats().length; i++) {
@@ -868,6 +906,12 @@ public class TableService {
     private void invokeRebuyCallback(String username, int seatIndex, String tableId) {
         if(tableCallback != null) {
             tableCallback.onRebuy(username, seatIndex, tableId);
+        }
+    }
+
+    private void invokeAddOnCallback(int seatIndex, BigDecimal rebuyAmount) {
+        if(tableCallback != null) {
+            tableCallback.onAddOn(seatIndex, rebuyAmount);
         }
     }
 }

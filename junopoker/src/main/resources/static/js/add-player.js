@@ -20,21 +20,20 @@ function submitPlayerData() {
             currentBet: 0,
             isActive: false
         };
-        //get the seat the user selected
-        const seat = currentButtonNumber;
 
         //create payload that will be sent to the backend
-        const data = {
+        const playerRequest = {
             player: player,
-            seat: seat
-        }
+            seatIndex: currentButtonNumber,
+            tableID: $("#table-id").val()
+        };
         // Make a Fetch API POST request to your Spring Boot controller
         fetch("/createPlayer", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(playerRequest)
         }).then(response => {
             // Check if the response is successful (status code 2xx)
             if (!response.ok) {
@@ -42,11 +41,11 @@ function submitPlayerData() {
                 throw new Error('Network response was not ok');
             }
             return response.json();
-        }).then(data => {
+        }).then(() => {
             //if fetch call is successful, the following logic wil execute:
 
             //method used to subscribe user to player-events topic
-            subscribeToPlayerTopic(usernameInput, player, seat);
+            subscribeToPlayerTopic(usernameInput, player, currentButtonNumber);
 
             // Close the modal
             closeAddPlayerModal();
@@ -59,7 +58,7 @@ function submitPlayerData() {
 //Subscribe user to personal channel player-events/${username}
 //subscription for private events (player cards, show player actions when it's their turn. etc.)
 //Send data to "addUser" about new player
-function subscribeToPlayerTopic(usernameInput, player) {
+function subscribeToPlayerTopic(usernameInput, player, seatIndex) {
     // Subscribe to the player-specific topic
     //all messages sent to /topic/playerEvents/${} will be redirected to "playerEvents(payload) method below"
     stompClient.subscribe(`/topic/playerEvents/${usernameInput}`, playerEvents);
@@ -70,7 +69,8 @@ function subscribeToPlayerTopic(usernameInput, player) {
         let playerRequest = {
             type: "SIT",
             player: player,
-            seat: currentButtonNumber
+            seatIndex: seatIndex,
+            tableID: $("#table-id").val()
         };
         //sends message to all users that a player has taken a seat
         stompClient.send("/app/tableEvents", {}, JSON.stringify(playerRequest));
@@ -104,13 +104,10 @@ async function playerEvents(payload) {
 async function sitPlayerEvent(message) {
     console.log("Sit ", message);
 
-    //fetch array of table seats
-    const seats = await fetchTableSeats();
-
     //loop to hide all seat buttons once the player sits
     let seatedPlayerCount = 0;
-    for (let i = 0; i < seats.length; i++) {
-        if (seats[i] === null) {
+    for (let i = 0; i < message.seats.length; i++) {
+        if (message.seats[i] === null) {
             const seatDiv = $(`#seat-${i}`);
             seatDiv.hide();
         }
@@ -123,13 +120,9 @@ async function sitPlayerEvent(message) {
     settingsBar.css("display", "flex");
     //associates the settings bar with a specific seat
     //so, for example, the controller knows who to remove when a player clicks the "stand" button
-    settingsBar.attr("data-seat", message.seat);
+    settingsBar.attr("data-seat", message.seatIndex);
 
-    if(seatedPlayerCount > 1) {
-        const response = await fetch("/startGame");
-        const table = await response.json();
-        stompClient.send("/app/startGame", {}, JSON.stringify(table))
-    }
+    stompClient.send("/app/countPlayers", {}, $("#table-id").val());
 }
 async function standPlayerEvent(message) {
     //console.log("Stand ", message);

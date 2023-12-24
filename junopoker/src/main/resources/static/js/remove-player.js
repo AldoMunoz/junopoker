@@ -3,7 +3,7 @@ function removePlayer() {
     const seat = settingsBar.attr('data-seat');
     console.log("Seat value in removePlayer()", seat);
 
-    fetch(`/removePlayerAtSeat?seat=${seat}`)
+    fetch(`/removePlayerAtSeat?seat=${seat}&tableID=${$("#table-id").val()}`)
         .then(response => response.json())
         .then(player => {
             const request = {

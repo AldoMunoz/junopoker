@@ -26,5 +26,7 @@ public interface TableCallback {
     void onHandRanking(String handRanking, String username);
 
     void onRebuy(String username, int seatIndex, String tableId);
+
+    void onAddOn(int seatIndex, BigDecimal rebuyAmount);
     void onCleanUp(boolean isHandOver);
 }

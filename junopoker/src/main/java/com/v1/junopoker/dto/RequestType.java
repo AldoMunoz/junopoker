@@ -1,6 +1,7 @@
 package com.v1.junopoker.dto;
 
 public enum RequestType {
+    SEATS,
     SIT,
     STAND,
     MOVE_BUTTON,
@@ -17,5 +18,6 @@ public enum RequestType {
     BOARD_CARDS,
     HAND_RANKING,
     REBUY,
+    ADD_ON,
     CLEAN_UP
 }

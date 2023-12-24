@@ -24,7 +24,6 @@ public class TableWebSocketController implements TableCallback {
     public TableWebSocketController (SimpMessagingTemplate messagingTemplate, TableService tableService) {
         this.messagingTemplate = messagingTemplate;
         this.tableService = tableService;
-        //revert this line to not use this if code doesn't work
         this.tableService.setTableCallback(this);
     }
 
@@ -36,22 +35,46 @@ public class TableWebSocketController implements TableCallback {
 
     @MessageMapping("/playerEvents")
     public void playerEvents(@Payload PlayerRequest request) {
+        Player[] seats = tableService.getSeats(request.getTableID());
+
+        SeatsAndSeatResponse response = new SeatsAndSeatResponse();
+        response.setType(RequestType.SIT);
+        response.setSeats(seats);
+        response.setSeatIndex(request.getSeatIndex());
+
         String username = request.getPlayer().getUsername();
-        messagingTemplate.convertAndSend("/topic/playerEvents/" + username, request);
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + username, response);
     }
 
+    @MessageMapping("/getSeats")
+    public void getSeats(@Payload String tableID) {
+        Player[] seats = tableService.getSeats(tableID);
+
+        SeatsResponse response = new SeatsResponse();
+        response.setType(RequestType.SEATS);
+        response.setSeats(seats);
+        response.setTableID(tableID);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", response);
+    }
+
+
+    @MessageMapping("/countPlayers")
+    public void countPlayers(@Payload String tableID) {
+        tableService.countPlayers(tableID);
+    }
+    /*
     @MessageMapping("/startGame")
     public void startGame(@Payload Table table) {
         System.out.println("startGame, TableWebSocketController: " + table.getTABLE_ID());
         tableService.runGame(table);
     }
-
+     */
     @MessageMapping("/rebuy")
     public void rebuy(@Payload RebuyResponse request) {
         tableService.rebuyPlayer(request.getRebuyAmount(), request.getSeatIndex(), request.getTableId());
     }
 
-    @Override
     public void onButtonSet(int buttonIndex) {
         MoveButtonRequest request = new MoveButtonRequest();
         request.setType(RequestType.MOVE_BUTTON);
@@ -59,7 +82,7 @@ public class TableWebSocketController implements TableCallback {
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
-    @Override
+
     public void onPotInit(int sbIndex, int bbIndex, BigDecimal sbAmount, BigDecimal bbAmount, BigDecimal potSize) {
         InitPotRequest request = new InitPotRequest();
         request.setType(RequestType.INIT_POT);
@@ -71,7 +94,7 @@ public class TableWebSocketController implements TableCallback {
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
-    @Override
+
     public void onHoleCardsDealt(String username, int seat, Card[] holeCards) {
         SeatRequest publicRequest = new SeatRequest();
         publicRequest.setType(RequestType.DEAL_PRE);
@@ -92,7 +115,6 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/playerEvents/" + username, privateRequest);
     }
 
-    @Override
     //send a request to the front end for the player to input an action (check, bet, or fold)
     //receive that action and send it to TableService.java using a CompletableFuture
     public void onPreFlopAction(Player player, int seat, BigDecimal currentBet, BigDecimal potSize, BigDecimal minBet) {
@@ -114,7 +136,6 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/playerEvents/" + player.getUsername(), privateRequest);
     }
 
-    @Override
     //Add the player(s) who won the pot and send that via WebSocket Object
     public void onCompleteHand(HashMap<Integer, Player> indexAndWinner) {
         IntPlayerMapRequest request = new IntPlayerMapRequest();
@@ -124,7 +145,6 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
 
-    @Override
     public void onBoardCardsDealt(ArrayList<Card> cards) {
         DealBoardCardsRequest request = new DealBoardCardsRequest();
         request.setType(RequestType.BOARD_CARDS);
@@ -133,7 +153,6 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
 
-    @Override
     public void onHandRanking(String handRanking, String username) {
         HandRankingRequest request = new HandRankingRequest();
         request.setType(RequestType.HAND_RANKING);
@@ -143,7 +162,6 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/playerEvents/" + request.getUsername(), request);
     }
 
-    @Override
     public void onRebuy(String username, int seatIndex, String tableId) {
         RebuyRequest request = new RebuyRequest();
         request.setType(RequestType.REBUY);
@@ -153,7 +171,15 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/playerEvents/" + username, request);
     }
 
-    @Override
+    public void onAddOn(int seatIndex, BigDecimal rebuyAmount) {
+        AddOnRequest request = new AddOnRequest();
+        request.setType(RequestType.ADD_ON);
+        request.setSeatIndex(seatIndex);
+        request.setRebuyAmount(rebuyAmount);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", request);
+    }
+
     public void onCleanUp(boolean isHandOver) {
         CleanUpRequest request = new CleanUpRequest();
         request.setType(RequestType.CLEAN_UP);
@@ -167,7 +193,6 @@ public class TableWebSocketController implements TableCallback {
         tableService.handlePlayerAction(response);
     }
 
-    @Override
     public void onEndPlayerAction(char action, String username, int seatIndex, BigDecimal betAmount, BigDecimal stackSize, BigDecimal potSize, BigDecimal currentStreetPotSize, boolean isPreFlop) {
         EndPlayerActionRequest request = new EndPlayerActionRequest();
         request.setType(RequestType.END_PLAYER_ACTION);
@@ -183,7 +208,6 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
 
-    @Override
     public void onShowdown(HashMap<Integer, Player> indexAndPlayer) {
         IntPlayerMapRequest request = new IntPlayerMapRequest();
         request.setType(RequestType.SHOWDOWN);

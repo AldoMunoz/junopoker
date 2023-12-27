@@ -13,7 +13,7 @@ import java.util.ArrayList;
 public class Table {
     private String gameType;
     private final int seatCount;
-    private BigDecimal pot;
+    private BigDecimal[] pot;
     private BigDecimal currentStreetPot;
     private final BigDecimal[] stakes;
     //Changed "players" to "seats", more accurate
@@ -32,6 +32,7 @@ public class Table {
     private boolean handOver;
     private boolean actionComplete;
     private DeckService deckService;
+    private ArrayList<Player>[] playersToPot;
 
     //initiates table
     public Table (String gameType, BigDecimal[] stakes) {
@@ -49,7 +50,8 @@ public class Table {
         gameRunning = false;
         handOver = false;
         actionComplete = false;
-        pot = BigDecimal.valueOf(0);
+        pot = new BigDecimal[10];
         currentStreetPot = BigDecimal.valueOf(0);
+        playersToPot = new ArrayList[10];
     }
 }

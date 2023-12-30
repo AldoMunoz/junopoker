@@ -1,7 +1,6 @@
 'use strict'
 // Global Variables
 //whenever a user takes a seat, this number will correspond to the seat they chose
-import {CardGroup} from "poker-odds-calculator";
 
 let currentButtonNumber = -1;
 //WebSocket connection
@@ -427,6 +426,7 @@ function showdownEvent(message) {
 //calculate equity of each player using the API and then displays each player's equity by their hand
 function calculateEquityEvent(message) {
     //console.log("Calculate equity event: ", message);
+
 
 
 }

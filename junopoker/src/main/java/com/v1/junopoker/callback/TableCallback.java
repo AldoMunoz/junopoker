@@ -21,7 +21,7 @@ public interface TableCallback {
 
     void onShowdown(HashMap<Integer, Player> indexAndPlayer);
 
-    void onCalculateEquity(HashMap<String, Integer> cardsAndIndex, String boardInStringForm);
+    void onCalculateEquity(HashMap<Integer, String > indexAndCards, String boardInStringForm);
     void onCompleteHand(HashMap<Integer, Player> indexAndWinner);
 
     void onBoardCardsDealt(ArrayList<Card> cards);

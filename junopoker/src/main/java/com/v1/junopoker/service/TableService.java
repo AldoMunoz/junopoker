@@ -40,6 +40,7 @@ public class TableService {
         this.playerActionResponse.complete(playerActionResponse);
     }
 
+    ///register the table with a unique table ID
     public void registerTable(Table table) {
         System.out.println("TableID in TableService" + table.getTABLE_ID());
         this.tableRegistry.registerTable(table.getTABLE_ID(), table);
@@ -51,11 +52,27 @@ public class TableService {
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() + 1);
     }
 
+    //
     public void addPlayer (String tableID, Player player, int seatIndex) {
         Table table = tableRegistry.getTableByID(tableID);
 
-        if (table.getSeats()[seatIndex] == null) table.getSeats()[seatIndex] = player;
+        //if it isn't make player active
+        if (!table.isGameRunning()) {
+            player.setActive(true);
+            table.setActivePlayerCount(table.getActivePlayerCount() + 1);
+        }
+        //if it is, add player to list of players sitting out
+        else {
+            table.getPlayersSittingOut()[seatIndex] = true;
+        }
+        //seat the player
+        table.getSeats()[seatIndex] = player;
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() + 1);
+
+
+        //check for heads up edge case
+        if(table.getActivePlayerCount() == 2) table.setHeadsUp(true);
+        else table.setHeadsUp(false);
     }
 
     //given a certain seat index, find the player at that seat
@@ -63,27 +80,36 @@ public class TableService {
         return table.getSeats()[seat];
     }
 
+
+    //returns the player located at a given seat index
     public Player getPlayer(String tableID, int seat) {
         Table table = tableRegistry.getTableByID(tableID);
         return table.getSeats()[seat];
     }
 
+    //Starts the game if it wasn't running already and the active player count has increased to 2
     public void countPlayers(String tableID) {
         Table table = tableRegistry.getTableByID(tableID);
 
-        if(table.getSeatedPlayerCount() > 1) runGame(table);
+        if(!table.isGameRunning() && table.getActivePlayerCount() > 1) runGame(table);
     }
 
     //removes player at the given seat
     public void removePlayer(Table table, int seat) {
         table.getSeats()[seat] = null;
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() - 1);
+        table.setActivePlayerCount(table.getActivePlayerCount() - 1);
     }
 
+    //stands and removes the table from the table
     public void removePlayer(String tableID, int seat) {
         Table table = tableRegistry.getTableByID(tableID);
         table.getSeats()[seat] = null;
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() - 1);
+        table.setActivePlayerCount(table.getActivePlayerCount() - 1);
+
+        if(table.getActivePlayerCount() == 2) table.setHeadsUp(true);
+        else table.setHeadsUp(false);
     }
 
     //Returns seat information to the controller
@@ -92,12 +118,13 @@ public class TableService {
         return table.getSeats();
     }
 
+    //Checks to see if the table ID exists in the registry
     public boolean doesTableExist(String tableID) {
         if(tableRegistry.getTableByID(tableID) == null) return false;
         else return true;
     }
 
-    //Returns basic table info to the controller
+    //Returns the game type and stakes of the table to the controller
     public TableRequest getBasicTableInfo(String tableID) {
         Table table = tableRegistry.getTableByID(tableID);
 
@@ -118,7 +145,7 @@ public class TableService {
         }
 
         //game will run while there are at least 2 people seated at the table
-        while (table.getSeatedPlayerCount() > 1) {
+        while (table.getActivePlayerCount() > 1) {
             sleepTimer(4000);
 
             table.setHandOver(false);
@@ -129,7 +156,6 @@ public class TableService {
 
             preFlopBetting(table);
             //if action is complete
-            //showdown, runout, complete hand, clear table, continue
             if(table.isActionComplete()) {
                 showdown(table);
                 dealRunout(table);
@@ -141,6 +167,7 @@ public class TableService {
             else if(table.isHandOver()) {
                 completeHand(table);
                 clearTable(table);
+                dealInNewPlayers(table);
                 continue;
             }
 
@@ -158,6 +185,7 @@ public class TableService {
             else if(table.isHandOver()) {
                 completeHand(table);
                 clearTable(table);
+                dealInNewPlayers(table);
                 continue;
             }
 
@@ -175,6 +203,7 @@ public class TableService {
             else if(table.isHandOver()) {
                 completeHand(table);
                 clearTable(table);
+                dealInNewPlayers(table);
                 continue;
             }
 
@@ -185,6 +214,7 @@ public class TableService {
             completeHand(table);
             clearTable(table);
             checkStacks(table);
+            dealInNewPlayers(table);
         }
     }
 
@@ -202,21 +232,25 @@ public class TableService {
         }
     }
 
+
+    //Adds the player back to the
     public void rebuyPlayer(BigDecimal rebuyAmount, int seatIndex, String tableId) {
-        // Retrieve the table from the registry
         Table table = tableRegistry.getTableByID(tableId);
 
         //add money to player's stack
         table.getSeats()[seatIndex].setChipCount(table.getSeats()[seatIndex].getChipCount().add(rebuyAmount));
-        //set status to active
-        table.getSeats()[seatIndex].setActive(true);
-        //set seated player count of the table up 1,
-        table.setSeatedPlayerCount(table.getSeatedPlayerCount()+1);
 
+        //if there is only 1 other active player at the table, make this player active and
+        // call countPlayers(), which starts the game
+        if(table.getActivePlayerCount() == 1) {
+            table.setActivePlayerCount(table.getActivePlayerCount()+1);
+            table.getSeats()[seatIndex].setActive(true);
+            table.getPlayersSittingOut()[seatIndex] = false;
+            countPlayers(tableId);
+        }
+
+        //callback to display the add-on amount in the front end
         invokeAddOnCallback(seatIndex, rebuyAmount);
-
-        //check player count
-        countPlayers(tableId);
     }
 
     //moves the BB and SB to the next player
@@ -229,7 +263,7 @@ public class TableService {
         boolean bigBlindSet = false;
         //rotates clockwise using modulus until the next player is found, assigns them the BB
         for (int i = (table.getBigBlindIndex()+1) % seatCount; i < seatCount; i = (i+1) % seatCount) {
-            if (table.getSeats()[i] == null);
+            if (table.getSeats()[i] == null || !(table.getSeats()[i].isActive()));
             //first player found after big blind = new big blind
             else if(!bigBlindSet){
                 table.setBigBlindIndex(i);
@@ -247,7 +281,7 @@ public class TableService {
     //tracks each players starting stack at the beginning of each hand (used for side pots and all-in tracking)
     private void trackStartingStacks(Table table) {
         for (int i = 0; i < table.getSEAT_COUNT(); i++) {
-            if(table.getSeats()[i] != null) {
+            if(table.getSeats()[i] != null && table.getSeats()[i].isActive()) {
                 table.getSeats()[i].setStartingStackThisHand(table.getSeats()[i].getChipCount());
             }
         }
@@ -301,10 +335,11 @@ public class TableService {
             seats[smallBlindIndex].setChipCount(BigDecimal.valueOf(0));
         }
 
+        //Callback function to initiate the pot in the front-end
         invokeInitPotCallback(table.getSmallBlindIndex(), table.getBigBlindIndex(), sbAmount, bbAmount, table.getPot());
     }
 
-    //deals cards preflop to all players
+    //Deals cards pre-flop to all players
     private void dealCards (Table table) {
         //the deck will be organized in a random order before the round starts
         DeckService deckService = new DeckService();
@@ -312,7 +347,7 @@ public class TableService {
 
         //deals cards to every seat with an active player in it
         for (int i = 0; i < table.getSEAT_COUNT(); i++) {
-            if (table.getSeats()[i] != (null)) {
+            if (table.getSeats()[i] != (null) && table.getSeats()[i].isActive()) {
                 //creates an arraylist where the two dealt cards will be added
                 Card[] cards = new Card[2];
                 cards[0] = deckService.drawCard(table.getDeck());
@@ -326,7 +361,7 @@ public class TableService {
         }
     }
 
-    //deals the flop out
+    //Deals the flop out
     private void dealFlop (Table table) {
         DeckService deckService = new DeckService();
 
@@ -342,7 +377,7 @@ public class TableService {
         invokeDealBoardCardsCallback(table.getBoard());
     }
 
-    //deals the turn or river card
+    //Deals the turn or river card
     private void dealTurnOrRiver (Table table) {
         DeckService deckService = deckServiceFactory.createDeckService();
 
@@ -362,47 +397,40 @@ public class TableService {
         invokeDealBoardCardsCallback(cards);
     }
 
-    //deals with the pre-flop betting rounds
+    //Sets up pre-flop betting round
     private void preFlopBetting (Table table) {
-        //creating local fields for SB, BB, stakes, seats
-        int smallBlind = table.getSmallBlindIndex();
-        int bigBlind = table.getBigBlindIndex();
-        BigDecimal[] stakes = table.getStakes();
-        Player[] seats = table.getSeats();
         //set current bet for player in SB and BB position
-        table.getSeats()[smallBlind].setCurrentBet(stakes[0]);
-        table.getSeats()[bigBlind].setCurrentBet(stakes[1]);
-
+        table.getSeats()[table.getSmallBlindIndex()].setCurrentBet(table.getStakes()[0]);
+        table.getSeats()[table.getBigBlindIndex()].setCurrentBet(table.getStakes()[1]);
 
         //find the first player to act
-        int currPlayerIndex = (bigBlind + 1) % table.getSEAT_COUNT();
-        while (seats[currPlayerIndex] == null) {
+        int currPlayerIndex = (table.getBigBlindIndex() + 1) % table.getSEAT_COUNT();
+        while (table.getSeats()[currPlayerIndex] == null || !(table.getSeats()[currPlayerIndex].isActive())) {
             currPlayerIndex = (currPlayerIndex + 1) % table.getSEAT_COUNT();
         }
 
         //set the current table bet to the big blind
-        table.setCurrentBet(stakes[1]);
+        table.setCurrentBet(table.getStakes()[1]);
 
         //handle betting round actions from players
         playerAction(table, currPlayerIndex, true);
 
-        //switch sb and bb if game is heads up
-        if (table.getSeatedPlayerCount() == 2) {
-            int temp = bigBlind;
+        //switch SB and BB if game is heads up
+        if (table.isHeadsUp()) {
+            int temp = table.getBigBlindIndex();;
             table.setBigBlindIndex(table.getSmallBlindIndex());
             table.setSmallBlindIndex(temp);
         }
     }
-    private void postFlopBetting(Table table) {
-        //set fields
-        int smallBlind = table.getSmallBlindIndex();
-        Player[] seats = table.getSeats();
 
+    //Sets up post-flop betting round
+    private void postFlopBetting(Table table) {
+        //Reset the current street pot to 0
         table.setCurrentStreetPot(BigDecimal.valueOf(0));
 
         //Identify who will be first to act
-        int currPlayerIndex = smallBlind;
-        while (seats[currPlayerIndex] == null) {
+        int currPlayerIndex = table.getSmallBlindIndex();
+        while (table.getSeats()[currPlayerIndex] == null || !(table.getSeats()[currPlayerIndex].isInHand())) {
             currPlayerIndex = (currPlayerIndex + 1) % table.getSEAT_COUNT();
         }
 
@@ -415,19 +443,17 @@ public class TableService {
         int firstToActIndex = currPlayerIndex;
         boolean actionOver = false;
         boolean firstAction = true;
-        int seatedPlayerCount = table.getSeatedPlayerCount();
         BigDecimal[] stakes = table.getStakes();
         BigDecimal previousBet = BigDecimal.valueOf(0);
 
         BigDecimal minBet;
-        //TODO math might be wrong
         if(isPreFlop) minBet = table.getCurrentBet().subtract(previousBet).add(table.getCurrentBet());
         else minBet = table.getStakes()[1];
 
         //loop will continue until all action for the round is over
         while (!actionOver) {
             //if everyone has folded (except for 1 player), the whole hand is over, skip to complete hand
-            if (table.getSeatedFoldCount() == seatedPlayerCount - 1) {
+            if (table.getSeatedFoldCount() == table.getActivePlayerCount() - 1) {
                 table.setHandOver(true);
                 break;
             }
@@ -583,12 +609,12 @@ public class TableService {
                     }
 
                     //if all the active players are all-in action is over
-                    if(table.getAllInCount() == table.getSeatedPlayerCount() - table.getSeatedFoldCount()) {
+                    if(table.getAllInCount() == table.getActivePlayerCount()) {
                         table.setActionComplete(true);
                         break;
                     }
                     //else if all the active players - 1 are all-in, check to see if action is over
-                    else if(table.getAllInCount() - table.getSeatedPlayerCount() - table.getSeatedFoldCount() >= -1) {
+                    else if(table.getAllInCount() - table.getActivePlayerCount() - table.getSeatedFoldCount() >= -1) {
                         BigDecimal threshold = BigDecimal.valueOf(0);
                         Player notAllInPlayer = null;
 
@@ -626,21 +652,21 @@ public class TableService {
         }
     }
 
-    //resets all values that the table tracks after each street, sends a callback method to represent the reset values in the front-end
+    //Resets all values that the table tracks after each street, sends a callback method to represent the reset values in the front-end
     private void cleanUp(Table table) {
-        //clean up table currentBet and player current bets
+        //Clean up table currentBet and player current bets
         table.setCurrentBet(BigDecimal.valueOf(0));
         table.setCurrentStreetPot(BigDecimal.valueOf(0));
         for (Player player : table.getSeats()) {
-            if (player != null) player.setCurrentBet(BigDecimal.valueOf(0));
+            if (player != null && player.isActive()) player.setCurrentBet(BigDecimal.valueOf(0));
         }
         invokeCleanUpCallback(table.isHandOver());
     }
 
-    //sends a hashmap of the seats and players who are still in the hand to the front end
+    //Sends a hashmap of the seats and players who are still in the hand to the front end
     private void showdown(Table table) {
         //if there's only one player in the hand, continue
-        if(table.getSeatedPlayerCount() - table.getSeatedFoldCount() == 1);
+        if(table.getActivePlayerCount() - table.getSeatedFoldCount() == 1);
         //else find the players who are still in the hand and their seats
         else {
             HashMap<Integer, Player> indexAndPlayer = new HashMap<>();
@@ -649,9 +675,7 @@ public class TableService {
                     indexAndPlayer.put(i, table.getSeats()[i]);
                 }
             }
-
             invokeShowdownCallback(indexAndPlayer);
-
         }
     }
 
@@ -659,7 +683,6 @@ public class TableService {
     private void dealRunout (Table table) {
         //if all in pre-flop, deal flop, turn, and river
         if(table.getBoard().size() == 0) {
-            stringifyCards(table);
             sleepTimer(3000);
             dealFlop(table);
             sleepTimer(3000);
@@ -681,14 +704,17 @@ public class TableService {
         }
     }
 
+
+    //Method meant to be used for sending the hole cards and board in String format for an all-in equity calculator
+    //probably won't be implemented in the near future
     private void stringifyCards(Table table) {
-        HashMap<String, Integer> cardsAndIndex = new HashMap<>();
+        HashMap<Integer, String> indexAndCards = new HashMap<>();
 
         for (int i = 0; i < table.getSEAT_COUNT(); i++) {
             if(table.getSeats()[i] != null && table.getSeats()[i].isInHand()) {
                 Card[] holeCards = table.getSeats()[i].getHoleCards();
                 String cardsInStringForm = holeCards[0].toString() + holeCards[1].toString();
-                cardsAndIndex.put(cardsInStringForm, i);
+                indexAndCards.put(i, cardsInStringForm);
             }
         }
 
@@ -697,7 +723,7 @@ public class TableService {
             boardInStringForm = boardInStringForm + table.getBoard().get(i).toString();
         }
 
-        invokeCalculateEquityCallback(cardsAndIndex, boardInStringForm);
+        invokeCalculateEquityCallback(indexAndCards, boardInStringForm);
     }
 
     private void completeHand(Table table) {
@@ -705,7 +731,7 @@ public class TableService {
         HashMap<Integer, Player> indexAndWinner = new HashMap<>();
 
         // Only going through the if when there are at least two winners, more efficient
-        if (table.getSeatedFoldCount() != table.getSeatedPlayerCount() - 1) {
+        if (table.getSeatedFoldCount() != table.getActivePlayerCount() - 1) {
             HandRanking max_rank = null;
             Player[] players = table.getSeats();
             //loop to find the highest hand rank among the players seated and in the hand
@@ -789,16 +815,38 @@ public class TableService {
     }
 
 
-    //checks to see if a player got stacked
-    //if so, they are stood up from the table
+    //Stands players whose stack = 0 at the end of a hand
     private void checkStacks(Table table) {
         for (int i = 0; i < table.getSEAT_COUNT(); i++) {
-            if (table.getSeats()[i] != null && table.getSeats()[i].getChipCount().compareTo(BigDecimal.valueOf(0)) == 0) {
-                table.setSeatedPlayerCount(table.getSeatedPlayerCount() - 1);
+            //if the player is active and has a stack size of 0, stand the player and send a callback to the controller for a rebuy
+            if (table.getSeats()[i] != null && table.getSeats()[i].isActive() && table.getSeats()[i].getChipCount().compareTo(BigDecimal.valueOf(0)) == 0) {
+                table.setActivePlayerCount(table.getActivePlayerCount() - 1);
                 table.getSeats()[i].setActive(false);
 
-                System.out.println("Check ID: "+ table.getTABLE_ID());
+                table.getPlayersSittingOut()[i] = true;
+
+                //edge case to check for heads up
+                if(table.getActivePlayerCount() == 2) table.setHeadsUp(true);
+                else table.setHeadsUp(false);
+
                 invokeRebuyCallback(table.getSeats()[i].getUsername(), i, table.getTABLE_ID());
+            }
+        }
+    }
+
+    //Checks if there are any new players to deal into the next hand
+    private void dealInNewPlayers(Table table) {
+        for (int i = 0; i < table.getSEAT_COUNT(); i++) {
+            //if a player is sitting out and has a stack greater than 0, deal them in
+            if(table.getPlayersSittingOut()[i] == true && table.getSeats()[i].getChipCount().compareTo(BigDecimal.valueOf(0)) > 0) {
+                table.getSeats()[i].setActive(true);
+                table.setActivePlayerCount(table.getActivePlayerCount() + 1);
+
+                //edge case to check for heads up
+                if(table.getActivePlayerCount() == 2) table.setHeadsUp(true);
+                else table.setHeadsUp(false);
+
+                table.getPlayersSittingOut()[i] = false;
             }
         }
     }
@@ -807,7 +855,7 @@ public class TableService {
     private void getHandRankings(Table table) {
         //iterates through players, gets their hand ranking, and sets it
         for (int i = 0; i < table.getSEAT_COUNT(); i++) {
-            if (table.getSeats()[i] != (null)) {
+            if (table.getSeats()[i] != (null) && table.getSeats()[i].isActive()) {
                 //creates new Hand and assigns it to the player
                 Hand hand = new Hand(table.getSeats()[i].getHoleCards(), table.getBoard());
                 table.getSeats()[i].setHand(hand);
@@ -829,7 +877,7 @@ public class TableService {
 
         //resets player hands and hand statuses
         for (int i = 0; i < table.getSEAT_COUNT(); i++) {
-            if (table.getSeats()[i] != (null)) {
+            if (table.getSeats()[i] != (null) && table.getSeats()[i].isActive()) {
                 table.getSeats()[i].setHand(null);
                 table.getSeats()[i].setInHand(true);
                 table.getSeats()[i].setAllIn(false);
@@ -873,7 +921,10 @@ public class TableService {
         }
     }
 
-    //callback function used to send position info to the front-end
+    /*
+    Callback Functions
+    Used throughout the code to send a message to the controller
+     */
     private void invokeButtonCallback(int buttonIndex) {
         if(tableCallback != null) {
             tableCallback.onButtonSet(buttonIndex);
@@ -916,9 +967,9 @@ public class TableService {
         }
     }
 
-    private void invokeCalculateEquityCallback(HashMap<String, Integer> cardsAndIndex, String boardInStringForm) {
+    private void invokeCalculateEquityCallback(HashMap<Integer, String> indexAndCards, String boardInStringForm) {
         if(tableCallback != null) {
-            tableCallback.onCalculateEquity(cardsAndIndex, boardInStringForm);
+            tableCallback.onCalculateEquity(indexAndCards, boardInStringForm);
         }
     }
     private void invokeCompleteHandCallback(HashMap<Integer, Player> indexAndWinner) {

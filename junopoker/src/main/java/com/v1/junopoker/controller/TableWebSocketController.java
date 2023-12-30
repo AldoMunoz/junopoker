@@ -216,10 +216,10 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
 
-    public void onCalculateEquity(HashMap<String, Integer> cardsAndIndex, String boardInStringForm) {
+    public void onCalculateEquity(HashMap<Integer, String> indexAndCards, String boardInStringForm) {
         CalculateEquityRequest request = new CalculateEquityRequest();
         request.setType(RequestType.CALC_EQUITY);
-        request.setCardsAndIndex(cardsAndIndex);
+        request.setIndexAndCards(indexAndCards);
         request.setBoardInStringForm(boardInStringForm);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", request);

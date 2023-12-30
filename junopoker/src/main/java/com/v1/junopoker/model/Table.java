@@ -20,8 +20,10 @@ public class Table {
     private BigDecimal currentStreetPot;
     //Changed "players" to "seats", more accurate
     private Player[] seats;
+    private boolean[] playersSittingOut;
     private ArrayList<Card> board;
     //Changed "playerCount" to "seatedPlayerCount", more specific
+    private int activePlayerCount;
     private int seatedPlayerCount;
     private int seatedFoldCount;
     private int allInCount;
@@ -33,6 +35,7 @@ public class Table {
     private boolean gameRunning;
     private boolean handOver;
     private boolean actionComplete;
+    private boolean headsUp;
     private DeckService deckService;
 
     //initiates table
@@ -44,6 +47,7 @@ public class Table {
         TABLE_ID = tableRegistry.generateID(this.gameType);
 
         SEAT_COUNT = 6;
+        playersSittingOut = new boolean[SEAT_COUNT];
         seats = new Player[SEAT_COUNT];
         board = new ArrayList<>();
         seatedPlayerCount = 0;
@@ -51,6 +55,7 @@ public class Table {
         bigBlindIndex = -1;
         smallBlindIndex = -1;
         dealerButton = -1;
+        headsUp = false;
         gameRunning = false;
         handOver = false;
         actionComplete = false;

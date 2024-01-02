@@ -635,8 +635,10 @@ public class TableService {
 
                     //move currPlayerIndex over by 1
                     currPlayerIndex = (currPlayerIndex + 1) % table.getSEAT_COUNT();
-                    //loops until a non-empty seat with non-folded player
-                    while (table.getSeats()[currPlayerIndex] == null || !(table.getSeats()[currPlayerIndex].isInHand())) {
+                    //loops until a non-empty seat with non-folded player is found
+                    while (table.getSeats()[currPlayerIndex] == null ||
+                            !(table.getSeats()[currPlayerIndex].isActive()) ||
+                            !(table.getSeats()[currPlayerIndex].isInHand())) {
                         currPlayerIndex = (currPlayerIndex + 1) % table.getSEAT_COUNT();
                     }
 
@@ -819,6 +821,7 @@ public class TableService {
             if (table.getSeats()[i] != null && table.getSeats()[i].isActive() && table.getSeats()[i].getChipCount().compareTo(BigDecimal.valueOf(0)) == 0) {
                 table.setActivePlayerCount(table.getActivePlayerCount() - 1);
                 table.getSeats()[i].setActive(false);
+                table.getSeats()[i].setInHand(false);
 
                 table.getPlayersSittingOut()[i] = true;
 

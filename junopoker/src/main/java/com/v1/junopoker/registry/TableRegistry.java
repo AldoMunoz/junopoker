@@ -14,7 +14,6 @@ public class TableRegistry {
     }
 
     public void registerTable(String tableID, Table table) {
-        System.out.println("TableId in TableRegistry:" + tableID);
         tableMap.put(tableID, table);
     }
 

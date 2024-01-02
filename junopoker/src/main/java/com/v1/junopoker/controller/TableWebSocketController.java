@@ -117,7 +117,7 @@ public class TableWebSocketController implements TableCallback {
 
     //send a request to the front end for the player to input an action (check, bet, or fold)
     //receive that action and send it to TableService.java using a CompletableFuture
-    public void onPreFlopAction(Player player, int seat, BigDecimal currentBet, BigDecimal potSize, BigDecimal minBet) {
+    public void onAction(Player player, int seat, BigDecimal currentBet, BigDecimal potSize, BigDecimal minBet) {
         SeatRequest publicRequest= new SeatRequest();
         publicRequest.setType(RequestType.PLAYER_ACTION);
         publicRequest.setSeatIndex(seat);

@@ -18,11 +18,9 @@ public class Table {
     private final int SEAT_COUNT;
     private BigDecimal pot;
     private BigDecimal currentStreetPot;
-    //Changed "players" to "seats", more accurate
     private Player[] seats;
     private boolean[] playersSittingOut;
     private ArrayList<Card> board;
-    //Changed "playerCount" to "seatedPlayerCount", more specific
     private int activePlayerCount;
     private int seatedPlayerCount;
     private int seatedFoldCount;
@@ -43,6 +41,7 @@ public class Table {
         this.stakes = stakes;
         this.gameType = gameType;
 
+        //generate a table ID upon creation of the table
         TableRegistry tableRegistry = new TableRegistry();
         TABLE_ID = tableRegistry.generateID(this.gameType);
 

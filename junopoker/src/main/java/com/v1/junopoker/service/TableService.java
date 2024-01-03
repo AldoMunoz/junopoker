@@ -143,7 +143,7 @@ public class TableService {
 
         //game will run while there are at least 2 people seated at the table
         while (table.getActivePlayerCount() > 1) {
-            sleepTimer(4000);
+            sleepTimer(5000);
 
             //initiate the betting round
             table.setHandOver(false);
@@ -253,21 +253,24 @@ public class TableService {
     //moves the BB and SB to the next player
     //sets or moves the button
     private void moveBlinds(Table table) {
-        //SB is set to person who was just BB
-        table.setSmallBlindIndex(table.getBigBlindIndex());
-
-        int seatCount = table.getSEAT_COUNT();
+        boolean smallBlindSet = false;
         boolean bigBlindSet = false;
-        //rotates clockwise using modulus until the next player is found, assigns them the BB
-        for (int i = (table.getBigBlindIndex()+1) % seatCount; i < seatCount; i = (i+1) % seatCount) {
-            //first player found after big blind = new big blind
-            if(table.getSeats()[i] != null && table.getSeats()[i].isActive() && !bigBlindSet){
+        //rotates clockwise starting from the seat to the left of the small blind to assign new SB, BB, and BTN
+        for (int i = (table.getSmallBlindIndex()+1) % table.getSEAT_COUNT(); i < table.getSEAT_COUNT(); i = (i+1) % table.getSEAT_COUNT()) {
+            //first player found after small blind = new small blind
+            if(table.getSeats()[i] != null && table.getSeats()[i].isActive() && !smallBlindSet){
+                table.setSmallBlindIndex(i);
+                smallBlindSet = true;
+            }
+            //next player found after small blind = big blind
+            else if(table.getSeats()[i] != null && table.getSeats()[i].isActive() && !bigBlindSet) {
                 table.setBigBlindIndex(i);
                 bigBlindSet = true;
             }
             //next player found after big blind = button
-            else if(table.getSeats()[i] != null && table.getSeats()[i].isActive() && bigBlindSet) {
+            else if(table.getSeats()[i] != null && table.getSeats()[i].isActive()) {
                 table.setDealerButton(i);
+                //callback to send message with button index to the controller
                 invokeButtonCallback(table.getDealerButton());
                 break;
             }
@@ -410,13 +413,6 @@ public class TableService {
 
         //handle betting round actions from players
         playerAction(table, currPlayerIndex, true);
-
-        //switch SB and BB if game is heads up
-        if (table.isHeadsUp()) {
-            int temp = table.getBigBlindIndex();;
-            table.setBigBlindIndex(table.getSmallBlindIndex());
-            table.setSmallBlindIndex(temp);
-        }
     }
 
     //Sets up post-flop betting round
@@ -425,7 +421,7 @@ public class TableService {
         table.setCurrentStreetPot(BigDecimal.valueOf(0));
 
         //Identify who will be first to act
-        int currPlayerIndex = table.getSmallBlindIndex();
+        int currPlayerIndex = (table.getDealerButton() + 1) % table.getSEAT_COUNT();
         while (table.getSeats()[currPlayerIndex] == null || !(table.getSeats()[currPlayerIndex].isInHand())) {
             currPlayerIndex = (currPlayerIndex + 1) % table.getSEAT_COUNT();
         }
@@ -611,7 +607,7 @@ public class TableService {
                     }
                     //TODO try and find a simpler solution to this
                     //else if all the players in the hand except for one are all-in, check to see if action is over
-                    else if(table.getActivePlayerCount() - table.getSeatedFoldCount() - table.getAllInCount() == 1) {
+                    else if(table.getAllInCount() > 0 && table.getActivePlayerCount() - table.getSeatedFoldCount() - table.getAllInCount() == 1) {
                         BigDecimal threshold = BigDecimal.valueOf(0);
                         Player notAllInPlayer = null;
 
@@ -668,6 +664,7 @@ public class TableService {
         if(table.getActivePlayerCount() - table.getSeatedFoldCount() == 1);
         //else find the players who are still in the hand and their seats
         else {
+            if(table.getBoard().size() != 5) sleepTimer(1500);
             HashMap<Integer, Player> indexAndPlayer = new HashMap<>();
             for (int i = 0; i < table.getSeats().length; i++) {
                 if (table.getSeats()[i] != null && table.getSeats()[i].isInHand()) {
@@ -831,6 +828,7 @@ public class TableService {
 
                 if(table.getActivePlayerCount() <= 1) table.setGameRunning(false);
 
+                sleepTimer(3000);
                 invokeRebuyCallback(table.getSeats()[i].getUsername(), i, table.getTABLE_ID());
             }
         }
@@ -895,13 +893,6 @@ public class TableService {
         table.setActionComplete(false);
         table.setAllInCount(0);
 
-        //heads-up edge case to switch blinds correctly
-        if (table.getSeatedPlayerCount() == 2) {
-            int sb = table.getSmallBlindIndex();
-            table.setSmallBlindIndex(table.getBigBlindIndex());
-            table.setBigBlindIndex(sb);
-        }
-
         invokeCleanUpCallback(table.isHandOver());
     }
 
@@ -917,7 +908,7 @@ public class TableService {
     //method that adds a delay between actions
     private void sleepTimer(int milliseconds) {
         try {
-            Thread.sleep(milliseconds); // Sleep for 4 seconds
+            Thread.sleep(milliseconds);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

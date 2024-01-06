@@ -68,11 +68,13 @@ public class TableService {
             dealCards(table);
 
             preFlopBetting(table);
+            computePots(table);
             //if action is complete
             //showdown, runout, complete hand, clear table, continue
             if(table.isActionComplete()) {
                 showdown(table);
                 dealRunout(table);
+
                 completeHand(table);
                 clearTable(table);
                 continue;
@@ -185,8 +187,7 @@ public class TableService {
         //BB collection
         if (seats[bigBlindIndex].getChipCount().compareTo(stakes[1]) > 0) {
             //add big blind to the pot
-            table.setPot(new BigDecimal[]{table.getPot()[0].add(stakes[1])});
-
+            table.getPot()[0] = stakes[1];
             //deduct big blind from the player's stack
             seats[bigBlindIndex].setAmountBetThisHand(stakes[1]);
             seats[bigBlindIndex].setChipCount((seats[bigBlindIndex].getChipCount().subtract(stakes[1])).setScale(2, BigDecimal.ROUND_HALF_UP));
@@ -194,9 +195,7 @@ public class TableService {
         //edge case, if the players stack size is less than the blind
         else {
             bbAmount = seats[bigBlindIndex].getChipCount();
-
-            table.setPot(new BigDecimal[]{(table.getPot()[0].add(bbAmount).setScale(2, BigDecimal.ROUND_HALF_UP))});
-
+            table.getPot()[0] = table.getPot()[0].add(bbAmount);
             seats[bigBlindIndex].setAmountBetThisHand(seats[bigBlindIndex].getChipCount());
             seats[bigBlindIndex].setChipCount(BigDecimal.valueOf(0));
         }
@@ -204,7 +203,7 @@ public class TableService {
         //SB collection
         if (seats[smallBlindIndex].getChipCount().compareTo(stakes[0]) > 0) {
             //add small blind to the pot
-            table.setPot(new BigDecimal[]{(table.getPot()[0].add(stakes[0])).setScale(2, BigDecimal.ROUND_HALF_UP)});
+            table.getPot()[0] = table.getPot()[0].add(stakes[0]).setScale(2, BigDecimal.ROUND_HALF_UP);
 
             //deduct small blind from the player's stack
             seats[smallBlindIndex].setAmountBetThisHand(stakes[0]);
@@ -213,8 +212,7 @@ public class TableService {
         //edge case, if the players stack size is less than the blind
         else {
             sbAmount = seats[smallBlindIndex].getChipCount();
-
-            table.setPot(new BigDecimal[]{(table.getPot()[0].add(seats[smallBlindIndex].getChipCount())).setScale(2, BigDecimal.ROUND_HALF_UP)});
+            table.getPot()[0] = table.getPot()[0].add(seats[smallBlindIndex].getChipCount()).setScale(2, BigDecimal.ROUND_HALF_UP);
 
             seats[smallBlindIndex].setAmountBetThisHand(seats[smallBlindIndex].getChipCount());
             seats[smallBlindIndex].setChipCount(BigDecimal.valueOf(0));
@@ -419,7 +417,7 @@ public class TableService {
                         table.getSeats()[currPlayerIndex].setAllIn(true);
 
                         //update the pot size of the table
-                        table.setPot(new BigDecimal[]{(table.getPot()[0].add((bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet())))).setScale(2, BigDecimal.ROUND_HALF_UP)});
+                        table.getPot()[0] = table.getPot()[0].add((bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet()))).setScale(2, BigDecimal.ROUND_HALF_UP);
 
                         //update the pot size of the current street
                         table.setCurrentStreetPot((table.getCurrentStreetPot().add(bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet()))).setScale(2, BigDecimal.ROUND_HALF_UP));
@@ -455,7 +453,7 @@ public class TableService {
                         }
 
                         //update the pot size of the table
-                        table.setPot(new BigDecimal[]{(table.getPot()[0].add(bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet()))).setScale(2, BigDecimal.ROUND_HALF_UP)});
+                        table.getPot()[0] = table.getPot()[0].add(bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet())).setScale(2, BigDecimal.ROUND_HALF_UP);
 
                         //update the pot size of the current street
                         table.setCurrentStreetPot((table.getCurrentStreetPot().add((bet.subtract(table.getSeats()[currPlayerIndex].getCurrentBet())))).setScale(2, BigDecimal.ROUND_HALF_UP));
@@ -486,9 +484,9 @@ public class TableService {
                         }
 
                         //update the pot size of the table
-                        table.setPot(new BigDecimal[]{(table.getPot()[0].add(bet)).setScale(2, BigDecimal.ROUND_HALF_UP)});
+                        table.getPot()[0] = table.getPot()[0].add(bet).setScale(2, BigDecimal.ROUND_HALF_UP);
 
-                        //change the current bet to the bet that was just mad
+                        //change the current bet to the bet that was just made
                         table.getSeats()[currPlayerIndex].setCurrentBet(table.getSeats()[currPlayerIndex].getCurrentBet().add(bet));
 
                         //update the pot size of the current street
@@ -720,7 +718,7 @@ public class TableService {
         deckService.joinDeck(table.getDeck());
 
         //reset the table fields
-        table.setPot(new BigDecimal[]{BigDecimal.valueOf(0)});
+        table.getPot()[0] = BigDecimal.ZERO;
         table.setSeatedFoldCount(0);
         table.setActionComplete(false);
         table.setAllInCount(0);

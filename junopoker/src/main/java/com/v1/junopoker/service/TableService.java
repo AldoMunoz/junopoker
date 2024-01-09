@@ -679,8 +679,10 @@ public class TableService {
             }
             // allocation of winnings
             for (Player winner : winners) {
-                winner.setChipCount((winner.getChipCount().add(table.getPot()[curPot].divide(BigDecimal.valueOf(winners.size())))).setScale(2, BigDecimal.ROUND_HALF_UP));
+                System.out.println("curPot: " + curPot);
+                winner.setChipCount((winner.getChipCount().add(table.getPot()[curPot].divide(BigDecimal.valueOf(winners.size()),2, BigDecimal.ROUND_HALF_UP))));
                 indexAndWinner.put(getSeatOfPlayer(table, winner.getUsername()), winner);
+                System.out.println("pot " + curPot + " is " + table.getPot()[curPot]);
             }
             winners.clear();
             curPot++;
@@ -770,7 +772,15 @@ public class TableService {
     }
 
     public void computePots(Table table) {
-        // Check if stacks are equivalent, and do not recompute pot in this case
+        // base case, only one pot
+        if (table.getAllInCount() == 0) {
+            for (Player p : table.getSeats()) {
+                if (p != null && p.isInHand()) table.getPlayersToPot()[0].add(p);
+            }
+            return;
+        }
+        // check if stacks are equivalent, and do not recompute pot in this case
+        BigDecimal temp = table.getPot()[0];
         BigDecimal[] pots = new BigDecimal[10];
         BigDecimal stack = BigDecimal.ZERO;
         boolean equal = true;
@@ -793,38 +803,39 @@ public class TableService {
         }
         // create min-heap of all-in player stacks
         PriorityQueue<BigDecimal> allInStacks = new PriorityQueue<>();
+        HashMap<BigDecimal, Player> AllInAndPlayer = new HashMap<>();
         for (Player p : table.getSeats()) {
             if (p == null) continue;
-            if (p.isAllIn()) allInStacks.add(p.getCurrentBet());
+            if (p.isAllIn()) {
+                allInStacks.add(p.getStartingStackThisHand());
+                AllInAndPlayer.put(p.getStartingStackThisHand(), p);
+            }
         }
         // create array representing all pots, where index 0 is the main pot
         int cur = table.getSeatedPlayerCount() - table.getSeatedFoldCount();
         int potPos = 0;
         BigDecimal tempPotSum = BigDecimal.ZERO;
         for (int i = 0; i < table.getAllInCount(); i++) {
+            System.out.println(allInStacks);
             if (pots[i] == null) pots[i] = BigDecimal.ZERO;
             BigDecimal curBet = allInStacks.poll();
             pots[i] = pots[i].add(curBet.multiply(BigDecimal.valueOf(cur)));
             for (Player p : table.getSeats()) {
                 if (p == null) continue;
-                if (!p.isInHand()) continue;
+                if (!p.isInHand()) {
+                    if (p.getCurrentBet().equals(BigDecimal.ZERO))
+                        continue;
+                    if (p.getAmountBetThisHand().compareTo(curBet) >= 0) {
+                        pots[i] = pots[i].add(curBet);
+                        p.setAmountBetThisHand(p.getAmountBetThisHand().subtract(curBet));
+                    } else {
+                        pots[i] = pots[i].add(p.getAmountBetThisHand());
+                        p.setAmountBetThisHand(BigDecimal.ZERO);
+                    }
+                }
                 if (p.getAmountBetThisHand().compareTo(curBet) >= 0) {
                     table.getPlayersToPot()[i].add(p);
                     p.setAmountBetThisHand(p.getAmountBetThisHand().subtract(curBet));
-                }
-            }
-            for (Player f : table.getSeats()) {
-                if (f == null) continue;
-                if (!f.isInHand()) {
-                    if (f.getCurrentBet().equals(BigDecimal.ZERO))
-                        continue;
-                    if (f.getAmountBetThisHand().compareTo(curBet) >= 0) {
-                        pots[i] = pots[i].add(f.getAmountBetThisHand().subtract(curBet));
-                        f.setAmountBetThisHand(f.getAmountBetThisHand().subtract(curBet));
-                    } else {
-                        pots[i] = pots[i].add(f.getAmountBetThisHand());
-                        f.setAmountBetThisHand(BigDecimal.ZERO);
-                    }
                 }
             }
             // update heap
@@ -838,13 +849,11 @@ public class TableService {
             cur--;
             potPos++;
         }
-        // compute the last side-pot's value
-        if ((cur - table.getAllInCount()) >= 0) {
-            pots[potPos] = table.getPot()[0].subtract(tempPotSum).subtract(table.getStakes()[0].add(table.getStakes()[1]));
-        }
         for (Player p : table.getSeats()) {
             if (p != null) p.setAmountBetThisHand(p.getCurrentBet());
         }
+        System.out.println("temp: " + temp);
+        System.out.println("tempPotSum: " + tempPotSum);
         table.setPot(pots);
     }
     //callback function used to send position info to the front-end

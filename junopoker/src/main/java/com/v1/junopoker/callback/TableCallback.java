@@ -7,7 +7,10 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
-
+/*
+Interface for all callback methods called by the backend game logic
+methods are used to send information to the front-end whenever required
+ */
 public interface TableCallback {
     void onButtonSet(int buttonIndex);
 
@@ -32,6 +35,5 @@ public interface TableCallback {
 
     void onAddOn(int seatIndex, BigDecimal rebuyAmount);
     void onCleanUp(boolean isHandOver);
-
     void onStand(int seatIndex, String username);
 }

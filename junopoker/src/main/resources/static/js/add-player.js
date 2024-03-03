@@ -27,7 +27,7 @@ function submitPlayerData() {
             seatIndex: currentButtonNumber,
             tableID: $("#table-id").val()
         };
-        // Make a Fetch API POST request to your Spring Boot controller
+        // Make a Fetch API POST request to controller
         fetch("/createPlayer", {
             method: 'POST',
             headers: {

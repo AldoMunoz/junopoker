@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+//Registry is used to store Table information
+//Substitute for a Database, which will be implemented at a later date
 public class TableRegistry {
     private Map<String, Table> tableMap;
 

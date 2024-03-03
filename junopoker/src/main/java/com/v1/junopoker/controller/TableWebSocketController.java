@@ -47,15 +47,16 @@ public class TableWebSocketController implements TableCallback {
     }
 
     @MessageMapping("/getSeats")
-    public void getSeats(@Payload String tableID) {
-        Player[] seats = tableService.getSeats(tableID);
+    public void getSeats(@Payload GetSeatsRequest request) {
+        Player[] seats = tableService.getSeats(request.getTableId());
 
         SeatsResponse response = new SeatsResponse();
         response.setType(RequestType.SEATS);
         response.setSeats(seats);
-        response.setTableID(tableID);
+        response.setTableID(response.getTableID());
 
-        messagingTemplate.convertAndSend("/topic/tableEvents", response);
+        System.out.println("sending message from getSeats");
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + request.getUsername(), response);
     }
 
 
@@ -63,13 +64,20 @@ public class TableWebSocketController implements TableCallback {
     public void countPlayers(@Payload String tableID) {
         tableService.countPlayers(tableID);
     }
-    /*
-    @MessageMapping("/startGame")
-    public void startGame(@Payload Table table) {
-        System.out.println("startGame, TableWebSocketController: " + table.getTABLE_ID());
-        tableService.runGame(table);
+
+    @MessageMapping("/standPlayerAtSeat")
+    public void standPlayerAtSeat(@Payload StandRequest request) {
+        tableService.removePlayer(request.getTableId(), request.getSeatIndex());
     }
-     */
+
+    @MessageMapping("/foldEvent")
+    public void foldEvent(@Payload FoldRequest request) {
+        SeatRequest seatRequest = new SeatRequest();
+        seatRequest.setType(request.getType());
+        seatRequest.setSeatIndex(request.getSeat());
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + request.getUsername(), seatRequest);
+    }
+
     @MessageMapping("/rebuy")
     public void rebuy(@Payload RebuyResponse request) {
         tableService.rebuyPlayer(request.getRebuyAmount(), request.getSeatIndex(), request.getTableId());
@@ -225,11 +233,13 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/tableEvents", request);
     }
 
-    @MessageMapping("/foldEvent")
-    public void foldEvent(@Payload FoldRequest request) {
-        SeatRequest seatRequest = new SeatRequest();
-        seatRequest.setType(request.getType());
-        seatRequest.setSeatIndex(request.getSeat());
-        messagingTemplate.convertAndSend("/topic/playerEvents/" + request.getUsername(), seatRequest);
+    public void onStand(int seatIndex, String username) {
+        StandResponse response = new StandResponse();
+        response.setType(RequestType.STAND);
+        response.setSeatIndex(seatIndex);
+        response.setUsername(username);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", response);
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + username, response);
     }
 }

@@ -63,6 +63,7 @@ function subscribeToPlayerTopic(usernameInput, player, seatIndex) {
     //all messages sent to /topic/playerEvents/${} will be redirected to "playerEvents(payload) method below"
     stompClient.subscribe(`/topic/playerEvents/${usernameInput}`, playerEvents);
     isSeated = true;
+    console.log("Set is seated to true");
 
     if(player && stompClient) {
         //create PlayerRequest object to be sent to the front end
@@ -90,6 +91,8 @@ async function playerEvents(payload) {
     if(message.type === "SIT") await sitPlayerEvent(message);
     //function for when player stands from table
     else if(message.type === "STAND") await standPlayerEvent(message);
+    //function for populate empty seats with seat button
+    else if(message.type === "SEATS") populateSeatsEvent(message);
     //function for dealing player's private hold cards
     else if (message.type === "DEAL_PRE") privateDealHoleCardsEvent(message);
     //function for setting up and displaying player's private action HUD
@@ -127,14 +130,29 @@ async function sitPlayerEvent(message) {
 async function standPlayerEvent(message) {
     //console.log("Stand ", message);
 
-    const seats = await fetchTableSeats();
-    populateTable(seats);
+    //const seats = await fetchTableSeats();
+    //populateTable(seats);
 
     //hide settings bar
     const settingsBar = $('.settings-bar');
     settingsBar.css("display", "none");
-    //unsubscribe user for /topic/playerEvents/${}
-    stompClient.unsubscribe(`/topic/playerEvents/${message.player.username}`);
+
+    //send request to the controller to get the seats at the table
+    const request = {
+        type: "SEATS",
+        tableId: $("#table-id").val(),
+        username: message.username
+    };
+    stompClient.send("/app/getSeats", {}, request);
+}
+
+function populateSeatsEvent(message) {
+    console.log("Seats ", message);
+
+    //TODO populate the table with seat buttons
+
+    //unsubscribe user
+    stompClient.unsubscribe(`/topic/playerEvents/${message.username}`);
 }
 function privateDealHoleCardsEvent(message) {
     //console.log("Private deal hole cards ", message);
@@ -283,7 +301,16 @@ function closeAddPlayerModal() {
 //Closes the rebuy modal and unsubscribes the player from their personal WebSocket connection
 function closeRebuyModal() {
     //TODO unsubscribe the player from their personal WebSocket connection
+
+    const request = {
+        seatIndex: $("#rebuyModal").data("seatIndex"),
+        tableId: $("#rebuyModal").data("tableId")
+    }
+
+    isSeated = false;
+    console.log("Set is seated to false");
     $("#rebuyModal").hide();
+    stompClient.send("/app/standPlayerAtSeat", {}, JSON.stringify(request));
 }
 
 //Adds the player back into the game at the earliest convenience

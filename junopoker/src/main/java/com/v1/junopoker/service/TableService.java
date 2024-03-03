@@ -101,13 +101,24 @@ public class TableService {
     }
 
     //stands and removes the table from the table
-    public void removePlayer(String tableID, int seat) {
+    public void removePlayer(String tableID, int seatIndex) {
         Table table = tableRegistry.getTableByID(tableID);
-        table.getSeats()[seat] = null;
-        table.setSeatedPlayerCount(table.getSeatedPlayerCount() - 1);
-        table.setActivePlayerCount(table.getActivePlayerCount() - 1);
 
+        //save the username for the callback
+        String username = table.getSeats()[seatIndex].getUsername();
+
+        //decrease the seated player count and active player count (if player was active)
+        table.setSeatedPlayerCount(table.getSeatedPlayerCount() - 1);
+        if(table.getSeats()[seatIndex].isActive())
+            table.setActivePlayerCount(table.getActivePlayerCount() - 1);
+
+        //remove the player
+        table.getSeats()[seatIndex] = null;
+
+        //if there are now 2 active players at the table, set to heads up
         table.setHeadsUp(table.getActivePlayerCount() == 2);
+
+        invokeStandCallback(seatIndex, username);
     }
 
     //Returns seat information to the controller
@@ -985,6 +996,12 @@ public class TableService {
     private void invokeAddOnCallback(int seatIndex, BigDecimal rebuyAmount) {
         if(tableCallback != null) {
             tableCallback.onAddOn(seatIndex, rebuyAmount);
+        }
+    }
+
+    private void invokeStandCallback(int seatIndex, String username) {
+        if(tableCallback != null) {
+            tableCallback.onStand(seatIndex, username);
         }
     }
 }

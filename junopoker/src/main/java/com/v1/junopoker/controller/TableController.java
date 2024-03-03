@@ -33,6 +33,7 @@ public class TableController {
         session.setAttribute("tableId", table.getTABLE_ID());
 
         tableService.registerTable(table);
+        System.out.println(table.getTABLE_ID());
         return ResponseEntity.ok().body(table.getTABLE_ID());
     }
 

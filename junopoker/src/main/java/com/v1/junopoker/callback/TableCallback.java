@@ -32,4 +32,6 @@ public interface TableCallback {
 
     void onAddOn(int seatIndex, BigDecimal rebuyAmount);
     void onCleanUp(boolean isHandOver);
+
+    void onStand(int seatIndex, String username);
 }

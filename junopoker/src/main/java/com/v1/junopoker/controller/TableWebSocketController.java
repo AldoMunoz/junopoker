@@ -58,6 +58,53 @@ public class TableWebSocketController implements TableCallback {
         messagingTemplate.convertAndSend("/topic/tableEvents", response);
     }
 
+    @MessageMapping("/addPlayer")
+    public void addPlayer(@Payload PlayerRequest playerRequest) {
+        System.out.println("Entered add player");
+        tableService.addPlayer(playerRequest.getTableID(), playerRequest.getPlayer(), playerRequest.getSeatIndex());
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", playerRequest);
+        try {
+            Thread.sleep(100); // Sleep for 100 milliseconds
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        Player[] seats = tableService.getSeats(playerRequest.getTableID());
+
+        SeatsAndSeatResponse response = new SeatsAndSeatResponse();
+        response.setType(RequestType.SIT);
+        response.setSeats(seats);
+        response.setSeatIndex(playerRequest.getSeatIndex());
+
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + playerRequest.getPlayer().getUsername(), response);
+    }
+
+    @MessageMapping("/removePlayer")
+    public void removePlayer(@Payload PlayerRequest playerRequest) {
+        //remove player from back-end
+        Player player = tableService.getPlayer(playerRequest.getTableID(), playerRequest.getSeatIndex());
+        tableService.removePlayer(playerRequest.getTableID(), playerRequest.getSeatIndex());
+
+        //set Player that was removed in playerRequest
+        playerRequest.setPlayer(player);
+
+        messagingTemplate.convertAndSend("/topic/tableEvents", playerRequest);
+        try {
+            Thread.sleep(100); // Sleep for 100 milliseconds
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        Player[] seats = tableService.getSeats(playerRequest.getTableID());
+
+        RemovePlayerRequest request = new RemovePlayerRequest();
+        request.setType(RequestType.STAND);
+        request.setSeats(seats);
+        request.setUsername(player.getUsername());
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + playerRequest.getPlayer().getUsername(), request);
+    }
+
 
     @MessageMapping("/countPlayers")
     public void countPlayers(@Payload String tableID) {

@@ -23,63 +23,19 @@ function submitPlayerData() {
 
         //create payload that will be sent to the backend
         const playerRequest = {
+            type: "SIT",
             player: player,
             seatIndex: currentButtonNumber,
             tableID: $("#table-id").val()
         };
-        // Make a Fetch API POST request to your Spring Boot controller
-        fetch("/createPlayer", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(playerRequest)
-        }).then(response => {
-            // Check if the response is successful (status code 2xx)
-            if (!response.ok) {
-                console.log("error occurred creating player")
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        }).then(() => {
-            //if fetch call is successful, the following logic wil execute:
 
-            //method used to subscribe user to player-events topic
-            subscribeToPlayerTopic(usernameInput, player, currentButtonNumber);
+        stompClient.subscribe(`/topic/playerEvents/${usernameInput}`, playerEvents);
 
-            // Close the modal
-            closeAddPlayerModal();
-        }).catch(error => {
-            console.error('Error occurred:', error);
-        });
+        //sends message to controller to add a player to the table
+        stompClient.send("/app/addPlayer", {}, JSON.stringify(playerRequest));
+        closeAddPlayerModal();
     }
 }
-
-//Subscribe user to personal channel player-events/${username}
-//subscription for private events (player cards, show player actions when it's their turn. etc.)
-//Send data to "addUser" about new player
-function subscribeToPlayerTopic(usernameInput, player, seatIndex) {
-    // Subscribe to the player-specific topic
-    //all messages sent to /topic/playerEvents/${} will be redirected to "playerEvents(payload) method below"
-    stompClient.subscribe(`/topic/playerEvents/${usernameInput}`, playerEvents);
-    isSeated = true;
-
-    if(player && stompClient) {
-        //create PlayerRequest object to be sent to the front end
-        let playerRequest = {
-            type: "SIT",
-            player: player,
-            seatIndex: seatIndex,
-            tableID: $("#table-id").val()
-        };
-        //sends message to all users that a player has taken a seat
-        stompClient.send("/app/tableEvents", {}, JSON.stringify(playerRequest));
-        //sends message to the player to hide other seat buttons
-        stompClient.send("/app/playerEvents", {}, JSON.stringify(playerRequest));
-    }
-    else console.log("Something went wrong before Websocket could send")
-}
-
 
 //handle all messages sent to /topic/playerEvents/${}
 async function playerEvents(payload) {
@@ -125,16 +81,22 @@ async function sitPlayerEvent(message) {
     stompClient.send("/app/countPlayers", {}, $("#table-id").val());
 }
 async function standPlayerEvent(message) {
-    //console.log("Stand ", message);
+    console.log("Stand ", message);
 
+    //stompClient.send("/app/getSeats", {}, ($("#table-id").val()));
+
+    /*
     const seats = await fetchTableSeats();
-    populateTable(seats);
+
+     */
+
+    populateTable(message.seats);
 
     //hide settings bar
     const settingsBar = $('.settings-bar');
     settingsBar.css("display", "none");
     //unsubscribe user for /topic/playerEvents/${}
-    stompClient.unsubscribe(`/topic/playerEvents/${message.player.username}`);
+    stompClient.unsubscribe(`/topic/playerEvents/${message.username}`);
 }
 function privateDealHoleCardsEvent(message) {
     //console.log("Private deal hole cards ", message);

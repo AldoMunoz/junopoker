@@ -34,7 +34,7 @@ $(document).ready(function () {
             }
             //else if table doesn't exist
             else {
-                console.log*("Creating new table...")
+                console.log("Creating new table...")
                 //creates default table object
                 const defaultTableData = {
                     gameType: "NLH",
@@ -180,13 +180,13 @@ function sitTableEvent(message) {
     seatDiv.append(playerInfoDiv);
 }
 function standTableEvent(message) {
-    //console.log("stand", message);
+    console.log("stand", message);
 
     //replaces the player icon with seat button, and then hide it from view
     //we hide it so that seated players can't see or select another seat
-    const seatDiv = $(`#seat-${message.seat}`);
+    const seatDiv = $(`#seat-${message.seatIndex}`);
     seatDiv.empty();
-    seatDiv.append(`<button class="seat-buttons" data-button-number="${message.seat}" onclick="openAddPlayerModal(${message.seat})"><img src="/images/grey-button.png" alt="Error"></button>`)
+    seatDiv.append(`<button class="seat-buttons" data-button-number="${message.seatIndex}" onclick="openAddPlayerModal(${message.seatIndex})"><img src="/images/grey-button.png" alt="Error"></button>`)
     if (isSeated === true) {
         seatDiv.hide();
     }
@@ -598,6 +598,7 @@ function submitTableData() {
 
 //asynchronous function that calls TableController method getSeats()
 //fetches and returns array of table seats
+//TODO remove
 async function fetchTableSeats() {
     try {
         const seats = stompClient.send("/app/getSeats", {}, ($("#table-id").val()));

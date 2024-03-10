@@ -83,13 +83,6 @@ async function sitPlayerEvent(message) {
 async function standPlayerEvent(message) {
     console.log("Stand ", message);
 
-    //stompClient.send("/app/getSeats", {}, ($("#table-id").val()));
-
-    /*
-    const seats = await fetchTableSeats();
-
-     */
-
     populateTable(message.seats);
 
     //hide settings bar
@@ -244,7 +237,14 @@ function closeAddPlayerModal() {
 }
 //Closes the rebuy modal and unsubscribes the player from their personal WebSocket connection
 function closeRebuyModal() {
-    //TODO unsubscribe the player from their personal WebSocket connection
+    const playerRequest = {
+        type: "STAND",
+        player: null,
+        seatIndex: $("#rebuyModal").data("seatIndex"),
+        tableID: $("#rebuyModal").data("tableId")
+    };
+    stompClient.send("/app/removePlayer", {}, JSON.stringify(playerRequest));
+
     $("#rebuyModal").hide();
 }
 

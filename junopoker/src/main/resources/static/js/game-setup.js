@@ -178,6 +178,7 @@ function sitTableEvent(message) {
     playerInfoDiv.append(playerActionsDiv);
 
     seatDiv.append(playerInfoDiv);
+    isSeated = true;
 }
 function standTableEvent(message) {
     console.log("stand", message);
@@ -591,24 +592,6 @@ function submitTableData() {
     }
 }
 
-
-
-/*ASYNCHRONOUS FUNCTIONS
-/*-----------------------------------*/
-
-//asynchronous function that calls TableController method getSeats()
-//fetches and returns array of table seats
-//TODO remove
-async function fetchTableSeats() {
-    try {
-        const seats = stompClient.send("/app/getSeats", {}, ($("#table-id").val()));
-        console.log("fetchTableSeats in game-setup: ", seats);
-        return seats;
-    } catch (error) {
-        console.error('Error occurred while fetching table seats:', error);
-        return [];
-    }
-}
 function populateTable(seats) {
     //populate view with either seat button or player icon
     for (let i = 0; i < seats.length; i++) {

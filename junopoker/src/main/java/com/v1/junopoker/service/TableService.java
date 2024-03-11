@@ -56,7 +56,7 @@ public class TableService {
     public void addPlayer (String tableID, Player player, int seatIndex) {
         Table table = tableRegistry.getTableByID(tableID);
 
-        //if it isn't make player active
+        //if table isn't running, make player active
         if (!table.isGameRunning()) {
             player.setActive(true);
             table.setActivePlayerCount(table.getActivePlayerCount() + 1);
@@ -103,9 +103,14 @@ public class TableService {
     //stands and removes the table from the table
     public void removePlayer(String tableID, int seat) {
         Table table = tableRegistry.getTableByID(tableID);
-        table.getSeats()[seat] = null;
+
         table.setSeatedPlayerCount(table.getSeatedPlayerCount() - 1);
-        table.setActivePlayerCount(table.getActivePlayerCount() - 1);
+        if(table.getSeats()[seat].isActive()) {
+            table.getSeats()[seat].setActive(false);
+            table.setActivePlayerCount(table.getActivePlayerCount() - 1);
+        }
+
+        table.getSeats()[seat] = null;
 
         table.setHeadsUp(table.getActivePlayerCount() == 2);
     }

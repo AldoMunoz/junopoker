@@ -2,6 +2,8 @@ package com.v1.junopoker.service;
 
 import com.v1.junopoker.callback.TableCallback;
 import com.v1.junopoker.dto.PlayerActionResponse;
+import com.v1.junopoker.dto.RequestType;
+import com.v1.junopoker.dto.TableInfoResponse;
 import com.v1.junopoker.dto.TableRequest;
 import com.v1.junopoker.factory.DeckServiceFactory;
 import com.v1.junopoker.model.*;
@@ -9,6 +11,7 @@ import com.v1.junopoker.registry.TableRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +46,38 @@ public class TableService {
     ///register the table with a unique table ID
     public void registerTable(Table table) {
         System.out.println("TableID in TableService" + table.getTABLE_ID());
+        //TODO do we need "this"?
         this.tableRegistry.registerTable(table.getTABLE_ID(), table);
+    }
+
+    public TableInfoResponse getTableInfo(String tableID) {
+        Table table = this.tableRegistry.getTableByID(tableID);
+
+        TableInfoResponse response = new TableInfoResponse();
+        response.setType(RequestType.TABLE_INFO);
+        response.setBoard(table.getBoard());
+        response.setCurrentStreetPot(table.getCurrentStreetPot());
+        response.setTotalPot(table.getPot());
+        response.setButtonIndex(table.getDealerButton());
+        //TODO get currentActingPlayer
+
+        ArrayList<StrippedPlayer> strippedPlayers = new ArrayList<>();
+
+        for (int i = 0; i < table.getSEAT_COUNT(); i++) {
+            if(table.getSeats()[i] != null) {
+                StrippedPlayer player = new StrippedPlayer();
+                player.setUsername(table.getSeats()[i].getUsername());
+                player.setChipCount(table.getSeats()[i].getChipCount());
+                player.setSeatIndex(i);
+                player.setInHand(table.getSeats()[i].isInHand());
+                player.setCurrentBet(table.getSeats()[i].getCurrentBet());
+
+                strippedPlayers.add(player);
+            }
+        }
+        response.setStrippedPlayers(strippedPlayers);
+
+        return response;
     }
 
     //adds a player to the players list, gives them a chip count and a specific seat
@@ -120,6 +154,8 @@ public class TableService {
         Table table = tableRegistry.getTableByID(tableID);
         return table.getSeats();
     }
+
+
 
     //Checks to see if the table ID exists in the registry
     public boolean doesTableExist(String tableID) {

@@ -42,18 +42,12 @@ public class TableWebSocketController implements TableCallback {
         response.setSeats(seats);
         response.setSeatIndex(request.getSeatIndex());
 
-        String username = request.getPlayer().getUsername();
-        messagingTemplate.convertAndSend("/topic/playerEvents/" + username, response);
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + request.getPlayer().getUsername(), response);
     }
 
-    @MessageMapping("/getSeats")
-    public void getSeats(@Payload String tableID) {
-        Player[] seats = tableService.getSeats(tableID);
-
-        SeatsResponse response = new SeatsResponse();
-        response.setType(RequestType.SEATS);
-        response.setSeats(seats);
-        response.setTableID(tableID);
+    @MessageMapping("/getTableInfo")
+    public void getTableInfo(@Payload String tableID) {
+        TableInfoResponse response = tableService.getTableInfo(tableID);
 
         messagingTemplate.convertAndSend("/topic/tableEvents", response);
     }

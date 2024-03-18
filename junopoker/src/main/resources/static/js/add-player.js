@@ -83,6 +83,7 @@ async function sitPlayerEvent(message) {
 async function standPlayerEvent(message) {
     console.log("Stand ", message);
 
+    //TODO might have to change this to another function call
     populateTable(message.seats);
 
     //hide settings bar

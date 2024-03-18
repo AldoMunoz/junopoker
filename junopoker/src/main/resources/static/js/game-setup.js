@@ -92,7 +92,7 @@ async function onConnected() {
     //subscribes users to tableEvents, public topic that will impact the view of all players
     //all messages sent to /topic/table events will be redirected to "tableEvents(payload) method below"
     stompClient.subscribe("/topic/tableEvents", tableEvents);
-    stompClient.send("/app/getSeats", {}, $("#table-id").val());
+    stompClient.send("/app/getTableInfo", {}, $("#table-id").val());
 }
 
 //Displays error message if WebSocket Connection is unsuccessful

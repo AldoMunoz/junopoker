@@ -1,6 +1,7 @@
 package com.v1.junopoker.dto;
 
 public enum RequestType {
+    TABLE_INFO,
     SEATS,
     SIT,
     STAND,

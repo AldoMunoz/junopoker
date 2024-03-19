@@ -89,7 +89,7 @@ function establishWebSocketConnection() {
 
 //Subscribe user to "seated-players" and "poker-events"
 async function onConnected() {
-    //subscribes users to tableEvents, public topic that will impact the view of all players
+    //subscribes users to tableEvents, public topic that will impact the view of all players publicly
     //all messages sent to /topic/table events will be redirected to "tableEvents(payload) method below"
     stompClient.subscribe("/topic/tableEvents", tableEvents);
     stompClient.send("/app/getTableInfo", {}, $("#table-id").val());
@@ -110,8 +110,10 @@ function tableEvents(payload) {
     //parse the body of the message
     let message = JSON.parse(payload.body);
 
+    //view logic for a player first opens up a table
+    if(message.type === "TABLE_INFO") tableInfoEvent(message);
     //view logic for display all players at the table
-    if(message.type === "SEATS") seatsEvent(message);
+    else if(message.type === "SEATS") seatsEvent(message);
     //view logic for when a new player takes a seat
     else if(message.type === "SIT") sitTableEvent(message);
     //view logic for when player stands up from seat
@@ -140,6 +142,71 @@ function tableEvents(payload) {
     else if(message.type === "CLEAN_UP") cleanUpEvent(message);
     //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
+}
+
+function tableInfoEvent(message) {
+    console.log("TABLE INFO:", message)
+
+    //fii the seats with player info (icon, username, chips, current bet)
+    if (message.strippedPlayers != null) {
+        for (let i = 0; i < message.strippedPlayers.length; i++) {
+            const seatDiv = $(`#seat-${message.strippedPlayers[i].seatIndex}`);
+            seatDiv.empty();
+
+            //populate the seat with the player icon and player information
+            const playerInfoDiv = $("<div class='player-info'></div>");
+            const playerIconDiv = $("<div class='player-icon'></div>");
+            playerIconDiv.append(`<img class="icon-img" src="/images/player-icon.png" alt="Player Icon">`);
+            const playerPanelDiv = $("<div class='player-panel'></div>");
+            playerPanelDiv.append(`<img class="panel-img" src="/images/player-info.png" alt="Player Info">`)
+            playerPanelDiv.append(`<p class="player-usernames">${message.strippedPlayers[i].username}</p>`);
+            playerPanelDiv.append(`<p class="player-chip-counts" id="chip-count-${i}">${message.strippedPlayers[i].chipCount}</p>`);
+
+            //if the player is in the hand, give them 2 hole cards
+            const holeCardDiv =$("<div class='hole-cards'></div>");
+            if(message.strippedPlayers[i].isInHand) {
+                holeCardsDiv.empty();
+                holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
+                holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
+                holeCardsDiv.show();
+            }
+
+            const playerActionsDiv = $("<div class='player-actions'></div>");
+            playerActionsDiv.append(`<p></p>`);
+
+            playerInfoDiv.append(playerIconDiv);
+            playerInfoDiv.append(playerPanelDiv);
+            playerInfoDiv.append(holeCardDiv);
+            playerInfoDiv.append(playerActionsDiv);
+
+            seatDiv.append(playerInfoDiv);
+
+            //update player's bet display
+            if(message.strippedPlayers[i].currentBet > 0) {
+                const betDisplayDiv = $(`#bet-display-${message.strippedPlayers[i].seatIndex}`);
+                const betElement = betDisplayDiv.find(".player-bet-display");
+                betElement.text(message.bet);
+                betDisplayDiv.show();
+            }
+        }
+    }
+
+    //update the pot size
+    if(message.totalPot > 0) {
+        $("#total-pot").text("Total Pot: " + message.totalPot);
+    }
+
+    //update current street pot size
+    if(message.currentStreetPot > 0 && message.board.length > 0) {
+        $("#csp-text").text(`$ ${message.currentStreetPot}`);
+        $("#current-street-pot").css("display", "flex");
+    }
+
+    //update button index
+    moveButtonToIndex(message.buttonIndex);
+
+    //fill the board
+    addCardsToBoard(message.board);
 }
 
 function seatsEvent(message) {
@@ -196,8 +263,17 @@ function standTableEvent(message) {
 function moveButtonEvent(message) {
     console.log("move button", message);
 
+    moveButtonToIndex(message.button);
+}
+
+
+//moves the dealer button in the view to the position of the specified index
+function moveButtonToIndex(index) {
     const button = $('#dealer-button')
-    switch(message.button) {
+
+    switch(index) {
+        case -1:
+            break;
         case 0:
             button.css('display', 'flex');
             button.css('top', '18%');
@@ -515,9 +591,13 @@ function hideBetDisplays() {
 function dealBoardCardsEvent(message) {
     //console.log("Deal hole cards event", message);
 
-    for (let i = 0; i < message.cards.length; i++) {
+    addCardsToBoard(message.cards);
+}
+
+function addCardsToBoard(cards) {
+    for (let i = 0; i < cards.length; i++) {
         const flopCard = new  $('<img>');
-        flopCard.attr("src", `/images/cards/${message.cards[i]}.png`);
+        flopCard.attr("src", `/images/cards/${cards[i]}.png`);
         flopCard.attr("alt", `Board Card ${i}`);
 
         $("#board").append(flopCard);
@@ -606,7 +686,6 @@ function populateTable(seats) {
             seatDiv.empty();
 
             const playerInfoDiv = $("<div class='player-info'></div>");
-
             const playerIconDiv = $("<div class='player-icon'></div>");
             playerIconDiv.append(`<img class="icon-img" src="/images/player-icon.png" alt="Player Icon">`);
             const playerPanelDiv = $("<div class='player-panel'></div>");

@@ -28,7 +28,7 @@ public class Table {
     private Deck deck;
     private int bigBlindIndex;
     private int smallBlindIndex;
-    private int dealerButton;
+    private int dealerButtonIndex;
     private BigDecimal currentBet;
     private boolean gameRunning;
     private boolean handOver;
@@ -53,7 +53,7 @@ public class Table {
         deck = new Deck();
         bigBlindIndex = -1;
         smallBlindIndex = -1;
-        dealerButton = -1;
+        dealerButtonIndex = -1;
         headsUp = false;
         gameRunning = false;
         handOver = false;

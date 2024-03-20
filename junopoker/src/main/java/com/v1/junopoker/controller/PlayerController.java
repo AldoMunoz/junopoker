@@ -20,19 +20,4 @@ public class PlayerController {
         this.playerService = playerService;
         this.tableService = tableService;
     }
-
-    @PostMapping("/createPlayer")
-    public ResponseEntity<String> createPlayer(@RequestBody PlayerRequest playerRequest) {
-        tableService.addPlayer(playerRequest.getTableID(), playerRequest.getPlayer(), playerRequest.getSeatIndex());
-
-        return ResponseEntity.ok().body("{\"status\": \"success\"}");
-    }
-
-    @GetMapping("/removePlayerAtSeat")
-    public ResponseEntity<Player> removePlayerAtSeat(@RequestParam int seat, @RequestParam String tableID) {
-        Player player = tableService.getPlayer(tableID, seat);
-        tableService.removePlayer(tableID, seat);
-
-        return ResponseEntity.ok(player);
-    }
 }

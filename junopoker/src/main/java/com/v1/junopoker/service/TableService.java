@@ -57,7 +57,7 @@ public class TableService {
         response.setBoard(table.getBoard());
         response.setCurrentStreetPot(table.getCurrentStreetPot());
         response.setTotalPot(table.getPot());
-        response.setButtonIndex(table.getDealerButton());
+        response.setButtonIndex(table.getDealerButtonIndex());
         //TODO get currentActingPlayer
 
         ArrayList<StrippedPlayer> strippedPlayers = new ArrayList<>();
@@ -309,9 +309,9 @@ public class TableService {
             }
             //next player found after big blind = button
             else if(table.getSeats()[i] != null && table.getSeats()[i].isActive()) {
-                table.setDealerButton(i);
+                table.setDealerButtonIndex(i);
                 //callback to send message with button index to the controller
-                invokeButtonCallback(table.getDealerButton());
+                invokeButtonCallback(table.getDealerButtonIndex());
                 break;
             }
         }
@@ -461,7 +461,7 @@ public class TableService {
         table.setCurrentStreetPot(BigDecimal.valueOf(0));
 
         //Identify who will be first to act
-        int currPlayerIndex = (table.getDealerButton() + 1) % table.getSEAT_COUNT();
+        int currPlayerIndex = (table.getDealerButtonIndex() + 1) % table.getSEAT_COUNT();
         while (table.getSeats()[currPlayerIndex] == null || !(table.getSeats()[currPlayerIndex].isInHand())) {
             currPlayerIndex = (currPlayerIndex + 1) % table.getSEAT_COUNT();
         }

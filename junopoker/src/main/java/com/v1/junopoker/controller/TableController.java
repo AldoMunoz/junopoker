@@ -22,9 +22,8 @@ public class TableController {
         String tableID = (String) session.getAttribute("tableId");
         if(tableID == null) return ResponseEntity.ok().body(false);
         System.out.println("table ID: " + tableID);
-        boolean tableExists = tableService.doesTableExist(tableID);
 
-        if(tableExists) return ResponseEntity.ok().body(true);
+        if(tableService.doesTableExist(tableID)) return ResponseEntity.ok().body(true);
         else return ResponseEntity.ok().body(false);
     }
 
@@ -38,7 +37,6 @@ public class TableController {
 
     @GetMapping("/getTableData")
     public ResponseEntity<TableRequest> getTableData(HttpSession session) {
-        String tableID = (String) session.getAttribute("tableId");
-        return ResponseEntity.ok().body(tableService.getBasicTableInfo(tableID));
+        return ResponseEntity.ok().body(tableService.getBasicTableInfo((String) session.getAttribute("tableId")));
     }
 }

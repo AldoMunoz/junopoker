@@ -5,21 +5,12 @@
 //Stores the Player in the Table
 //creates Websocket subscription specifically for that player
 function submitPlayerData() {
-    //parse inputs
-    //TODO dont use const, just input data into the object
-    const usernameInput = $("#username").val().trim();
-    const chipCountInput = parseInt($("#chipCount").val());
-
-    if (usernameInput && chipCountInput) {
+    //if chip count input is valid
+    if (parseInt($("#chipCount").val())) {
         //create Player object
         const player = {
-            username: usernameInput,
-            chipCount: chipCountInput,
-            holeCards: null,
-            hand: null,
-            inHand: false,
-            currentBet: 0,
-            isActive: false
+            username: $("#username").val().trim(),
+            chipCount: parseInt($("#chipCount").val()),
         };
 
         //create payload that will be sent to the backend
@@ -145,12 +136,13 @@ async function sitPlayerEvent(message) {
     //so, for example, the controller knows who to remove when a player clicks the "stand" button
     settingsBar.attr("data-seat", message.seatIndex);
 
+    isSeated = true;
+
     stompClient.send("/app/countPlayers", {}, $("#table-id").val());
 }
 async function standPlayerEvent(message) {
     console.log("Stand ", message);
 
-    //TODO might have to change this to another function call
     populateTable(message.seats);
 
     //hide settings bar

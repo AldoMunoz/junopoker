@@ -190,7 +190,6 @@ function sitTableEvent(message) {
     playerInfoDiv.append(playerActionsDiv);
 
     seatDiv.append(playerInfoDiv);
-    isSeated = true;
 }
 function standTableEvent(message) {
     console.log("stand", message);

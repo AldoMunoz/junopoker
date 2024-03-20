@@ -6,6 +6,7 @@
 //creates Websocket subscription specifically for that player
 function submitPlayerData() {
     //parse inputs
+    //TODO dont use const, just input data into the object
     const usernameInput = $("#username").val().trim();
     const chipCountInput = parseInt($("#chipCount").val());
 
@@ -29,8 +30,6 @@ function submitPlayerData() {
             tableID: $("#table-id").val()
         };
 
-        stompClient.subscribe(`/topic/playerEvents/${usernameInput}`, playerEvents);
-
         //sends message to controller to add a player to the table
         stompClient.send("/app/addPlayer", {}, JSON.stringify(playerRequest));
         closeAddPlayerModal();
@@ -42,8 +41,10 @@ async function playerEvents(payload) {
     //parse message body
     let message = JSON.parse(payload.body);
 
+    //function for when a player opens the table
+    if(message.type === "TABLE_INFO") tableInfoEvent(message);
     //function for when player takes a seat
-    if(message.type === "SIT") await sitPlayerEvent(message);
+    else if(message.type === "SIT") await sitPlayerEvent(message);
     //function for when player stands from table
     else if(message.type === "STAND") await standPlayerEvent(message);
     //function for dealing player's private hold cards
@@ -56,6 +57,72 @@ async function playerEvents(payload) {
     else if(message.type === "REBUY") rebuyEvent(message);
     //function to display cards on hover after a player folds
     else if (message.type === "FOLD") foldEvent(message);
+}
+
+function tableInfoEvent(message) {
+    console.log("TABLE INFO:", message)
+
+    //fii the seats with player info (icon, username, chips, current bet)
+    if (message.strippedPlayers != null) {
+        for (let i = 0; i < message.strippedPlayers.length; i++) {
+            const seatDiv = $(`#seat-${message.strippedPlayers[i].seatIndex}`);
+            seatDiv.empty();
+
+            //populate the seat with the player icon and player information
+            const playerInfoDiv = $("<div class='player-info'></div>");
+            const playerIconDiv = $("<div class='player-icon'></div>");
+            playerIconDiv.append(`<img class="icon-img" src="/images/player-icon.png" alt="Player Icon">`);
+            const playerPanelDiv = $("<div class='player-panel'></div>");
+            playerPanelDiv.append(`<img class="panel-img" src="/images/player-info.png" alt="Player Info">`)
+            playerPanelDiv.append(`<p class="player-usernames">${message.strippedPlayers[i].username}</p>`);
+            playerPanelDiv.append(`<p class="player-chip-counts" id="chip-count-${i}">${message.strippedPlayers[i].chipCount}</p>`);
+
+            //if the player is in the hand, give them 2 hole cards
+            const holeCardsDiv =$("<div class='hole-cards'></div>");
+            if(message.strippedPlayers[i].inHand) {
+                holeCardsDiv.empty();
+                holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
+                holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
+                holeCardsDiv.show();
+            }
+
+            const playerActionsDiv = $("<div class='player-actions'></div>");
+            playerActionsDiv.append(`<p></p>`);
+
+            playerInfoDiv.append(playerIconDiv);
+            playerInfoDiv.append(playerPanelDiv);
+            playerInfoDiv.append(holeCardsDiv);
+            playerInfoDiv.append(playerActionsDiv);
+
+            seatDiv.append(playerInfoDiv);
+
+            //update player's bet display
+            if(message.strippedPlayers[i].currentBet > 0) {
+                const betDisplayDiv = $(`#bet-display-${message.strippedPlayers[i].seatIndex}`);
+                const betElement = betDisplayDiv.find(".player-bet-display");
+                betElement.text(message.strippedPlayers[i].currentBet);
+                betDisplayDiv.show();
+            }
+        }
+    }
+
+    //update the pot size
+    if(message.totalPot > 0) {
+        $("#total-pot").text("Total Pot: " + message.totalPot);
+        $("#total-pot").css("display", "flex");
+    }
+
+    //update current street pot size
+    if(message.currentStreetPot > 0 && message.board.length > 0) {
+        $("#csp-text").text(`$ ${message.currentStreetPot}`);
+        $("#current-street-pot").css("display", "flex");
+    }
+
+    //update button index
+    moveButtonToIndex(message.buttonIndex);
+
+    //fill the board
+    addCardsToBoard(message.board);
 }
 async function sitPlayerEvent(message) {
     console.log("Sit ", message);

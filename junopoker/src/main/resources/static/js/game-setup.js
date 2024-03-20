@@ -30,7 +30,7 @@ $(document).ready(function () {
                         $('#game-type').text(`Game Type: ${tableData.gameType}`);
                         $('#stakes').text(`Stakes: ${tableData.stakes[0]}/${tableData.stakes[1]}`);
                     })
-                establishWebSocketConnection();
+                displayUsernameModal();
             }
             //else if table doesn't exist
             else {
@@ -65,14 +65,22 @@ $(document).ready(function () {
                     $('#game-type').text(`Game Type: NLH`);
                     $('#stakes').text(`Stakes: 1/2`);
 
-                    // Establish WebSocket connection
-                    establishWebSocketConnection();
+                    displayUsernameModal()
                 }).catch(error => {
                     console.error('Error occurred while storing table data:', error);
                 });
             }
         });
 });
+
+function displayUsernameModal() {
+    $("#usernameModal").show();
+}
+
+function submitUsername() {
+    $("#usernameModal").hide();
+    establishWebSocketConnection();
+}
 
 
 /*WEB SOCKET CONNECTION
@@ -92,15 +100,19 @@ async function onConnected() {
     //subscribes users to tableEvents, public topic that will impact the view of all players publicly
     //all messages sent to /topic/table events will be redirected to "tableEvents(payload) method below"
     stompClient.subscribe("/topic/tableEvents", tableEvents);
-    stompClient.send("/app/getTableInfo", {}, $("#table-id").val());
+    stompClient.subscribe(`/topic/playerEvents/${$("#username").val().trim()}`, playerEvents);
+
+    const newPlayerRequest = {
+        tableID: $("#table-id").val(),
+        username: $("#username").val().trim()
+    }
+    stompClient.send("/app/getTableInfo", {}, JSON.stringify(newPlayerRequest));
 }
 
 //Displays error message if WebSocket Connection is unsuccessful
 function onError(error) {
     console.log('Could not connect to WebSocket server. Please refresh this page to try again!')
 }
-
-
 
 /*TABLE EVENTS
 /*-----------------------------------*/
@@ -110,10 +122,8 @@ function tableEvents(payload) {
     //parse the body of the message
     let message = JSON.parse(payload.body);
 
-    //view logic for a player first opens up a table
-    if(message.type === "TABLE_INFO") tableInfoEvent(message);
     //view logic for display all players at the table
-    else if(message.type === "SEATS") seatsEvent(message);
+    if(message.type === "SEATS") seatsEvent(message);
     //view logic for when a new player takes a seat
     else if(message.type === "SIT") sitTableEvent(message);
     //view logic for when player stands up from seat
@@ -142,71 +152,6 @@ function tableEvents(payload) {
     else if(message.type === "CLEAN_UP") cleanUpEvent(message);
     //logic for when error occurred, most likely in payload body
     else console.log("error occurred");
-}
-
-function tableInfoEvent(message) {
-    console.log("TABLE INFO:", message)
-
-    //fii the seats with player info (icon, username, chips, current bet)
-    if (message.strippedPlayers != null) {
-        for (let i = 0; i < message.strippedPlayers.length; i++) {
-            const seatDiv = $(`#seat-${message.strippedPlayers[i].seatIndex}`);
-            seatDiv.empty();
-
-            //populate the seat with the player icon and player information
-            const playerInfoDiv = $("<div class='player-info'></div>");
-            const playerIconDiv = $("<div class='player-icon'></div>");
-            playerIconDiv.append(`<img class="icon-img" src="/images/player-icon.png" alt="Player Icon">`);
-            const playerPanelDiv = $("<div class='player-panel'></div>");
-            playerPanelDiv.append(`<img class="panel-img" src="/images/player-info.png" alt="Player Info">`)
-            playerPanelDiv.append(`<p class="player-usernames">${message.strippedPlayers[i].username}</p>`);
-            playerPanelDiv.append(`<p class="player-chip-counts" id="chip-count-${i}">${message.strippedPlayers[i].chipCount}</p>`);
-
-            //if the player is in the hand, give them 2 hole cards
-            const holeCardDiv =$("<div class='hole-cards'></div>");
-            if(message.strippedPlayers[i].isInHand) {
-                holeCardsDiv.empty();
-                holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
-                holeCardsDiv.append(`<img src="/images/cards/card-back.png" alt="Card 1">`)
-                holeCardsDiv.show();
-            }
-
-            const playerActionsDiv = $("<div class='player-actions'></div>");
-            playerActionsDiv.append(`<p></p>`);
-
-            playerInfoDiv.append(playerIconDiv);
-            playerInfoDiv.append(playerPanelDiv);
-            playerInfoDiv.append(holeCardDiv);
-            playerInfoDiv.append(playerActionsDiv);
-
-            seatDiv.append(playerInfoDiv);
-
-            //update player's bet display
-            if(message.strippedPlayers[i].currentBet > 0) {
-                const betDisplayDiv = $(`#bet-display-${message.strippedPlayers[i].seatIndex}`);
-                const betElement = betDisplayDiv.find(".player-bet-display");
-                betElement.text(message.bet);
-                betDisplayDiv.show();
-            }
-        }
-    }
-
-    //update the pot size
-    if(message.totalPot > 0) {
-        $("#total-pot").text("Total Pot: " + message.totalPot);
-    }
-
-    //update current street pot size
-    if(message.currentStreetPot > 0 && message.board.length > 0) {
-        $("#csp-text").text(`$ ${message.currentStreetPot}`);
-        $("#current-street-pot").css("display", "flex");
-    }
-
-    //update button index
-    moveButtonToIndex(message.buttonIndex);
-
-    //fill the board
-    addCardsToBoard(message.board);
 }
 
 function seatsEvent(message) {

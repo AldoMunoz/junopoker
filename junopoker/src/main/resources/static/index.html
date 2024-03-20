@@ -18,6 +18,13 @@
         </header>
     </div>
     <!-- Main UI (Table, Seats, Settings Bar) -->
+    <div id="usernameModal" class="modal">
+        <div class="modal-content">
+            <label for="username">Username:</label>
+            <input type="text" id="username">
+            <button id="submitUsername" onclick="submitUsername()">Submit</button>
+        </div>
+    </div>
     <div class='main-ui'>
         <div class="settings-bar">
             <div class="settings-bar-buttons" data-tooltip="Settings">
@@ -105,8 +112,6 @@
     <div id="addUserModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeAddPlayerModal()">&times;</span>
-            <label for="username">Name:</label>
-            <input type="text" id="username">
             <label for="chipCount">Chip Count:</label>
             <input type="text" id="chipCount">
             <button id="submitBtn" onclick="submitPlayerData()">Submit</button>

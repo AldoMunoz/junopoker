@@ -5,6 +5,7 @@ import com.v1.junopoker.dto.*;
 import com.v1.junopoker.model.Card;
 import com.v1.junopoker.model.Player;
 import com.v1.junopoker.model.Table;
+import com.v1.junopoker.service.PlayerService;
 import com.v1.junopoker.service.TableService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -46,10 +47,10 @@ public class TableWebSocketController implements TableCallback {
     }
 
     @MessageMapping("/getTableInfo")
-    public void getTableInfo(@Payload String tableID) {
-        TableInfoResponse response = tableService.getTableInfo(tableID);
+    public void getTableInfo(@Payload NewPlayerRequest request) {
+        TableInfoResponse response = tableService.getTableInfo(request.getTableID());
 
-        messagingTemplate.convertAndSend("/topic/tableEvents", response);
+        messagingTemplate.convertAndSend("/topic/playerEvents/" + request.getUsername(), response);
     }
 
     @MessageMapping("/addPlayer")
